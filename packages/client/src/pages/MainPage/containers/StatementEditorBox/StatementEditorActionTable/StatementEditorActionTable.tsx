@@ -120,6 +120,7 @@ export const StatementEditorActionTable: React.FC<StatementEditorActionTable> = 
           return action ? (
             <ActantTag
               actant={action}
+              // fullWidth
               button={
                 userCanEdit && (
                   <Button

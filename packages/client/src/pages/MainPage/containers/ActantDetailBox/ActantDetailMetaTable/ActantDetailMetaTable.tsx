@@ -66,7 +66,7 @@ export const ActantDetailMetaTable: React.FC<ActantDetailMetaTable> = ({
           return typeActant && typeSActant ? (
             <ActantTag
               actant={typeActant}
-              short={false}
+              // fullWidth
               button={
                 userCanEdit && (
                   <Button
