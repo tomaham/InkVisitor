@@ -18,6 +18,7 @@ import { TerritoryTreeFilter } from "./TerritoryTreeFilter/TerritoryTreeFilter";
 const initValues: ITerritoryFilter = {
   nonEmpty: false,
   starred: false,
+  editorRights: false,
   filter: "",
 };
 

@@ -42,6 +42,13 @@ export const TerritoryTreeFilter: React.FC<TerritoryTreeFilter> = ({
               handleFilterChange("starred", value)
             }
           />
+          <Checkbox
+            label="editor rights"
+            value={filterData.editorRights}
+            onChangeFn={(value: boolean) =>
+              handleFilterChange("editorRights", value)
+            }
+          />
           <Input
             value={filterData.filter}
             onChangeFn={(value: string) => handleFilterChange("filter", value)}

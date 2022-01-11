@@ -258,5 +258,6 @@ export const classesPropValue = [
 export interface ITerritoryFilter {
   nonEmpty: boolean;
   starred: boolean;
+  editorRights: boolean;
   filter: string;
 }
