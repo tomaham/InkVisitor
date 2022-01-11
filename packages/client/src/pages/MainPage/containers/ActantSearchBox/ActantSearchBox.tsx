@@ -43,7 +43,7 @@ export const ActantSearchBox: React.FC = () => {
   const [classOption, setClassOption] = useState<
     ValueType<OptionTypeBase, any>
   >({
-    label: "*",
+    label: ActantType.Any,
     value: undefined,
   });
   const [searchData, setSearchData] = useState<IRequestSearch>(initValues);

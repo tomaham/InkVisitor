@@ -254,3 +254,9 @@ export const classesPropValue = [
   ActantType.Territory,
   ActantType.Resource,
 ];
+
+export interface ITerritoryFilter {
+  nonEmpty: boolean;
+  starred: boolean;
+  filter: string;
+}

@@ -15,3 +15,13 @@ export const StyledCheckbox = styled.input<StyledCheckbox>`
     outline: 0;
   }
 `;
+
+export const StyledCheckBoxWrap = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+export const StyledLabel = styled.label`
+  margin-left: ${({ theme }) => theme.space[1]};
+  font-size: ${({ theme }) => theme.fontSize["sm"]};
+`;

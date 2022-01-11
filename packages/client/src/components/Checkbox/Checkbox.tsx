@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { StyledCheckbox } from "./CheckboxStyles";
+import {
+  StyledCheckbox,
+  StyledCheckBoxWrap,
+  StyledLabel,
+} from "./CheckboxStyles";
 
 interface Checkbox {
   value?: boolean;
@@ -21,7 +25,7 @@ export const Checkbox: React.FC<Checkbox> = ({
     onChangeFn(checked);
   }, [checked]);
   return (
-    <>
+    <StyledCheckBoxWrap>
       <StyledCheckbox
         type="checkbox"
         id={id}
@@ -31,7 +35,7 @@ export const Checkbox: React.FC<Checkbox> = ({
         }}
         disabled={disabled}
       />
-      <label htmlFor={id}>{label}</label>
-    </>
+      {label && <StyledLabel htmlFor={id}>{label}</StyledLabel>}
+    </StyledCheckBoxWrap>
   );
 };

@@ -12,6 +12,14 @@ import { searchTree } from "utils";
 import { ContextMenuNewTerritoryModal } from "./ContextMenuNewTerritoryModal/ContextMenuNewTerritoryModal";
 import { StyledTreeWrapper } from "./TerritoryTreeBoxStyles";
 import { TerritoryTreeNode } from "./TerritoryTreeNode/TerritoryTreeNode";
+import { ITerritoryFilter } from "types";
+import { TerritoryTreeFilter } from "./TerritoryTreeFilter/TerritoryTreeFilter";
+
+const initValues: ITerritoryFilter = {
+  nonEmpty: false,
+  starred: false,
+  filter: "",
+};
 
 export const TerritoryTreeBox: React.FC = () => {
   const queryClient = useQueryClient();
@@ -83,6 +91,19 @@ export const TerritoryTreeBox: React.FC = () => {
     }
   }, [data, territoryId]);
 
+  const [filterData, setFilterData] = useState<ITerritoryFilter>(initValues);
+
+  const handleFilterChange = (key: string, value: string | boolean) => {
+    setFilterData({
+      ...filterData,
+      [key]: value,
+    });
+  };
+
+  useEffect(() => {
+    console.log(filterData);
+  }, [filterData]);
+
   return (
     <>
       {userRole === UserRoleMode.Admin && (
@@ -92,6 +113,10 @@ export const TerritoryTreeBox: React.FC = () => {
           onClick={() => setShowCreate(true)}
         />
       )}
+      <TerritoryTreeFilter
+        filterData={filterData}
+        handleFilterChange={handleFilterChange}
+      />
 
       <StyledTreeWrapper id="Territories-box-content">
         {data && (
