@@ -101,9 +101,79 @@ export const TerritoryTreeBox: React.FC = () => {
     });
   };
 
+  const findTextOld = (
+    element: IResponseTree,
+    matchingTitle: string
+  ): IResponseTree | null => {
+    var result = null;
+    if (element.territory.label.includes(matchingTitle)) {
+      return element;
+    } else if (element.children != null) {
+      var i;
+      // var result = null;
+      for (i = 0; result === null && i < element.children.length; i++) {
+        result = findTextOld(element.children[i], matchingTitle);
+        if (result) {
+          return result;
+        }
+      }
+      return result;
+    }
+    return null;
+  };
+
+  const findNonEmpty = (
+    element: IResponseTree
+  ): IResponseTree | null | undefined => {
+    if (element.children.length > 0) {
+      // ma deti
+      console.log("ma deti", element.territory.label);
+      for (var i = 0; i < element.children.length; i++) {
+        var result;
+        console.log("child ter label", element.children[i].territory.label);
+        result = findNonEmpty(element.children[i]);
+        // prosel jsem dite
+        if (!result) {
+          console.log("mazu", element.children[i].territory.label);
+          element.children.splice(i, 1);
+          i--;
+        }
+      }
+    } else {
+      // RESULT (kdyz nema deti, tak vytvarim result pro parent vrstvu)
+      console.log("nema deti", element.territory.label);
+      // kdyz nema deti
+      if (element.empty === true) {
+        // prazdny
+        console.log("EMPTY");
+        return null;
+      } else {
+        return element;
+      }
+    }
+    if (element && element.territory.id === "T0") {
+      // TODO: return filtered tree object
+      console.log("----- LOGUJU element", element);
+    }
+  };
+  // if (element.territory.label.includes(matchingTitle)) {
+
   useEffect(() => {
-    console.log(filterData);
-  }, [filterData]);
+    if (data) {
+      const foundTerritory = findNonEmpty(JSON.parse(JSON.stringify(data)));
+      if (foundTerritory) {
+      } else {
+      }
+    }
+  }, [data]);
+
+  // useEffect(() => {
+  //   if (data) {
+  //     const newData: IResponseTree = JSON.parse(JSON.stringify(data));
+  //     newData.children.splice(0, 2);
+  //     console.log(newData);
+  //   }
+  // }, [data]);
 
   return (
     <>

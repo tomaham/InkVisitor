@@ -15,7 +15,7 @@ export const TerritoryTreeFilter: React.FC<TerritoryTreeFilter> = ({
   filterData,
   handleFilterChange,
 }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <StyledFilterWrap>
