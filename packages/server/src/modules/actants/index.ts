@@ -26,6 +26,10 @@ import { mergeDeep } from "@common/functions";
 import { ActantStatus, ActantType, UserRole } from "@shared/enums";
 import Audit from "@models/audit";
 import { ResponseActant, ResponseActantDetail } from "@models/actant/response";
+import {
+  RequestSearchEntity,
+  RequestSearchStatement,
+} from "@shared/types/request-search";
 
 export default Router()
   .get(
@@ -311,5 +315,29 @@ export default Router()
         }
         return out;
       });
+    })
+  )
+  .post(
+    "/search_entity",
+    asyncRouteHandler<IResponseSearch[]>(async (httpRequest: Request) => {
+      const req = new RequestSearchEntity(httpRequest.body);
+      const err = req.validate();
+      if (err) {
+        throw err;
+      }
+
+      return [];
+    })
+  )
+  .post(
+    "/search_statement",
+    asyncRouteHandler<IResponseSearch[]>(async (httpRequest: Request) => {
+      const req = new RequestSearchStatement(httpRequest.body);
+      const err = req.validate();
+      if (err) {
+        throw err;
+      }
+
+      return [];
     })
   );

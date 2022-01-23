@@ -36,7 +36,11 @@ import { ITerritory } from "./territory";
 import { IOption } from "./option";
 import { IResponseGeneric } from "./response-generic";
 import { IResponseSearch } from "./response-search";
-import { RequestSearch } from "./request-search";
+import {
+  RequestSearch,
+  IRequestSearchEntity,
+  IRequestSearchStatement,
+} from "./request-search";
 import { RequestPermissionUpdate } from "./request-permission";
 
 export type {
@@ -75,4 +79,9 @@ export type {
   IResponsePermission,
 };
 
-export { RequestSearch, RequestPermissionUpdate };
+export {
+  RequestSearch,
+  IRequestSearchEntity,
+  IRequestSearchStatement,
+  RequestPermissionUpdate,
+};
