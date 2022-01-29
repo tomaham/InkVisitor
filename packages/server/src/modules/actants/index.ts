@@ -24,7 +24,7 @@ import {
 } from "@shared/types";
 import { mergeDeep } from "@common/functions";
 import { ActantStatus, ActantType, UserRole } from "@shared/enums";
-import Audit from "@models/audit";
+import Audit from "@models/audit/audit";
 import { ResponseActant, ResponseActantDetail } from "@models/actant/response";
 import {
   RequestSearchEntity,
@@ -55,6 +55,8 @@ export default Router()
       const actant = getActantType({ ...actantData });
 
       const response = new ResponseActant(actant);
+      console.log(response.data);
+
       await response.prepare(request);
 
       return response;
@@ -260,6 +262,8 @@ export default Router()
       }
 
       const response = new ResponseActantDetail(actant);
+
+      console.log(response);
       await response.prepare(request);
 
       return response;
