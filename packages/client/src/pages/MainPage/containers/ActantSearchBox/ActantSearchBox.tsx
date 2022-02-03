@@ -1,4 +1,4 @@
-import { ActantType } from "@shared/enums";
+import { ActantType, SearchType } from "@shared/enums";
 import { IOption, IResponseSearch } from "@shared/types";
 import api from "api";
 import { Button, Dropdown, Input, Loader, Tag } from "components";
@@ -9,6 +9,7 @@ import { useMutation, useQuery } from "react-query";
 import { OptionsType, OptionTypeBase, ValueType } from "react-select";
 import { Entities, IRequestSearch } from "types";
 import { EntitySuggester } from "..";
+import { AttributeButtonGroup } from "../AttributeButtonGroup/AttributeButtonGroup";
 import {
   StyledBoxContent,
   StyledResultHeading,
@@ -113,8 +114,43 @@ export const ActantSearchBox: React.FC = () => {
     }
   );
 
+  const [searchType, setSearchType] = useState<SearchType>(SearchType.Entity);
+
+  const renderEntitySearch = () => {
+    return <p>{SearchType.Entity}</p>;
+  };
+
+  const renderStatementSearch = () => {
+    return <p>{SearchType.Statement}</p>;
+  };
+
   return (
     <StyledBoxContent>
+      <StyledRow>
+        <AttributeButtonGroup
+          options={[
+            {
+              longValue: SearchType.Entity,
+              shortValue: SearchType.Entity,
+              onClick: () => setSearchType(SearchType.Entity),
+              selected: searchType === SearchType.Entity,
+            },
+            {
+              longValue: SearchType.Statement,
+              shortValue: SearchType.Statement,
+              onClick: () => setSearchType(SearchType.Statement),
+              selected: searchType === SearchType.Statement,
+            },
+          ]}
+        />
+      </StyledRow>
+      <StyledRow>
+        {searchType === SearchType.Entity ? (
+          <>{renderEntitySearch()} </>
+        ) : (
+          <>{renderStatementSearch()}</>
+        )}
+      </StyledRow>
       <StyledRow>
         <StyledRowHeader>Label (at least 4 characters)</StyledRowHeader>
         <Input

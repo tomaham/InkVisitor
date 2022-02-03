@@ -188,3 +188,8 @@ export enum UserRoleMode {
   Read = "read",
   Admin = "admin",
 }
+
+export enum SearchType {
+  Entity = "entity",
+  Statement = "statement",
+}
