@@ -14,6 +14,7 @@ import { StyledTreeWrapper } from "./TerritoryTreeBoxStyles";
 import { TerritoryTreeNode } from "./TerritoryTreeNode/TerritoryTreeNode";
 import { ITerritoryFilter } from "types";
 import { TerritoryTreeFilter } from "./TerritoryTreeFilter/TerritoryTreeFilter";
+import { IResponseTree } from "@shared/types";
 
 const initValues: ITerritoryFilter = {
   nonEmpty: false,
