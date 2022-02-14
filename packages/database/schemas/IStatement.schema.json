@@ -1,5 +1,8 @@
 {
+    "$id": "IStatement",
     "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "defaultProperties": [],
     "definitions": {
         "ActantStatus": {
             "enum": [
@@ -31,6 +34,8 @@
             "type": "string"
         },
         "IProp": {
+            "additionalProperties": false,
+            "defaultProperties": [],
             "properties": {
                 "bundleEnd": {
                     "type": "boolean"
@@ -39,22 +44,22 @@
                     "type": "boolean"
                 },
                 "certainty": {
-                    "$ref": "#/definitions/Certainty"
+                    "$ref": "IStatement#/definitions/Certainty"
                 },
                 "children": {
                     "items": {
-                        "$ref": "#/definitions/IProp"
+                        "$ref": "IStatement#/definitions/IProp"
                     },
                     "type": "array"
                 },
                 "elvl": {
-                    "$ref": "#/definitions/Elvl"
+                    "$ref": "IStatement#/definitions/Elvl"
                 },
                 "id": {
                     "type": "string"
                 },
                 "logic": {
-                    "$ref": "#/definitions/Logic"
+                    "$ref": "IStatement#/definitions/Logic"
                 },
                 "mood": {
                     "items": {
@@ -78,16 +83,16 @@
                     "type": "array"
                 },
                 "moodvariant": {
-                    "$ref": "#/definitions/MoodVariant"
+                    "$ref": "IStatement#/definitions/MoodVariant"
                 },
                 "operator": {
-                    "$ref": "#/definitions/Operator"
+                    "$ref": "IStatement#/definitions/Operator"
                 },
                 "type": {
-                    "$ref": "#/definitions/IPropSpec"
+                    "$ref": "IStatement#/definitions/IPropSpec"
                 },
                 "value": {
-                    "$ref": "#/definitions/IPropSpec"
+                    "$ref": "IStatement#/definitions/IPropSpec"
                 }
             },
             "required": [
@@ -107,21 +112,23 @@
             "type": "object"
         },
         "IPropSpec": {
+            "additionalProperties": false,
+            "defaultProperties": [],
             "properties": {
                 "elvl": {
-                    "$ref": "#/definitions/Elvl"
+                    "$ref": "IStatement#/definitions/Elvl"
                 },
                 "id": {
                     "type": "string"
                 },
                 "logic": {
-                    "$ref": "#/definitions/Logic"
+                    "$ref": "IStatement#/definitions/Logic"
                 },
                 "partitivity": {
-                    "$ref": "#/definitions/Partitivity"
+                    "$ref": "IStatement#/definitions/Partitivity"
                 },
                 "virtuality": {
-                    "$ref": "#/definitions/Virtuality"
+                    "$ref": "IStatement#/definitions/Virtuality"
                 }
             },
             "required": [
@@ -134,6 +141,8 @@
             "type": "object"
         },
         "IStatementActant": {
+            "additionalProperties": false,
+            "defaultProperties": [],
             "properties": {
                 "actant": {
                     "type": "string"
@@ -145,31 +154,31 @@
                     "type": "boolean"
                 },
                 "elvl": {
-                    "$ref": "#/definitions/Elvl"
+                    "$ref": "IStatement#/definitions/Elvl"
                 },
                 "id": {
                     "type": "string"
                 },
                 "logic": {
-                    "$ref": "#/definitions/Logic"
+                    "$ref": "IStatement#/definitions/Logic"
                 },
                 "operator": {
-                    "$ref": "#/definitions/Operator"
+                    "$ref": "IStatement#/definitions/Operator"
                 },
                 "partitivity": {
-                    "$ref": "#/definitions/Partitivity"
+                    "$ref": "IStatement#/definitions/Partitivity"
                 },
                 "position": {
-                    "$ref": "#/definitions/Position"
+                    "$ref": "IStatement#/definitions/Position"
                 },
                 "props": {
                     "items": {
-                        "$ref": "#/definitions/IProp"
+                        "$ref": "IStatement#/definitions/IProp"
                     },
                     "type": "array"
                 },
                 "virtuality": {
-                    "$ref": "#/definitions/Virtuality"
+                    "$ref": "IStatement#/definitions/Virtuality"
                 }
             },
             "required": [
@@ -188,6 +197,8 @@
             "type": "object"
         },
         "IStatementAction": {
+            "additionalProperties": false,
+            "defaultProperties": [],
             "properties": {
                 "action": {
                     "type": "string"
@@ -199,16 +210,16 @@
                     "type": "boolean"
                 },
                 "certainty": {
-                    "$ref": "#/definitions/Certainty"
+                    "$ref": "IStatement#/definitions/Certainty"
                 },
                 "elvl": {
-                    "$ref": "#/definitions/Elvl"
+                    "$ref": "IStatement#/definitions/Elvl"
                 },
                 "id": {
                     "type": "string"
                 },
                 "logic": {
-                    "$ref": "#/definitions/Logic"
+                    "$ref": "IStatement#/definitions/Logic"
                 },
                 "mood": {
                     "items": {
@@ -232,14 +243,14 @@
                     "type": "array"
                 },
                 "moodvariant": {
-                    "$ref": "#/definitions/MoodVariant"
+                    "$ref": "IStatement#/definitions/MoodVariant"
                 },
                 "operator": {
-                    "$ref": "#/definitions/Operator"
+                    "$ref": "IStatement#/definitions/Operator"
                 },
                 "props": {
                     "items": {
-                        "$ref": "#/definitions/IProp"
+                        "$ref": "IStatement#/definitions/IProp"
                     },
                     "type": "array"
                 }
@@ -260,22 +271,24 @@
             "type": "object"
         },
         "IStatementData": {
+            "additionalProperties": false,
+            "defaultProperties": [],
             "properties": {
                 "actants": {
                     "items": {
-                        "$ref": "#/definitions/IStatementActant"
+                        "$ref": "IStatement#/definitions/IStatementActant"
                     },
                     "type": "array"
                 },
                 "actions": {
                     "items": {
-                        "$ref": "#/definitions/IStatementAction"
+                        "$ref": "IStatement#/definitions/IStatementAction"
                     },
                     "type": "array"
                 },
                 "references": {
                     "items": {
-                        "$ref": "#/definitions/IStatementReference"
+                        "$ref": "IStatement#/definitions/IStatementReference"
                     },
                     "type": "array"
                 },
@@ -286,6 +299,8 @@
                     "type": "array"
                 },
                 "territory": {
+                    "additionalProperties": false,
+                    "defaultProperties": [],
                     "properties": {
                         "id": {
                             "type": "string"
@@ -315,6 +330,8 @@
             "type": "object"
         },
         "IStatementReference": {
+            "additionalProperties": false,
+            "defaultProperties": [],
             "properties": {
                 "id": {
                     "type": "string"
@@ -415,7 +432,7 @@
             "type": "string"
         },
         "data": {
-            "$ref": "#/definitions/IStatementData"
+            "$ref": "IStatement#/definitions/IStatementData"
         },
         "detail": {
             "type": "string"
@@ -427,7 +444,7 @@
             "type": "string"
         },
         "language": {
-            "$ref": "#/definitions/Language"
+            "$ref": "IStatement#/definitions/Language"
         },
         "notes": {
             "items": {
@@ -437,12 +454,12 @@
         },
         "props": {
             "items": {
-                "$ref": "#/definitions/IProp"
+                "$ref": "IStatement#/definitions/IProp"
             },
             "type": "array"
         },
         "status": {
-            "$ref": "#/definitions/ActantStatus"
+            "$ref": "IStatement#/definitions/ActantStatus"
         }
     },
     "required": [
