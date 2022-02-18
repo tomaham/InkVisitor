@@ -1,0 +1,33 @@
+version: "3.6"
+
+x-service: &service
+  restart: always
+
+services:
+  inkvisitor-database:
+    <<: *service
+    image: rethinkdb
+    container_name: "inkvisitor-database"
+    volumes:
+      - ./data:/data
+    ports:
+      - "8080:8080"
+      - "28015:28015"
+      - "29015:29015"
+  server:
+    <<: *service
+    build: .
+    environment:
+      #- NODE_ENV=devel
+      #- PORT=8000
+      - DB_NAME=inkvisitor
+      - DB_HOST=inkvisitor-database
+      - DB_PORT=28015
+    depends_on:
+      - inkvisitor-database
+    ports:
+      - 3000:3000
+      - 4000:4000
+      - 8000:8000
+          
+
