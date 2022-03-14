@@ -4,15 +4,6 @@
     "additionalProperties": false,
     "defaultProperties": [],
     "definitions": {
-        "ActantStatus": {
-            "enum": [
-                "0",
-                "1",
-                "2",
-                "3"
-            ],
-            "type": "string"
-        },
         "Certainty": {
             "enum": [
                 "0",
@@ -32,6 +23,43 @@
                 "3"
             ],
             "type": "string"
+        },
+        "EntityReferenceSource": {
+            "enum": [
+                "geonames",
+                "wordnet"
+            ],
+            "type": "string"
+        },
+        "EntityStatus": {
+            "enum": [
+                "0",
+                "1",
+                "2",
+                "3"
+            ],
+            "type": "string"
+        },
+        "IEntityReference": {
+            "additionalProperties": false,
+            "defaultProperties": [],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "source": {
+                    "$ref": "ITerritory#/definitions/EntityReferenceSource"
+                },
+                "value": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "source",
+                "value"
+            ],
+            "type": "object"
         },
         "IParentTerritory": {
             "additionalProperties": false,
@@ -56,6 +84,9 @@
             "properties": {
                 "bundleEnd": {
                     "type": "boolean"
+                },
+                "bundleOperator": {
+                    "$ref": "ITerritory#/definitions/Operator"
                 },
                 "bundleStart": {
                     "type": "boolean"
@@ -102,9 +133,6 @@
                 "moodvariant": {
                     "$ref": "ITerritory#/definitions/MoodVariant"
                 },
-                "operator": {
-                    "$ref": "ITerritory#/definitions/Operator"
-                },
                 "type": {
                     "$ref": "ITerritory#/definitions/IPropSpec"
                 },
@@ -114,6 +142,7 @@
             },
             "required": [
                 "bundleEnd",
+                "bundleOperator",
                 "bundleStart",
                 "certainty",
                 "children",
@@ -122,7 +151,6 @@
                 "logic",
                 "mood",
                 "moodvariant",
-                "operator",
                 "type",
                 "value"
             ],
@@ -163,6 +191,9 @@
                 "ces",
                 "eng",
                 "enm",
+                "fra",
+                "ger",
+                "ita",
                 "lat",
                 "oci"
             ],
@@ -254,11 +285,17 @@
         "id": {
             "type": "string"
         },
+        "isTemplate": {
+            "type": "boolean"
+        },
         "label": {
             "type": "string"
         },
         "language": {
             "$ref": "ITerritory#/definitions/Language"
+        },
+        "legacyId": {
+            "type": "string"
         },
         "notes": {
             "items": {
@@ -272,8 +309,22 @@
             },
             "type": "array"
         },
+        "references": {
+            "items": {
+                "$ref": "ITerritory#/definitions/IEntityReference"
+            },
+            "type": "array"
+        },
         "status": {
-            "$ref": "ITerritory#/definitions/ActantStatus"
+            "$ref": "ITerritory#/definitions/EntityStatus"
+        },
+        "templateData": {
+            "additionalProperties": true,
+            "properties": {},
+            "type": "object"
+        },
+        "usedTemplate": {
+            "type": "boolean"
         }
     },
     "required": [
@@ -285,6 +336,7 @@
         "language",
         "notes",
         "props",
+        "references",
         "status"
     ],
     "type": "object"

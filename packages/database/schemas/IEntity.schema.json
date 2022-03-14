@@ -4,15 +4,6 @@
     "additionalProperties": false,
     "defaultProperties": [],
     "definitions": {
-        "ActantStatus": {
-            "enum": [
-                "0",
-                "1",
-                "2",
-                "3"
-            ],
-            "type": "string"
-        },
         "Certainty": {
             "enum": [
                 "0",
@@ -33,25 +24,58 @@
             ],
             "type": "string"
         },
-        "EntityActantType": {
+        "EntityClass": {
             "enum": [
+                "A",
+                "C",
                 "E",
                 "G",
                 "L",
                 "O",
                 "P",
+                "R",
+                "S",
+                "T",
                 "V"
             ],
             "type": "string"
         },
-        "EntityLogicalType": {
+        "EntityReferenceSource": {
             "enum": [
-                "1",
-                "2",
-                "3",
-                "4"
+                "geonames",
+                "wordnet"
             ],
             "type": "string"
+        },
+        "EntityStatus": {
+            "enum": [
+                "0",
+                "1",
+                "2",
+                "3"
+            ],
+            "type": "string"
+        },
+        "IEntityReference": {
+            "additionalProperties": false,
+            "defaultProperties": [],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "source": {
+                    "$ref": "IEntity#/definitions/EntityReferenceSource"
+                },
+                "value": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "source",
+                "value"
+            ],
+            "type": "object"
         },
         "IProp": {
             "additionalProperties": false,
@@ -59,6 +83,9 @@
             "properties": {
                 "bundleEnd": {
                     "type": "boolean"
+                },
+                "bundleOperator": {
+                    "$ref": "IEntity#/definitions/Operator"
                 },
                 "bundleStart": {
                     "type": "boolean"
@@ -105,9 +132,6 @@
                 "moodvariant": {
                     "$ref": "IEntity#/definitions/MoodVariant"
                 },
-                "operator": {
-                    "$ref": "IEntity#/definitions/Operator"
-                },
                 "type": {
                     "$ref": "IEntity#/definitions/IPropSpec"
                 },
@@ -117,6 +141,7 @@
             },
             "required": [
                 "bundleEnd",
+                "bundleOperator",
                 "bundleStart",
                 "certainty",
                 "children",
@@ -125,7 +150,6 @@
                 "logic",
                 "mood",
                 "moodvariant",
-                "operator",
                 "type",
                 "value"
             ],
@@ -166,6 +190,9 @@
                 "ces",
                 "eng",
                 "enm",
+                "fra",
+                "ger",
+                "ita",
                 "lat",
                 "oci"
             ],
@@ -223,32 +250,26 @@
     },
     "properties": {
         "class": {
-            "$ref": "IEntity#/definitions/EntityActantType"
+            "$ref": "IEntity#/definitions/EntityClass"
         },
-        "data": {
-            "additionalProperties": false,
-            "defaultProperties": [],
-            "properties": {
-                "logicalType": {
-                    "$ref": "IEntity#/definitions/EntityLogicalType"
-                }
-            },
-            "required": [
-                "logicalType"
-            ],
-            "type": "object"
-        },
+        "data": {},
         "detail": {
             "type": "string"
         },
         "id": {
             "type": "string"
         },
+        "isTemplate": {
+            "type": "boolean"
+        },
         "label": {
             "type": "string"
         },
         "language": {
             "$ref": "IEntity#/definitions/Language"
+        },
+        "legacyId": {
+            "type": "string"
         },
         "notes": {
             "items": {
@@ -262,8 +283,22 @@
             },
             "type": "array"
         },
+        "references": {
+            "items": {
+                "$ref": "IEntity#/definitions/IEntityReference"
+            },
+            "type": "array"
+        },
         "status": {
-            "$ref": "IEntity#/definitions/ActantStatus"
+            "$ref": "IEntity#/definitions/EntityStatus"
+        },
+        "templateData": {
+            "additionalProperties": true,
+            "properties": {},
+            "type": "object"
+        },
+        "usedTemplate": {
+            "type": "boolean"
         }
     },
     "required": [
@@ -275,6 +310,7 @@
         "language",
         "notes",
         "props",
+        "references",
         "status"
     ],
     "type": "object"

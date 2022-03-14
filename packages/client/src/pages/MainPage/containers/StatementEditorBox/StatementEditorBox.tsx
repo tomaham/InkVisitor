@@ -1,4 +1,4 @@
-import { ActantType, UserRoleMode } from "@shared/enums";
+import { EntityClass, UserRoleMode } from "@shared/enums";
 import {
   IProp,
   IResponseStatement,
@@ -17,6 +17,7 @@ import {
 import { useSearchParams } from "hooks";
 import React, { useEffect, useMemo } from "react";
 import { FaTrashAlt, FaUnlink } from "react-icons/fa";
+import { BsInfoCircle } from "react-icons/bs";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { excludedSuggesterEntities } from "Theme/constants";
 import { AttributeButtonGroup } from "../AttributeButtonGroup/AttributeButtonGroup";
@@ -31,6 +32,7 @@ import {
   StyledBreadcrumbWrap,
   StyledEditorActantTableWrapper,
   StyledEditorPreSection,
+  StyledEditorEmptyState,
   StyledEditorSection,
   StyledEditorSectionContent,
   StyledEditorSectionHeader,
@@ -41,46 +43,47 @@ import {
   StyledTagsListItem,
   StyledTagWrapper,
 } from "./StatementEditorBoxStyles";
+import { DraggedPropRowCategory } from "types";
 
 const classesActants = [
-  ActantType.Statement,
-  ActantType.Action,
-  ActantType.Territory,
-  ActantType.Resource,
-  ActantType.Person,
-  ActantType.Group,
-  ActantType.Object,
-  ActantType.Concept,
-  ActantType.Location,
-  ActantType.Value,
-  ActantType.Event,
+  EntityClass.Statement,
+  EntityClass.Action,
+  EntityClass.Territory,
+  EntityClass.Resource,
+  EntityClass.Person,
+  EntityClass.Group,
+  EntityClass.Object,
+  EntityClass.Concept,
+  EntityClass.Location,
+  EntityClass.Value,
+  EntityClass.Event,
 ];
-const classesPropType = [ActantType.Concept];
+const classesPropType = [EntityClass.Concept];
 const classesPropValue = [
-  ActantType.Action,
-  ActantType.Person,
-  ActantType.Group,
-  ActantType.Object,
-  ActantType.Concept,
-  ActantType.Location,
-  ActantType.Value,
-  ActantType.Event,
-  ActantType.Statement,
-  ActantType.Territory,
-  ActantType.Resource,
+  EntityClass.Action,
+  EntityClass.Person,
+  EntityClass.Group,
+  EntityClass.Object,
+  EntityClass.Concept,
+  EntityClass.Location,
+  EntityClass.Value,
+  EntityClass.Event,
+  EntityClass.Statement,
+  EntityClass.Territory,
+  EntityClass.Resource,
 ];
-const classesResources = [ActantType.Resource];
+const classesResources = [EntityClass.Resource];
 const classesTags = [
-  ActantType.Action,
-  ActantType.Territory,
-  ActantType.Resource,
-  ActantType.Person,
-  ActantType.Group,
-  ActantType.Object,
-  ActantType.Concept,
-  ActantType.Location,
-  ActantType.Value,
-  ActantType.Event,
+  EntityClass.Action,
+  EntityClass.Territory,
+  EntityClass.Resource,
+  EntityClass.Person,
+  EntityClass.Group,
+  EntityClass.Object,
+  EntityClass.Concept,
+  EntityClass.Location,
+  EntityClass.Value,
+  EntityClass.Event,
 ];
 
 export const StatementEditorBox: React.FC = () => {
@@ -127,10 +130,10 @@ export const StatementEditorBox: React.FC = () => {
     error,
     isFetching,
   } = useQuery(
-    ["territoryActants", statement?.data.territory.id],
+    ["territoryActants", statement?.data?.territory?.id],
     async () => {
-      if (statement?.data.territory.id) {
-        const res = await api.actantIdsInTerritory(
+      if (statement?.data?.territory?.id) {
+        const res = await api.entityIdsInTerritory(
           statement?.data.territory.id
         );
         return res.data;
@@ -140,7 +143,7 @@ export const StatementEditorBox: React.FC = () => {
     },
     {
       initialData: [],
-      enabled: !!statement?.data.territory.id && api.isLoggedIn(),
+      enabled: !!statement?.data?.territory?.id && api.isLoggedIn(),
     }
   );
 
@@ -151,7 +154,7 @@ export const StatementEditorBox: React.FC = () => {
 
   // stores territory id
   const statementTerritoryId: string | undefined = useMemo(() => {
-    return statement?.data.territory.id;
+    return statement?.data?.territory?.id;
   }, [statement]);
 
   useEffect(() => {
@@ -169,7 +172,7 @@ export const StatementEditorBox: React.FC = () => {
   } = useQuery(
     ["territory", statementTerritoryId],
     async () => {
-      const res = await api.actantsGet(statementTerritoryId as string);
+      const res = await api.entitiesGet(statementTerritoryId as string);
       return res.data;
     },
     {
@@ -226,19 +229,32 @@ export const StatementEditorBox: React.FC = () => {
     if (statement) {
       const newProp = CProp();
       const newStatementData = { ...statement.data };
+
       [...newStatementData.actants, ...newStatementData.actions].forEach(
         (actant: IStatementActant | IStatementAction) => {
           const actantId = "actant" in actant ? actant.actant : actant.action;
+          // adding 1st level prop
           if (actantId === originId) {
             actant.props = [...actant.props, newProp];
           }
-          actant.props.forEach((prop, pi) => {
-            if (prop.id == originId) {
-              actant.props[pi].children = [
-                ...actant.props[pi].children,
+          // adding 2nd level prop
+          actant.props.forEach((prop1, pi1) => {
+            if (prop1.id == originId) {
+              actant.props[pi1].children = [
+                ...actant.props[pi1].children,
                 newProp,
               ];
             }
+
+            // adding 3rd level prop
+            actant.props[pi1].children.forEach((prop2, pi2) => {
+              if (prop2.id == originId) {
+                actant.props[pi1].children[pi2].children = [
+                  ...actant.props[pi1].children[pi2].children,
+                  newProp,
+                ];
+              }
+            });
           });
         }
       );
@@ -254,18 +270,30 @@ export const StatementEditorBox: React.FC = () => {
       // this is probably an overkill
       [...newStatementData.actants, ...newStatementData.actions].forEach(
         (actant: IStatementActant | IStatementAction) => {
-          actant.props.forEach((actantProp, pi) => {
-            if (actantProp.id === propId) {
-              actant.props[pi] = { ...actant.props[pi], ...changes };
+          actant.props.forEach((prop1, pi1) => {
+            // 1st level
+            if (prop1.id === propId) {
+              actant.props[pi1] = { ...actant.props[pi1], ...changes };
             }
 
-            actant.props[pi].children.forEach((actantPropProp, pii) => {
-              if (actantPropProp.id === propId) {
-                actant.props[pi].children[pii] = {
-                  ...actant.props[pi].children[pii],
+            // 2nd level
+            actant.props[pi1].children.forEach((prop2, pi2) => {
+              if (prop2.id === propId) {
+                actant.props[pi1].children[pi2] = {
+                  ...actant.props[pi1].children[pi2],
                   ...changes,
                 };
               }
+
+              // 3rd level
+              actant.props[pi1].children[pi2].children.forEach((prop3, pi3) => {
+                if (prop3.id === propId) {
+                  actant.props[pi1].children[pi2].children[pi3] = {
+                    ...actant.props[pi1].children[pi2].children[pi3],
+                    ...changes,
+                  };
+                }
+              });
             });
           });
         }
@@ -285,38 +313,19 @@ export const StatementEditorBox: React.FC = () => {
             (actantProp) => actantProp.id !== propId
           );
 
-          actant.props.forEach((actantProp, pi) => {
-            actant.props[pi].children = actant.props[pi].children.filter(
+          // 2nd level
+          actant.props.forEach((prop1, pi1) => {
+            actant.props[pi1].children = actant.props[pi1].children.filter(
               (childProp) => childProp.id != propId
             );
-          });
-        }
-      );
 
-      updateStatementDataMutation.mutate(newStatementData);
-    }
-  };
-
-  //actant.props = actant.props.splice(index + 1, 0, actant.props.splice(index, 1)[0]);
-  const movePropUp = (propId: string) => {
-    if (statement) {
-      const newStatementData = { ...statement.data };
-
-      [...newStatementData.actants, ...newStatementData.actions].forEach(
-        (actant: IStatementActant | IStatementAction) => {
-          actant.props.forEach((actantProp, pi) => {
-            if (actantProp.id === propId) {
-              actant.props.splice(pi - 1, 0, actant.props.splice(pi, 1)[0]);
-            }
-
-            actant.props[pi].children.forEach((actantPropProp, pii) => {
-              if (actantPropProp.id === propId) {
-                actant.props[pi].children.splice(
-                  pii - 1,
-                  0,
-                  actant.props[pi].children.splice(pii, 1)[0]
-                );
-              }
+            // 3rd level
+            actant.props[pi1].children.forEach((prop2, pi2) => {
+              actant.props[pi1].children[pi2].children = actant.props[
+                pi1
+              ].children[pi2].children.filter(
+                (childProp) => childProp.id != propId
+              );
             });
           });
         }
@@ -326,29 +335,58 @@ export const StatementEditorBox: React.FC = () => {
     }
   };
 
-  const movePropDown = (propId: string) => {
-    if (statement) {
-      const newStatementData = { ...statement.data };
-
-      [...newStatementData.actants, ...newStatementData.actions].forEach(
-        (actant: IStatementActant | IStatementAction) => {
-          actant.props.forEach((actantProp, pi) => {
-            if (actantProp.id === propId) {
-              actant.props.splice(pi + 1, 0, actant.props.splice(pi, 1)[0]);
-            }
-
-            actant.props[pi].children.forEach((actantPropProp, pii) => {
-              if (actantPropProp.id === propId) {
-                actant.props[pi].children.splice(
-                  pii + 1,
-                  0,
-                  actant.props[pi].children.splice(pii, 1)[0]
-                );
-              }
-            });
-          });
+  const changeOrder = (
+    propId: string,
+    actants: IStatementActant[] | IStatementAction[],
+    oldIndex: number,
+    newIndex: number
+  ) => {
+    for (let actant of actants) {
+      for (let prop of actant.props) {
+        if (prop.id === propId) {
+          actant.props.splice(newIndex, 0, actant.props.splice(oldIndex, 1)[0]);
+          return actants;
         }
-      );
+        for (let prop1 of prop.children) {
+          if (prop1.id === propId) {
+            prop.children.splice(
+              newIndex,
+              0,
+              prop.children.splice(oldIndex, 1)[0]
+            );
+            return actants;
+          }
+          for (let prop2 of prop1.children) {
+            if (prop2.id === propId) {
+              prop1.children.splice(
+                newIndex,
+                0,
+                prop1.children.splice(oldIndex, 1)[0]
+              );
+              return actants;
+            }
+          }
+        }
+      }
+    }
+    return actants;
+  };
+
+  const movePropToIndex = (
+    propId: string,
+    oldIndex: number,
+    newIndex: number
+  ) => {
+    if (statement) {
+      const { actions, actants, ...dataWithoutActants } = statement.data;
+      changeOrder(propId, actions, oldIndex, newIndex);
+      changeOrder(propId, actants, oldIndex, newIndex);
+
+      const newStatementData = {
+        actions,
+        actants,
+        ...dataWithoutActants,
+      };
 
       updateStatementDataMutation.mutate(newStatementData);
     }
@@ -402,7 +440,7 @@ export const StatementEditorBox: React.FC = () => {
 
   const updateStatementDataMutation = useMutation(
     async (changes: object) => {
-      await api.actantsUpdate(statementId, {
+      await api.entityUpdate(statementId, {
         data: changes,
       });
     },
@@ -415,7 +453,7 @@ export const StatementEditorBox: React.FC = () => {
 
   const updateActionsRefreshListMutation = useMutation(
     async (changes: object) => {
-      await api.actantsUpdate(statementId, {
+      await api.entityUpdate(statementId, {
         data: changes,
       });
     },
@@ -428,7 +466,7 @@ export const StatementEditorBox: React.FC = () => {
   );
 
   const updateActantMutation = useMutation(
-    async (changes: object) => await api.actantsUpdate(statementId, changes),
+    async (changes: object) => await api.entityUpdate(statementId, changes),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["statement"]);
@@ -438,14 +476,14 @@ export const StatementEditorBox: React.FC = () => {
 
   const updateActantsRefreshListMutation = useMutation(
     async (changes: object) =>
-      await api.actantsUpdate(statementId, {
+      await api.entityUpdate(statementId, {
         data: changes,
       }),
     {
       onSuccess: (data, variables) => {
         queryClient.invalidateQueries("statement");
         queryClient.invalidateQueries("territory");
-        queryClient.invalidateQueries("actant");
+        queryClient.invalidateQueries("entity");
       },
     }
   );
@@ -453,7 +491,8 @@ export const StatementEditorBox: React.FC = () => {
   const renderPropGroup = (
     originId: string,
     props: IProp[],
-    statement: IResponseStatement
+    statement: IResponseStatement,
+    category: DraggedPropRowCategory
   ) => {
     const originActant = statement.entities[originId];
 
@@ -467,10 +506,10 @@ export const StatementEditorBox: React.FC = () => {
           updateProp={updateProp}
           removeProp={removeProp}
           addProp={addProp}
-          movePropDown={movePropDown}
-          movePropUp={movePropUp}
+          movePropToIndex={movePropToIndex}
           userCanEdit={userCanEdit}
           openDetailOnCreate={false}
+          category={category}
         />
       );
     }
@@ -478,7 +517,7 @@ export const StatementEditorBox: React.FC = () => {
 
   const moveStatementMutation = useMutation(
     async (newTerritoryId: string) => {
-      await api.actantsUpdate(statementId, {
+      await api.entityUpdate(statementId, {
         data: { territory: { id: newTerritoryId, order: -1 } },
       });
     },
@@ -517,7 +556,7 @@ export const StatementEditorBox: React.FC = () => {
                 filterEditorRights
                 inputWidth={96}
                 allowCreate={false}
-                categoryTypes={[ActantType.Territory]}
+                categoryTypes={[EntityClass.Territory]}
                 onSelected={(newSelectedId: string) => {
                   moveStatementMutation.mutate(newSelectedId);
                 }}
@@ -571,7 +610,7 @@ export const StatementEditorBox: React.FC = () => {
                   onSelected={(newSelectedId: string) => {
                     addAction(newSelectedId);
                   }}
-                  categoryTypes={[ActantType.Action]}
+                  categoryTypes={[EntityClass.Action]}
                   excludedEntities={excludedSuggesterEntities}
                   placeholder={"add new action"}
                 />
@@ -824,7 +863,14 @@ export const StatementEditorBox: React.FC = () => {
           </StyledEditorSection>
         </div>
       ) : (
-        <>{"no statement selected"}</>
+        <>
+          <StyledEditorEmptyState>
+            <BsInfoCircle size="23" />
+          </StyledEditorEmptyState>
+          <StyledEditorEmptyState>
+            {"No statement selected yet. Pick one from the statements table"}
+          </StyledEditorEmptyState>
+        </>
       )}
       <Loader
         show={

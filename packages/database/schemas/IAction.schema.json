@@ -4,15 +4,6 @@
     "additionalProperties": false,
     "defaultProperties": [],
     "definitions": {
-        "ActantStatus": {
-            "enum": [
-                "0",
-                "1",
-                "2",
-                "3"
-            ],
-            "type": "string"
-        },
         "ActionEntity": {
             "additionalProperties": false,
             "defaultProperties": [],
@@ -84,12 +75,52 @@
             ],
             "type": "string"
         },
+        "EntityReferenceSource": {
+            "enum": [
+                "geonames",
+                "wordnet"
+            ],
+            "type": "string"
+        },
+        "EntityStatus": {
+            "enum": [
+                "0",
+                "1",
+                "2",
+                "3"
+            ],
+            "type": "string"
+        },
+        "IEntityReference": {
+            "additionalProperties": false,
+            "defaultProperties": [],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "source": {
+                    "$ref": "IAction#/definitions/EntityReferenceSource"
+                },
+                "value": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "source",
+                "value"
+            ],
+            "type": "object"
+        },
         "IProp": {
             "additionalProperties": false,
             "defaultProperties": [],
             "properties": {
                 "bundleEnd": {
                     "type": "boolean"
+                },
+                "bundleOperator": {
+                    "$ref": "IAction#/definitions/Operator"
                 },
                 "bundleStart": {
                     "type": "boolean"
@@ -136,9 +167,6 @@
                 "moodvariant": {
                     "$ref": "IAction#/definitions/MoodVariant"
                 },
-                "operator": {
-                    "$ref": "IAction#/definitions/Operator"
-                },
                 "type": {
                     "$ref": "IAction#/definitions/IPropSpec"
                 },
@@ -148,6 +176,7 @@
             },
             "required": [
                 "bundleEnd",
+                "bundleOperator",
                 "bundleStart",
                 "certainty",
                 "children",
@@ -156,7 +185,6 @@
                 "logic",
                 "mood",
                 "moodvariant",
-                "operator",
                 "type",
                 "value"
             ],
@@ -197,6 +225,9 @@
                 "ces",
                 "eng",
                 "enm",
+                "fra",
+                "ger",
+                "ita",
                 "lat",
                 "oci"
             ],
@@ -282,11 +313,17 @@
         "id": {
             "type": "string"
         },
+        "isTemplate": {
+            "type": "boolean"
+        },
         "label": {
             "type": "string"
         },
         "language": {
             "$ref": "IAction#/definitions/Language"
+        },
+        "legacyId": {
+            "type": "string"
         },
         "notes": {
             "items": {
@@ -300,8 +337,22 @@
             },
             "type": "array"
         },
+        "references": {
+            "items": {
+                "$ref": "IAction#/definitions/IEntityReference"
+            },
+            "type": "array"
+        },
         "status": {
-            "$ref": "IAction#/definitions/ActantStatus"
+            "$ref": "IAction#/definitions/EntityStatus"
+        },
+        "templateData": {
+            "additionalProperties": true,
+            "properties": {},
+            "type": "object"
+        },
+        "usedTemplate": {
+            "type": "boolean"
         }
     },
     "required": [
@@ -313,6 +364,7 @@
         "language",
         "notes",
         "props",
+        "references",
         "status"
     ],
     "type": "object"

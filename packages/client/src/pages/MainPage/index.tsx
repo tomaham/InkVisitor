@@ -60,8 +60,8 @@ interface MainPage {
 
 const MainPage: React.FC<MainPage> = ({ size }) => {
   const {
-    actantId,
-    setActantId,
+    detailId,
+    setDetailId,
     statementId,
     setStatementId,
     territoryId,
@@ -120,7 +120,7 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
     dispatch(setAuthToken(""));
     toast.success("You've been successfully logged out!");
     queryClient.removeQueries();
-    setActantId("");
+    setDetailId("");
     setStatementId("");
     setTerritoryId("");
   };
@@ -133,12 +133,10 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
     setUserAdministrationModalOpen(false);
   };
 
-  const rootUrl = process.env.ROOT_URL ?? "";
-  const environment = rootUrl.includes("staging")
-    ? "staging"
-    : rootUrl.includes("sandbox")
-    ? "sandbox"
-    : "";
+  const environmentName = (process.env.ROOT_URL || "").replace(
+    /apps\/inkvisitor[-]?/,
+    ""
+  );
 
   const heightContent = height - heightHeader - heightFooter;
 
@@ -182,7 +180,11 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
           height={heightHeader}
           paddingY={0}
           paddingX={10}
-          color={environment == "" ? "primary" : environment}
+          color={
+            ["production", ""].indexOf(environmentName) === -1
+              ? environmentName
+              : "primary"
+          }
           left={
             <StyledHeader>
               <StyledHeaderLogo
@@ -191,7 +193,10 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
                 alt="React Logo"
               />
               <StyledHeaderTag>
-                v. {packageJson.version} {environment}
+                v. {packageJson.version}{" "}
+                {["production", ""].indexOf(environmentName) === -1
+                  ? `| ${environmentName}`
+                  : ""}
               </StyledHeaderTag>
             </StyledHeader>
           }
@@ -256,23 +261,23 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
               }
             >
               <Box
-                height={actantId ? heightContent / 2 : heightContent}
+                height={detailId ? heightContent / 2 : heightContent}
                 label="Statements"
               >
                 <ScrollHandler />
                 <StatementListBox />
               </Box>
-              {actantId && (
+              {detailId && (
                 <Box
                   height={heightContent / 2}
                   label="Detail"
                   button={
-                    actantId && (
+                    detailId && (
                       <Button
                         inverted
                         icon={<IoMdClose />}
                         onClick={() => {
-                          setActantId("");
+                          setDetailId("");
                         }}
                       />
                     )

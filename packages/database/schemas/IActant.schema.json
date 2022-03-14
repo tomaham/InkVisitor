@@ -4,32 +4,6 @@
     "additionalProperties": false,
     "defaultProperties": [],
     "definitions": {
-        "ActantStatus": {
-            "enum": [
-                "0",
-                "1",
-                "2",
-                "3"
-            ],
-            "type": "string"
-        },
-        "ActantType": {
-            "enum": [
-                "*",
-                "A",
-                "C",
-                "E",
-                "G",
-                "L",
-                "O",
-                "P",
-                "R",
-                "S",
-                "T",
-                "V"
-            ],
-            "type": "string"
-        },
         "Certainty": {
             "enum": [
                 "0",
@@ -50,12 +24,40 @@
             ],
             "type": "string"
         },
+        "EntityClass": {
+            "enum": [
+                "A",
+                "C",
+                "E",
+                "G",
+                "L",
+                "O",
+                "P",
+                "R",
+                "S",
+                "T",
+                "V"
+            ],
+            "type": "string"
+        },
+        "EntityStatus": {
+            "enum": [
+                "0",
+                "1",
+                "2",
+                "3"
+            ],
+            "type": "string"
+        },
         "IProp": {
             "additionalProperties": false,
             "defaultProperties": [],
             "properties": {
                 "bundleEnd": {
                     "type": "boolean"
+                },
+                "bundleOperator": {
+                    "$ref": "IActant#/definitions/Operator"
                 },
                 "bundleStart": {
                     "type": "boolean"
@@ -102,9 +104,6 @@
                 "moodvariant": {
                     "$ref": "IActant#/definitions/MoodVariant"
                 },
-                "operator": {
-                    "$ref": "IActant#/definitions/Operator"
-                },
                 "type": {
                     "$ref": "IActant#/definitions/IPropSpec"
                 },
@@ -114,6 +113,7 @@
             },
             "required": [
                 "bundleEnd",
+                "bundleOperator",
                 "bundleStart",
                 "certainty",
                 "children",
@@ -122,7 +122,6 @@
                 "logic",
                 "mood",
                 "moodvariant",
-                "operator",
                 "type",
                 "value"
             ],
@@ -163,6 +162,9 @@
                 "ces",
                 "eng",
                 "enm",
+                "fra",
+                "ger",
+                "ita",
                 "lat",
                 "oci"
             ],
@@ -220,7 +222,7 @@
     },
     "properties": {
         "class": {
-            "$ref": "IActant#/definitions/ActantType"
+            "$ref": "IActant#/definitions/EntityClass"
         },
         "data": {},
         "detail": {
@@ -248,7 +250,7 @@
             "type": "array"
         },
         "status": {
-            "$ref": "IActant#/definitions/ActantStatus"
+            "$ref": "IActant#/definitions/EntityStatus"
         }
     },
     "required": [

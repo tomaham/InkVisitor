@@ -30,6 +30,9 @@
                 "bundleEnd": {
                     "type": "boolean"
                 },
+                "bundleOperator": {
+                    "$ref": "IProp#/definitions/Operator"
+                },
                 "bundleStart": {
                     "type": "boolean"
                 },
@@ -75,9 +78,6 @@
                 "moodvariant": {
                     "$ref": "IProp#/definitions/MoodVariant"
                 },
-                "operator": {
-                    "$ref": "IProp#/definitions/Operator"
-                },
                 "type": {
                     "$ref": "IProp#/definitions/IPropSpec"
                 },
@@ -87,6 +87,7 @@
             },
             "required": [
                 "bundleEnd",
+                "bundleOperator",
                 "bundleStart",
                 "certainty",
                 "children",
@@ -95,7 +96,6 @@
                 "logic",
                 "mood",
                 "moodvariant",
-                "operator",
                 "type",
                 "value"
             ],

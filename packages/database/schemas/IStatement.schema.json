@@ -4,15 +4,6 @@
     "additionalProperties": false,
     "defaultProperties": [],
     "definitions": {
-        "ActantStatus": {
-            "enum": [
-                "0",
-                "1",
-                "2",
-                "3"
-            ],
-            "type": "string"
-        },
         "Certainty": {
             "enum": [
                 "0",
@@ -33,12 +24,52 @@
             ],
             "type": "string"
         },
+        "EntityReferenceSource": {
+            "enum": [
+                "geonames",
+                "wordnet"
+            ],
+            "type": "string"
+        },
+        "EntityStatus": {
+            "enum": [
+                "0",
+                "1",
+                "2",
+                "3"
+            ],
+            "type": "string"
+        },
+        "IEntityReference": {
+            "additionalProperties": false,
+            "defaultProperties": [],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "source": {
+                    "$ref": "IStatement#/definitions/EntityReferenceSource"
+                },
+                "value": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "id",
+                "source",
+                "value"
+            ],
+            "type": "object"
+        },
         "IProp": {
             "additionalProperties": false,
             "defaultProperties": [],
             "properties": {
                 "bundleEnd": {
                     "type": "boolean"
+                },
+                "bundleOperator": {
+                    "$ref": "IStatement#/definitions/Operator"
                 },
                 "bundleStart": {
                     "type": "boolean"
@@ -85,9 +116,6 @@
                 "moodvariant": {
                     "$ref": "IStatement#/definitions/MoodVariant"
                 },
-                "operator": {
-                    "$ref": "IStatement#/definitions/Operator"
-                },
                 "type": {
                     "$ref": "IStatement#/definitions/IPropSpec"
                 },
@@ -97,6 +125,7 @@
             },
             "required": [
                 "bundleEnd",
+                "bundleOperator",
                 "bundleStart",
                 "certainty",
                 "children",
@@ -105,7 +134,6 @@
                 "logic",
                 "mood",
                 "moodvariant",
-                "operator",
                 "type",
                 "value"
             ],
@@ -150,6 +178,9 @@
                 "bundleEnd": {
                     "type": "boolean"
                 },
+                "bundleOperator": {
+                    "$ref": "IStatement#/definitions/Operator"
+                },
                 "bundleStart": {
                     "type": "boolean"
                 },
@@ -161,9 +192,6 @@
                 },
                 "logic": {
                     "$ref": "IStatement#/definitions/Logic"
-                },
-                "operator": {
-                    "$ref": "IStatement#/definitions/Operator"
                 },
                 "partitivity": {
                     "$ref": "IStatement#/definitions/Partitivity"
@@ -184,11 +212,11 @@
             "required": [
                 "actant",
                 "bundleEnd",
+                "bundleOperator",
                 "bundleStart",
                 "elvl",
                 "id",
                 "logic",
-                "operator",
                 "partitivity",
                 "position",
                 "props",
@@ -205,6 +233,9 @@
                 },
                 "bundleEnd": {
                     "type": "boolean"
+                },
+                "bundleOperator": {
+                    "$ref": "IStatement#/definitions/Operator"
                 },
                 "bundleStart": {
                     "type": "boolean"
@@ -245,9 +276,6 @@
                 "moodvariant": {
                     "$ref": "IStatement#/definitions/MoodVariant"
                 },
-                "operator": {
-                    "$ref": "IStatement#/definitions/Operator"
-                },
                 "props": {
                     "items": {
                         "$ref": "IStatement#/definitions/IProp"
@@ -258,6 +286,7 @@
             "required": [
                 "action",
                 "bundleEnd",
+                "bundleOperator",
                 "bundleStart",
                 "certainty",
                 "elvl",
@@ -265,7 +294,6 @@
                 "logic",
                 "mood",
                 "moodvariant",
-                "operator",
                 "props"
             ],
             "type": "object"
@@ -324,7 +352,6 @@
                 "actions",
                 "references",
                 "tags",
-                "territory",
                 "text"
             ],
             "type": "object"
@@ -360,6 +387,9 @@
                 "ces",
                 "eng",
                 "enm",
+                "fra",
+                "ger",
+                "ita",
                 "lat",
                 "oci"
             ],
@@ -440,11 +470,17 @@
         "id": {
             "type": "string"
         },
+        "isTemplate": {
+            "type": "boolean"
+        },
         "label": {
             "type": "string"
         },
         "language": {
             "$ref": "IStatement#/definitions/Language"
+        },
+        "legacyId": {
+            "type": "string"
         },
         "notes": {
             "items": {
@@ -458,8 +494,22 @@
             },
             "type": "array"
         },
+        "references": {
+            "items": {
+                "$ref": "IStatement#/definitions/IEntityReference"
+            },
+            "type": "array"
+        },
         "status": {
-            "$ref": "IStatement#/definitions/ActantStatus"
+            "$ref": "IStatement#/definitions/EntityStatus"
+        },
+        "templateData": {
+            "additionalProperties": true,
+            "properties": {},
+            "type": "object"
+        },
+        "usedTemplate": {
+            "type": "boolean"
         }
     },
     "required": [
@@ -471,6 +521,7 @@
         "language",
         "notes",
         "props",
+        "references",
         "status"
     ],
     "type": "object"

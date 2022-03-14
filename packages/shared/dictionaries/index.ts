@@ -2,12 +2,13 @@ import { certaintyDict } from "./certainty";
 import { elvlDict } from "./elvl";
 import { languageDict } from "./language";
 import { entitiesDict } from "./entity";
+import { entityReferenceSourceDict } from "./entityreferencesources";
 import { actantLogicalTypeDict } from "./logicaltype";
 import { actantPositionDict } from "./actantposition";
 import { referenceTypeDict } from "./referencetype";
 import { userRoleDict } from "./userroles";
 import { territoryTypeDict } from "./territorytype";
-import { actantStatusDict } from "./status";
+import { entityStatusDict } from "./status";
 import { logicDict } from "./logic";
 import { moodDict } from "./mood";
 import { moodVariantsDict } from "./moodvariants";
@@ -20,12 +21,13 @@ export {
   elvlDict,
   languageDict,
   entitiesDict,
+  entityReferenceSourceDict,
   actantLogicalTypeDict,
   actantPositionDict,
   referenceTypeDict,
   territoryTypeDict,
   userRoleDict,
-  actantStatusDict,
+  entityStatusDict,
   logicDict,
   moodDict,
   moodVariantsDict,

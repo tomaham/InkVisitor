@@ -8,7 +8,7 @@
             "additionalProperties": false,
             "defaultProperties": [],
             "properties": {
-                "actantIds": {
+                "entityIds": {
                     "items": {
                         "type": "string"
                     },
@@ -22,7 +22,7 @@
                 }
             },
             "required": [
-                "actantIds",
+                "entityIds",
                 "id",
                 "name"
             ],

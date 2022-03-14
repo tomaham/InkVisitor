@@ -1,9 +1,10 @@
 import { UserRole, UserRoleMode } from "@shared/enums";
 import {
-  IActant,
+  IEntity,
   IAction,
   IResponseStatement,
   IStatement,
+  IStatementData,
 } from "@shared/types";
 import api from "api";
 import {
@@ -40,11 +41,11 @@ import {
 
 const initialData: {
   statements: IStatement[];
-  actants: IActant[];
+  entities: IEntity[];
   right: UserRoleMode;
 } = {
   statements: [],
-  actants: [],
+  entities: [],
   right: UserRoleMode.Read,
 };
 
@@ -104,7 +105,7 @@ export const StatementListBox: React.FC = () => {
 
   const removeStatementMutation = useMutation(
     async (sId: string) => {
-      await api.actantsDelete(sId);
+      await api.entityDelete(sId);
     },
     {
       onSuccess: () => {
@@ -112,7 +113,7 @@ export const StatementListBox: React.FC = () => {
         setStatementId("");
         queryClient.invalidateQueries("territory");
         queryClient.invalidateQueries("tree");
-        queryClient.invalidateQueries("actant");
+        queryClient.invalidateQueries("entity");
       },
     }
   );
@@ -122,14 +123,14 @@ export const StatementListBox: React.FC = () => {
       const { ...newStatementObject } = statementToDuplicate;
 
       const duplicatedStatement = DStatement(newStatementObject as IStatement);
-      await api.actantsCreate(duplicatedStatement);
+      await api.entityCreate(duplicatedStatement);
     },
     {
       onSuccess: (data, variables) => {
         setStatementId(variables.id);
         toast.info(`Statement duplicated!`);
         queryClient.invalidateQueries("territory");
-        queryClient.invalidateQueries("actant");
+        queryClient.invalidateQueries("entity");
       },
       onError: () => {
         toast.error(`Error: Statement not duplicated!`);
@@ -139,7 +140,7 @@ export const StatementListBox: React.FC = () => {
 
   const addStatementAtTheEndMutation = useMutation(
     async (newStatement: IStatement) => {
-      await api.actantsCreate(newStatement);
+      await api.entityCreate(newStatement);
     },
     {
       onSuccess: (data, variables) => {
@@ -151,7 +152,7 @@ export const StatementListBox: React.FC = () => {
   );
 
   const actantsCreateMutation = useMutation(
-    async (newStatement: IStatement) => await api.actantsCreate(newStatement),
+    async (newStatement: IStatement) => await api.entityCreate(newStatement),
     {
       onSuccess: (data, variables) => {
         toast.info(`Statement created!`);
@@ -170,68 +171,93 @@ export const StatementListBox: React.FC = () => {
   );
 
   const addStatementAtCertainIndex = async (index: number) => {
-    const newOrder =
-      index + 1 > statements.length
-        ? statements.length
-        : index < 1
-        ? statements[0].data.territory.order - 1
-        : (statements[index - 1].data.territory.order +
-            statements[index].data.territory.order) /
+    let newOrder: number | false = false;
+
+    if (index + 1 > statements.length) {
+      // last one
+      newOrder = statements.length;
+    } else {
+      if (index < 1 && statements[0].data.territory) {
+        // first one
+        newOrder = statements[0].data.territory.order - 1;
+      } else if (
+        statements[index - 1].data.territory &&
+        statements[index].data.territory
+      ) {
+        // somewhere between
+        newOrder =
+          ((
+            statements[index - 1].data.territory as {
+              order: number;
+              id: string;
+            }
+          ).order +
+            (statements[index].data.territory as { order: number; id: string })
+              .order) /
           2;
+      }
+    }
 
-    const newStatement: IStatement = CStatement(
-      territoryId,
-      localStorage.getItem("userrole") as UserRole
-    );
-    newStatement.data.territory.order = newOrder;
+    if (newOrder) {
+      const newStatement: IStatement = CStatement(
+        territoryId,
+        localStorage.getItem("userrole") as UserRole
+      );
+      (newStatement.data.territory as { order: number; id: string }).order =
+        newOrder;
 
-    actantsCreateMutation.mutate(newStatement);
+      actantsCreateMutation.mutate(newStatement);
+    }
   };
 
-  const { statements, actants } = data || initialData;
+  const { statements, entities } = data || initialData;
 
   const moveEndRow = async (statementToMove: IStatement, index: number) => {
     // return if order don't change
-    if (
-      statementToMove.data.territory.order ===
-      statements[index].data.territory.order
-    ) {
-      return;
+
+    if (statementToMove.data.territory && statements[index].data.territory) {
+      if (
+        statementToMove.data.territory.order !==
+        statements[index].data.territory?.order
+      ) {
+        // whether row is moving top-bottom direction
+        const topDown =
+          statementToMove.data.territory.order <
+          (statements[index].data.territory as { id: string; order: number })
+            .order;
+
+        const thisOrder = statementToMove.data.territory.order;
+        let allOrders: number[] = statements.map((s) =>
+          s.data.territory ? s.data.territory.order : 0
+        );
+        allOrders.sort((a, b) => (a && b ? (a > b ? 1 : -1) : 0));
+        const thisIndex = allOrders.indexOf(thisOrder);
+
+        allOrders = allOrders.filter((o) => o !== thisOrder);
+        allOrders.splice(index, 0, thisOrder);
+
+        if (index === 0) {
+          allOrders[index] = allOrders[1] - 1;
+        } else if (index === allOrders.length - 1) {
+          allOrders[index] = allOrders[index - 1] + 1;
+        } else {
+          allOrders[index] = (allOrders[index - 1] + allOrders[index + 1]) / 2;
+        }
+
+        const res = await api.entityUpdate(statementToMove.id, {
+          data: {
+            territory: {
+              id: statementToMove.data.territory.id,
+              order: allOrders[index],
+            },
+          },
+        });
+        queryClient.invalidateQueries("territory");
+      }
     }
-
-    // whether row is moving top-bottom direction
-    const topDown =
-      statementToMove.data.territory.order <
-      statements[index].data.territory.order;
-
-    const thisOrder = statementToMove.data.territory.order;
-    let allOrders = statements.map((s) => s.data.territory.order);
-    allOrders.sort((a, b) => (a > b ? 1 : -1));
-    const thisIndex = allOrders.indexOf(thisOrder);
-
-    allOrders = allOrders.filter((o) => o !== thisOrder);
-    allOrders.splice(index, 0, thisOrder);
-
-    if (index === 0) {
-      allOrders[index] = allOrders[1] - 1;
-    } else if (index === allOrders.length - 1) {
-      allOrders[index] = allOrders[index - 1] + 1;
-    } else {
-      allOrders[index] = (allOrders[index - 1] + allOrders[index + 1]) / 2;
-    }
-
-    const res = await api.actantsUpdate(statementToMove.id, {
-      data: {
-        territory: {
-          id: statementToMove.data.territory.id,
-          order: allOrders[index],
-        },
-      },
-    });
-    queryClient.invalidateQueries("territory");
   };
 
-  const renderListActant = (actantObject: IActant, key: number) => {
+  const renderListActant = (actantObject: IEntity, key: number) => {
     return (
       actantObject && (
         <EntityTag
@@ -245,7 +271,7 @@ export const StatementListBox: React.FC = () => {
   };
 
   const renderListActantLong = (
-    actantObject: IActant,
+    actantObject: IEntity,
     key: number,
     attributes?: boolean,
     statement?: IResponseStatement
@@ -281,7 +307,7 @@ export const StatementListBox: React.FC = () => {
           const statement = row.original as IStatement;
           return (
             <EntityTag
-              actant={statement as IActant}
+              actant={statement as IEntity}
               showOnly="entity"
               tooltipText={statement.data.text}
             />
@@ -300,7 +326,7 @@ export const StatementListBox: React.FC = () => {
 
           const subjectObjects = subjectIds.map((actantId: string) => {
             const subjectObject =
-              actants && actants.find((a) => a.id === actantId);
+              entities && entities.find((e) => e.id === actantId);
 
             return subjectObject;
           });
@@ -311,7 +337,7 @@ export const StatementListBox: React.FC = () => {
             <TagGroup>
               {subjectObjects
                 .slice(0, 2)
-                .map((subjectObject: IActant, key: number) =>
+                .map((subjectObject: IEntity, key: number) =>
                   renderListActant(subjectObject, key)
                 )}
               {isOversized && (
@@ -324,7 +350,7 @@ export const StatementListBox: React.FC = () => {
                     <TagGroup>
                       {subjectObjects
                         .slice(2)
-                        .map((subjectObject: IActant, key: number) =>
+                        .map((subjectObject: IEntity, key: number) =>
                           renderListActant(subjectObject, key)
                         )}
                     </TagGroup>
@@ -346,7 +372,7 @@ export const StatementListBox: React.FC = () => {
 
           const actionObjects = actionIds.map((actionId: string) => {
             const actantObject =
-              actants && actants.find((a) => a && a.id === actionId);
+              entities && entities.find((e) => e && e.id === actionId);
             return actantObject && actantObject;
           });
 
@@ -397,14 +423,14 @@ export const StatementListBox: React.FC = () => {
 
           const actantObjects = actantIds.map((actantId: string) => {
             const actantObject =
-              actants && actants.find((a) => a && a.id === actantId);
+              entities && entities.find((e) => e && e.id === actantId);
             return actantObject && actantObject;
           });
           return (
             <TagGroup>
               {actantObjects
                 .slice(0, 4)
-                .map((actantObject: IActant, key: number) =>
+                .map((actantObject: IEntity, key: number) =>
                   renderListActant(actantObject, key)
                 )}
               {isOversized && (
@@ -417,7 +443,7 @@ export const StatementListBox: React.FC = () => {
                     <TagGroup>
                       {actantObjects
                         .slice(4)
-                        .map((actantObject: IActant, key: number) =>
+                        .map((actantObject: IEntity, key: number) =>
                           renderListActant(actantObject, key)
                         )}
                     </TagGroup>
@@ -569,7 +595,7 @@ export const StatementListBox: React.FC = () => {
           const statement = row.original as IResponseStatement;
           const actantObjects = actantIds.map((actantId: string) => {
             const actantObject =
-              actants && actants.find((a) => a && a.id === actantId);
+              entities && entities.find((e) => e && e.id === actantId);
             return actantObject && actantObject;
           });
 
@@ -578,7 +604,7 @@ export const StatementListBox: React.FC = () => {
               <div>{actantObjects.length > 0 ? <i>Actants</i> : ""}</div>
               <TagGroup>
                 <div style={{ display: "block" }}>
-                  {actantObjects.map((actantObject: IActant, key: number) =>
+                  {actantObjects.map((actantObject: IEntity, key: number) =>
                     renderListActantLong(actantObject, key, true, statement)
                   )}
                 </div>
@@ -597,7 +623,7 @@ export const StatementListBox: React.FC = () => {
 
           const actantObjects = refs.map((actantId: string) => {
             const actantObject =
-              actants && actants.find((a) => a && a.id === actantId);
+              entities && entities.find((e) => e && e.id === actantId);
             return actantObject && actantObject;
           });
           return (
@@ -605,7 +631,7 @@ export const StatementListBox: React.FC = () => {
               <div>{actantObjects.length > 0 ? <i>References</i> : ""}</div>
               <TagGroup>
                 <div style={{ display: "block" }}>
-                  {actantObjects.map((actantObject: IActant, key: number) =>
+                  {actantObjects.map((actantObject: IEntity, key: number) =>
                     renderListActantLong(actantObject, key)
                   )}
                 </div>
@@ -621,7 +647,7 @@ export const StatementListBox: React.FC = () => {
           const actantIds = row.values.data?.tags ? row.values.data.tags : [];
           const actantObjects = actantIds.map((actantId: string) => {
             const actantObject =
-              actants && actants.find((a) => a && a.id === actantId);
+              entities && entities.find((e) => e && e.id === actantId);
             return actantObject && actantObject;
           });
           return (
@@ -629,7 +655,7 @@ export const StatementListBox: React.FC = () => {
               <div>{actantObjects.length > 0 ? <i>Tags</i> : ""}</div>
               <TagGroup>
                 <div style={{ display: "block" }}>
-                  {actantObjects.map((actantObject: IActant, key: number) =>
+                  {actantObjects.map((actantObject: IEntity, key: number) =>
                     renderListActantLong(actantObject, key)
                   )}
                 </div>
@@ -642,7 +668,11 @@ export const StatementListBox: React.FC = () => {
   }, [data, statementId]);
 
   statements.sort((a, b) =>
-    a.data.territory.order > b.data.territory.order ? 1 : -1
+    a.data.territory && b.data.territory
+      ? a.data.territory.order > b.data.territory.order
+        ? 1
+        : -1
+      : 0
   );
 
   const moveTerritoryMutation = useMutation(
