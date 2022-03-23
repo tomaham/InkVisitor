@@ -23,11 +23,12 @@ services:
       - DB_NAME=inkvisitor
       - DB_HOST=inkvisitor-database
       - DB_PORT=28015
+      - APIURL=http://localhost:4000
     depends_on:
       - inkvisitor-database
     ports:
       - 3000:3000
       - 4000:4000
       - 8000:8000
-          
+
 

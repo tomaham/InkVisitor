@@ -4,7 +4,7 @@ cd packages/database
 npm run import-local
 
 cd ../server
-npm run start:dev &
+npm run start:development &
 
 cd ../client
 npm start
