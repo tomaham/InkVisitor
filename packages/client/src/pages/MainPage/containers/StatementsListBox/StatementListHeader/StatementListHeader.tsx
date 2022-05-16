@@ -170,6 +170,7 @@ export const StatementListHeader: React.FC<StatementListHeader> = ({
                 label="refresh"
                 onClick={() => {
                   queryClient.invalidateQueries(["territory"]);
+                  queryClient.invalidateQueries(["statement"]);
                 }}
               />
             </ButtonGroup>
@@ -183,7 +184,7 @@ export const StatementListHeader: React.FC<StatementListHeader> = ({
           <EntitySuggester
             filterEditorRights
             inputWidth={96}
-            allowCreate={false}
+            disableCreate
             categoryTypes={[EntityClass.Territory]}
             onSelected={(newSelectedId: string) => {
               moveTerritoryMutation.mutate(newSelectedId);

@@ -1,4 +1,4 @@
-import { EntityStatus, EntityClass } from "@shared/enums";
+import { EntityClass, EntityStatus } from "@shared/enums";
 import { IOption } from "@shared/types";
 import { Button, Dropdown, Input, Loader, Tag } from "components";
 import useKeypress from "hooks/useKeyPress";
@@ -8,7 +8,7 @@ import { FaPlayCircle, FaPlus } from "react-icons/fa";
 import { MdCancel } from "react-icons/md";
 import { OptionTypeBase, ValueType } from "react-select";
 import { toast } from "react-toastify";
-import { DropdownAny, wildCardChar } from "Theme/constants";
+import { DropdownAny } from "Theme/constants";
 import theme from "Theme/theme";
 import { ItemTypes } from "types";
 import { SuggesterKeyPress } from "./SuggesterKeyPress";
@@ -44,7 +44,7 @@ export interface UserSuggestionI {
   icons?: React.ReactNode[];
 }
 
-interface SuggesterProps {
+interface Suggester {
   marginTop?: boolean;
   suggesterType?: "entity" | "user";
   suggestions: EntitySuggestionI[] | UserSuggestionI[];
@@ -55,7 +55,7 @@ interface SuggesterProps {
   suggestionListPosition?: string; // todo not implemented yet
   disabled?: boolean; // todo not implemented yet
   inputWidth?: number | "full";
-  allowCreate?: boolean;
+  disableCreate?: boolean;
   allowDrop?: boolean;
   isFetching?: boolean;
 
@@ -73,7 +73,7 @@ interface SuggesterProps {
 
 const MAXSUGGESTIONDISPLAYED = 10;
 
-export const Suggester: React.FC<SuggesterProps> = ({
+export const Suggester: React.FC<Suggester> = ({
   marginTop,
   suggesterType = "entity",
   suggestions = [],
@@ -84,7 +84,7 @@ export const Suggester: React.FC<SuggesterProps> = ({
   suggestionListPosition,
   disabled,
   inputWidth = 100,
-  allowCreate = true,
+  disableCreate = false,
   allowDrop = false,
 
   // events
@@ -242,7 +242,7 @@ export const Suggester: React.FC<SuggesterProps> = ({
       <StyledSuggester marginTop={marginTop}>
         <StyledInputWrapper
           ref={dropRef}
-          hasButton={allowCreate}
+          hasButton={!disableCreate}
           isOver={isOver}
         >
           <Dropdown
@@ -258,7 +258,6 @@ export const Suggester: React.FC<SuggesterProps> = ({
             onBlur={() => setIsFocused(false)}
             disableTyping
             suggester
-            oneLetter
           />
           <StyledTypeBar entity={`entity${category.value}`}></StyledTypeBar>
           <Input
@@ -279,12 +278,12 @@ export const Suggester: React.FC<SuggesterProps> = ({
             }}
           />
           {typed.length > 0 && (
-            <StyledSuggestionCancelButton hasButton={allowCreate}>
+            <StyledSuggestionCancelButton hasButton={!disableCreate}>
               <MdCancel onClick={() => onCancel()} />
             </StyledSuggestionCancelButton>
           )}
 
-          {allowCreate && (
+          {!disableCreate && (
             <StyledSuggesterButton>
               <Button
                 icon={<FaPlus style={{ fontSize: "16px", padding: "2px" }} />}

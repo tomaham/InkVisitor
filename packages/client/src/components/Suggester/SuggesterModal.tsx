@@ -116,7 +116,6 @@ export const SuggesterModal: React.FC<SuggesterModal> = ({
                 width={40}
                 entityDropdown
                 disableTyping
-                oneLetter
               />
               <StyledTypeBar
                 entity={`entity${selectedCategory.value}`}
@@ -172,7 +171,7 @@ export const SuggesterModal: React.FC<SuggesterModal> = ({
                     <EntitySuggester
                       filterEditorRights
                       inputWidth={96}
-                      allowCreate={false}
+                      disableCreate
                       categoryTypes={[EntityClass.Territory]}
                       onSelected={(newSelectedId: string) => {
                         setTerritoryId(newSelectedId);
