@@ -398,7 +398,7 @@
             "enum": [
                 "a1",
                 "a2",
-                "p",
+                "pa",
                 "s"
             ],
             "type": "string"
@@ -470,7 +470,7 @@
             "type": "object"
         },
         "usedTemplate": {
-            "type": "boolean"
+            "type": "string"
         }
     },
     "required": [

@@ -345,7 +345,7 @@
             "type": "object"
         },
         "usedTemplate": {
-            "type": "boolean"
+            "type": "string"
         }
     },
     "required": [
