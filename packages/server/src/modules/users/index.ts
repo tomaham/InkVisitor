@@ -6,6 +6,7 @@ import { deleteUser } from "@service/shorthands";
 import {
   BadCredentialsError,
   BadParams,
+  EmailError,
   InternalServerError,
   ModelNotValidError,
   UserDoesNotExits,
@@ -52,7 +53,23 @@ export default Router()
     })
   )
   .get(
-    "/get/:userId?",
+    "/administration",
+    asyncRouteHandler<IResponseAdministration>(async (request: Request) => {
+      const out: IResponseAdministration = {
+        users: [],
+      };
+
+      for (const user of await User.findAllUsers(request.db.connection)) {
+        const response = new ResponseUser(user);
+        await response.unwindAll(request);
+        out.users.push(response);
+      }
+
+      return out;
+    })
+  )
+  .get(
+    "/:userId",
     asyncRouteHandler<IResponseUser>(async (request: Request) => {
       const userId = request.params.userId;
 
@@ -71,10 +88,10 @@ export default Router()
       return response;
     })
   )
-  .post(
-    "/getMore",
+  .get(
+    "/",
     asyncRouteHandler<IUser[]>(async (request: Request) => {
-      const label = request.body.label;
+      const label = (request.query.label as string) || "";
 
       if (!label) {
         return await User.findAllUsers(request.db.connection);
@@ -85,7 +102,7 @@ export default Router()
     })
   )
   .post(
-    "/create",
+    "/",
     asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
       const userData = request.body as IUser;
 
@@ -99,10 +116,17 @@ export default Router()
       const result = await user.save(request.db.connection);
 
       if (result.inserted === 1) {
-        mailer.sendNewUser(user.email, {
-          login: user.name,
-          password: rawpassword,
-        });
+        try {
+          await mailer.sendNewUser(user.email, {
+            login: user.name,
+            password: rawpassword,
+          });
+        } catch (e) {
+          throw new EmailError(
+            "please check the logs",
+            (e as Error).toString()
+          );
+        }
 
         return {
           result: true,
@@ -113,9 +137,12 @@ export default Router()
     })
   )
   .put(
-    "/update/:userId?",
+    "/:userId",
     asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
-      const userId = request.params.userId || (request as any).user.user.id;
+      const userId =
+        request.params.userId !== "me"
+          ? request.params.userId
+          : (request as any).user.user.id;
       const userData = request.body as IUser;
 
       if (!userId || !userData || Object.keys(userData).length === 0) {
@@ -144,7 +171,7 @@ export default Router()
     })
   )
   .delete(
-    "/delete/:userId?",
+    "/:userId",
     asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
       const userId = request.params.userId;
 
@@ -176,13 +203,16 @@ export default Router()
     })
   )
   .get(
-    "/bookmarks/:userId?",
+    "/:userId/bookmarks",
     asyncRouteHandler<IResponseBookmarkFolder[]>(async (request: Request) => {
       if (!(request as any).user) {
         throw new BadParams("not logged");
       }
 
-      const userId = request.params.userId || (request as any).user.user.id;
+      const userId =
+        request.params.userId !== "me"
+          ? request.params.userId
+          : (request as any).user.user.id;
 
       if (!userId) {
         throw new BadParams("user id has to be set");
@@ -202,24 +232,8 @@ export default Router()
       return response.bookmarks;
     })
   )
-  .get(
-    "/administration",
-    asyncRouteHandler<IResponseAdministration>(async (request: Request) => {
-      const out: IResponseAdministration = {
-        users: [],
-      };
-
-      for (const user of await User.findAllUsers(request.db.connection)) {
-        const response = new ResponseUser(user);
-        await response.unwindAll(request);
-        out.users.push(response);
-      }
-
-      return out;
-    })
-  )
-  .get(
-    "/reset-password/:userId?",
+  .patch(
+    "/:userId/password",
     asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
       const userId = request.params.userId;
 
@@ -244,14 +258,42 @@ export default Router()
 
       console.log(`Password reset for ${user.email}: ${raw}`);
 
-      mailer.sendPasswordReset(user.email, {
-        login: user.name,
-        email: user.email,
-        password: raw,
-      });
+      try {
+        await mailer.sendPasswordReset(user.email, {
+          login: user.name,
+          email: user.email,
+          password: raw,
+        });
+      } catch (e) {
+        throw new EmailError("please check the logs", (e as Error).toString());
+      }
 
       return {
         result: true,
+      };
+    })
+  )
+  .get(
+    "/me/emails/test",
+    asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
+      const user = request.getUserOrFail();
+      const email = request.query.email as string;
+      if (!email) {
+        throw new BadParams("email has to be set");
+      }
+
+      try {
+        await mailer.sendTest(email, {
+          name: user.name,
+          email: user.email,
+        });
+      } catch (e) {
+        throw new EmailError("please check the logs", (e as Error).toString());
+      }
+
+      return {
+        result: true,
+        message: `Test email sent to ${email}`,
       };
     })
   )

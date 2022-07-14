@@ -13,7 +13,7 @@ import { useDebounce, useSearchParams } from "hooks";
 import React, { useEffect, useState } from "react";
 import { DragObjectWithType } from "react-dnd";
 import { FaHome } from "react-icons/fa";
-import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useMutation, useQuery } from "react-query";
 import { OptionTypeBase, ValueType } from "react-select";
 import { DropdownAny, rootTerritoryId, wildCardChar } from "Theme/constants";
 import { Entities } from "types";
@@ -45,13 +45,12 @@ export const EntitySuggester: React.FC<EntitySuggesterI> = ({
   filterEditorRights = false,
   excludedActantIds = [],
 }) => {
-  const queryClient = useQueryClient();
   const [typed, setTyped] = useState<string>("");
   const debouncedTyped = useDebounce(typed, 100);
   const [selectedCategory, setSelectedCategory] = useState<any>();
   const [allCategories, setAllCategories] = useState<IOption[]>();
 
-  const { setDetailId } = useSearchParams();
+  const { appendDetailId } = useSearchParams();
   const userRole = localStorage.getItem("userrole");
 
   // Suggesions query
@@ -63,7 +62,7 @@ export const EntitySuggester: React.FC<EntitySuggesterI> = ({
   } = useQuery(
     ["suggestion", debouncedTyped, selectedCategory],
     async () => {
-      const resSuggestions = await api.entitiesGetMore({
+      const resSuggestions = await api.entitiesSearch({
         label: debouncedTyped + wildCardChar,
         class:
           selectedCategory?.value === DropdownAny
@@ -107,6 +106,7 @@ export const EntitySuggester: React.FC<EntitySuggesterI> = ({
               detail: s.detail,
               status: s.status,
               ltype: s.data.logicalType,
+              isTemplate: s.isTemplate,
               id: s.id,
               icons: icons,
             };
@@ -156,7 +156,7 @@ export const EntitySuggester: React.FC<EntitySuggesterI> = ({
         onSelected(variables.id);
         handleClean();
         if (openDetailOnCreate) {
-          setDetailId(variables.id);
+          appendDetailId(variables.id);
         }
       },
     }

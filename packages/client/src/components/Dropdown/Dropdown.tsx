@@ -1,4 +1,5 @@
 import { allEntities } from "@shared/dictionaries/entity";
+import { IOption } from "@shared/types";
 import React, { ReactNode, useEffect, useState } from "react";
 import {
   components,
@@ -41,6 +42,7 @@ interface Dropdown {
   entityDropdown?: boolean;
   onFocus?: () => void;
   onBlur?: () => void;
+  autoFocus?: boolean;
   disableTyping?: boolean;
   suggester?: boolean;
   allowAny?: boolean;
@@ -64,6 +66,7 @@ export const Dropdown: React.FC<Dropdown> = ({
   entityDropdown = false,
   onFocus = () => {},
   onBlur = () => {},
+  autoFocus = false,
   disableTyping = false,
   suggester = false,
   allowAny = false,
@@ -81,16 +84,19 @@ export const Dropdown: React.FC<Dropdown> = ({
       <StyledSelect
         suggester={suggester}
         onFocus={onFocus}
+        autoFocus={autoFocus}
         onBlur={onBlur}
         isMulti={isMulti}
         isDisabled={disabled || isOneOptionSingleSelect}
         isOneOptionSingleSelect={isOneOptionSingleSelect}
         entityDropdown={entityDropdown}
+        wildCardChar={(value as IOption).label === "*"}
         className="react-select-container"
         classNamePrefix="react-select"
         placeholder={placeholder}
         noOptionsMessage={noOptionsMessage}
         isClearable={isClearable}
+        captureMenuScroll={false}
         components={{
           components,
           Option,

@@ -84,8 +84,13 @@ const classesTags = [
 ];
 
 export const StatementEditorBox: React.FC = () => {
-  const { statementId, setStatementId, detailId, territoryId, setTerritoryId } =
-    useSearchParams();
+  const {
+    statementId,
+    setStatementId,
+    territoryId,
+    setTerritoryId,
+    selectedDetailId,
+  } = useSearchParams();
 
   const queryClient = useQueryClient();
 
@@ -99,10 +104,9 @@ export const StatementEditorBox: React.FC = () => {
     ["statement", statementId],
     async () => {
       const res = await api.statementGet(statementId);
-
       return res.data;
     },
-    { enabled: !!statementId && api.isLoggedIn(), retry: 2 }
+    { enabled: !!statementId && api.isLoggedIn() }
   );
 
   // Audit query
@@ -117,7 +121,7 @@ export const StatementEditorBox: React.FC = () => {
       const res = await api.auditGet(statementId);
       return res.data;
     },
-    { enabled: !!statementId && api.isLoggedIn(), retry: 2 }
+    { enabled: !!statementId && api.isLoggedIn() }
   );
 
   // territory query
@@ -192,7 +196,7 @@ export const StatementEditorBox: React.FC = () => {
   } = useQuery(
     ["statement-templates"],
     async () => {
-      const res = await api.entitiesGetMore({
+      const res = await api.entitiesSearch({
         onlyTemplates: true,
         class: EntityClass.Statement,
       });
@@ -203,7 +207,7 @@ export const StatementEditorBox: React.FC = () => {
       );
       return templates;
     },
-    { enabled: !!statement && api.isLoggedIn(), retry: 2 }
+    { enabled: !!statement && api.isLoggedIn() }
   );
 
   const templateOptions: DropdownItem[] = useMemo(() => {
@@ -255,7 +259,6 @@ export const StatementEditorBox: React.FC = () => {
     },
     {
       enabled: !!statementId && !!statementTerritoryId,
-      retry: 2,
     }
   );
 
@@ -490,9 +493,15 @@ export const StatementEditorBox: React.FC = () => {
       await api.entityUpdate(statementId, changes);
     },
     {
-      onSuccess: (data, variables) => {
-        if (detailId === statementId) {
+      onSuccess: (data, variables: any) => {
+        if (selectedDetailId === statementId) {
           queryClient.invalidateQueries(["entity"]);
+        }
+        if (statement && statement.isTemplate) {
+          queryClient.invalidateQueries(["templates"]);
+        }
+        if (variables.label !== undefined) {
+          queryClient.invalidateQueries("detail-tab-entities");
         }
         queryClient.invalidateQueries(["statement"]);
         queryClient.invalidateQueries(["territory"]);
@@ -510,6 +519,9 @@ export const StatementEditorBox: React.FC = () => {
         queryClient.invalidateQueries(["entity"]);
         queryClient.invalidateQueries(["statement"]);
         queryClient.invalidateQueries(["territory"]);
+        if (variables.text !== undefined) {
+          queryClient.invalidateQueries("detail-tab-entities");
+        }
       },
     }
   );
@@ -554,22 +566,26 @@ export const StatementEditorBox: React.FC = () => {
                 </StyledEditorHeaderInputWrap>
               </div>
             </StyledEditorStatementInfo>
-            <StyledBreadcrumbWrap>
-              {territoryPath &&
-                territoryPath.map((territory: string, key: number) => {
-                  return (
-                    <React.Fragment key={key}>
-                      <StatementListBreadcrumbItem territoryId={territory} />
-                    </React.Fragment>
-                  );
-                })}
-              {territoryData && (
-                <React.Fragment key={territoryData.id}>
-                  <StatementListBreadcrumbItem territoryId={territoryData.id} />
-                </React.Fragment>
-              )}
-              <Loader size={20} show={isFetchingTerritory} />
-            </StyledBreadcrumbWrap>
+            {!statement.isTemplate && (
+              <StyledBreadcrumbWrap>
+                {territoryPath &&
+                  territoryPath.map((territory: string, key: number) => {
+                    return (
+                      <React.Fragment key={key}>
+                        <StatementListBreadcrumbItem territoryId={territory} />
+                      </React.Fragment>
+                    );
+                  })}
+                {territoryData && (
+                  <React.Fragment key={territoryData.id}>
+                    <StatementListBreadcrumbItem
+                      territoryId={territoryData.id}
+                    />
+                  </React.Fragment>
+                )}
+                <Loader size={20} show={isFetchingTerritory} />
+              </StyledBreadcrumbWrap>
+            )}
           </StyledEditorPreSection>
           {userCanEdit && (
             <StyledEditorPreSection>
@@ -748,11 +764,16 @@ export const StatementEditorBox: React.FC = () => {
                   territoryActants={territoryActants}
                   openDetailOnCreate
                   onSelected={(newSelectedId: string) => {
-                    addTag(newSelectedId);
+                    if (!statement.data.tags.find((t) => t === newSelectedId)) {
+                      addTag(newSelectedId);
+                    } else {
+                      toast.info("Tag already added!");
+                    }
                   }}
                   categoryTypes={classesTags}
                   placeholder={"add new tag"}
                   excludedEntities={excludedSuggesterEntities}
+                  excludedActantIds={statement.data.tags}
                 />
               )}
             </StyledEditorSectionContent>
@@ -853,3 +874,5 @@ export const StatementEditorBox: React.FC = () => {
     </>
   );
 };
+
+export const MemoizedStatementEditorBox = React.memo(StatementEditorBox);

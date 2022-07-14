@@ -10,17 +10,7 @@ export const StyledSuggester = styled.div<StyledSuggester>`
   display: inline-flex;
   margin-top: ${({ marginTop }) => (marginTop ? space2 : 0)};
 `;
-interface StyledTypeBar {
-  entity: string;
-}
-export const StyledTypeBar = styled.div<StyledTypeBar>`
-  position: absolute;
-  background-color: ${({ theme, entity }) => theme.color[entity]};
-  width: 3px;
-  left: 1px;
-  top: 1px;
-  bottom: 1px;
-`;
+
 interface Column {
   isSelected: boolean;
 }
@@ -72,10 +62,6 @@ export const StyledRelativePosition = styled.div`
   max-width: 24rem;
   display: grid;
 
-  grid-template-columns: 2.5rem auto 3rem;
-  grid-template-rows: auto;
-  grid-auto-flow: row;
-  align-items: center;
   min-height: 3rem;
   padding-bottom: ${space1};
 
@@ -84,6 +70,11 @@ export const StyledRelativePosition = styled.div`
   }
 `;
 
+export const StyledSuggestionRow = styled.div`
+  display: grid;
+  grid-template-columns: 2.5rem auto 3rem;
+  align-items: center;
+`;
 export const StyledSuggestionLineActions = styled.div<Column>`
   display: grid;
   align-items: center;

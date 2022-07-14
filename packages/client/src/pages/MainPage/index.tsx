@@ -1,25 +1,19 @@
 import api from "api";
-import LogoInkvisitor from "assets/logos/inkvisitor-full.svg";
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  Footer,
-  Header,
-  Panel,
-  PanelSeparator,
-  Toast,
-} from "components";
+
+import { Box, Button, Header, Panel, PanelSeparator, Toast } from "components";
+import { MemoizedFooter } from "components/Footer/Footer";
 import { useSearchParams } from "hooks";
 import ScrollHandler from "hooks/ScrollHandler";
 import React, { useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import { BiHide, BiShow } from "react-icons/bi";
 import { IoMdClose } from "react-icons/io";
 import { RiMenuFoldFill, RiMenuUnfoldFill } from "react-icons/ri";
 import { useQuery, useQueryClient } from "react-query";
 import { toast } from "react-toastify";
 import { setFirstPanelExpanded } from "redux/features/layout/firstPanelExpandedSlice";
+import { setFourthPanelBoxesOpened } from "redux/features/layout/fourthPanelBoxesOpenedSlice";
 import { setFourthPanelExpanded } from "redux/features/layout/fourthPanelExpandedSlice";
 import { setUsername } from "redux/features/usernameSlice";
 import { useAppDispatch, useAppSelector } from "redux/hooks";
@@ -27,32 +21,25 @@ import {
   collapsedPanelWidth,
   heightFooter,
   heightHeader,
+  hiddenBoxHeight,
 } from "Theme/constants";
-import packageJson from "../../../package.json";
+import { UserListModal } from "./containers";
+import { MemoizedEntityBookmarkBox } from "./containers/EntityBookmarkBox/EntityBookmarkBox";
+import { MemoizedEntityDetailBox } from "./containers/EntityDetailBox/EntityDetailBox";
+import { MemoizedEntitySearchBox } from "./containers/EntitySearchBox/EntitySearchBox";
 import {
-  EntityBookmarkBox,
-  EntitySearchBox,
-  EntityDetailBox,
-  LoginModal,
-  StatementEditorBox,
-  StatementListBox,
-  TerritoryTreeBox,
-  UserListModal,
-  TemplateListBox,
-} from "./containers";
+  LeftHeader,
+  RightHeader,
+} from "./containers/MainPageHeader/MainPageHeader";
+import { MemoizedLoginModal } from "./containers/LoginModal/LoginModal";
+import { MemoizedStatementEditorBox } from "./containers/StatementEditorBox/StatementEditorBox";
+import { MemoizedStatementListBox } from "./containers/StatementsListBox/StatementListBox";
+import { MemoizedTemplateListBox } from "./containers/TemplateListBox/TemplateListBox";
+import { MemoizedTerritoryTreeBox } from "./containers/TerritoryTreeBox/TerritoryTreeBox";
 import { UserCustomizationModal } from "./containers/UserCustomizationModal/UserCustomizationModal";
-import {
-  StyledFaUserAlt,
-  StyledHeader,
-  StyledHeaderLogo,
-  StyledHeaderTag,
-  StyledPage,
-  StyledPanelWrap,
-  StyledText,
-  StyledUser,
-  StyledUserBox,
-  StyledUsername,
-} from "./MainPageStyles";
+import { StyledPage, StyledPanelWrap } from "./MainPageStyles";
+
+type FourthPanelBoxes = "search" | "bookmarks" | "templates";
 
 interface MainPage {
   size: number[];
@@ -60,19 +47,22 @@ interface MainPage {
 
 const MainPage: React.FC<MainPage> = ({ size }) => {
   const {
-    detailId,
-    setDetailId,
+    detailIdArray,
     statementId,
     setStatementId,
     territoryId,
     setTerritoryId,
+    clearAllDetailIds,
   } = useSearchParams();
 
   const [width, height] = size;
 
   const isLoggedIn = api.isLoggedIn();
   const dispatch = useAppDispatch();
-  const username = useAppSelector((state) => state.username);
+  const username: string = useAppSelector((state) => state.username);
+  const fourthPanelBoxesOpened: { [key: string]: boolean } = useAppSelector(
+    (state) => state.layout.fourthPanelBoxesOpened
+  );
   const userId = localStorage.getItem("userid");
   const userRole = localStorage.getItem("userrole");
 
@@ -108,7 +98,7 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
         return false;
       }
     },
-    { enabled: !!userId && api.isLoggedIn(), retry: 2 }
+    { enabled: !!userId && api.isLoggedIn() }
   );
 
   const [userAdministrationModalOpen, setUserAdministrationModalOpen] =
@@ -118,7 +108,7 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
     dispatch(setUsername(""));
     toast.success("You've been successfully logged out!");
     queryClient.removeQueries();
-    setDetailId("");
+    clearAllDetailIds();
     setStatementId("");
     setTerritoryId("");
   };
@@ -153,7 +143,7 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
       icon={firstPanelExpanded ? <RiMenuFoldFill /> : <RiMenuUnfoldFill />}
     />
   );
-  const fourthPanelButton = () => (
+  const hideFourthPanelButton = () => (
     <Button
       onClick={() => {
         if (fourthPanelExpanded) {
@@ -171,12 +161,62 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
 
   const [userCustomizationOpen, setUserCustomizationOpen] = useState(false);
 
-  const versionText = `v. ${packageJson.version} 
-  ${
-    ["production", ""].indexOf(environmentName) === -1
-      ? `| ${environmentName} | built: ${process.env.BUILD_TIMESTAMP}`
-      : ""
-  }`;
+  const handleHideBoxButtonClick = (
+    boxToHide: FourthPanelBoxes,
+    isThisBoxHidden: boolean
+  ) => {
+    if (isThisBoxHidden) {
+      const newObject = {
+        ...fourthPanelBoxesOpened,
+        [boxToHide]: true,
+      };
+      dispatch(setFourthPanelBoxesOpened(newObject));
+      localStorage.setItem("fourthPanelBoxesOpened", JSON.stringify(newObject));
+    } else {
+      const newObject = {
+        ...fourthPanelBoxesOpened,
+        [boxToHide]: false,
+      };
+      dispatch(setFourthPanelBoxesOpened(newObject));
+      localStorage.setItem("fourthPanelBoxesOpened", JSON.stringify(newObject));
+    }
+  };
+
+  const hideBoxButton = (boxToHide: FourthPanelBoxes) => {
+    const isThisBoxHidden = !fourthPanelBoxesOpened[boxToHide];
+    return (
+      <>
+        {fourthPanelExpanded && (
+          <Button
+            inverted
+            icon={isThisBoxHidden ? <BiHide /> : <BiShow />}
+            onClick={() => handleHideBoxButtonClick(boxToHide, isThisBoxHidden)}
+          />
+        )}
+      </>
+    );
+  };
+
+  const getFourthPanelBoxHeight = (box: FourthPanelBoxes): number => {
+    const isThisBoxHidden = !fourthPanelBoxesOpened[box];
+    const openBoxesCount = Object.values(fourthPanelBoxesOpened).filter(
+      (b) => b === true
+    );
+
+    if (!fourthPanelExpanded) {
+      return heightContent / 3;
+    } else if (isThisBoxHidden) {
+      return hiddenBoxHeight;
+    } else {
+      if (openBoxesCount.length === 3) {
+        return heightContent / 3;
+      } else if (openBoxesCount.length === 2) {
+        return (heightContent - hiddenBoxHeight) / 2;
+      } else {
+        return heightContent - 2 * hiddenBoxHeight;
+      }
+    }
+  };
 
   return (
     <>
@@ -190,56 +230,17 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
               ? environmentName
               : "primary"
           }
-          left={
-            <StyledHeader>
-              <StyledHeaderLogo
-                height={heightHeader - 10}
-                src={LogoInkvisitor}
-                alt="React Logo"
-              />
-              <StyledHeaderTag
-                onClick={async () => {
-                  await navigator.clipboard.writeText(versionText);
-                  toast.info("Inkvisitor version copied to clipboard");
-                }}
-              >
-                {versionText}
-              </StyledHeaderTag>
-            </StyledHeader>
-          }
+          left={<LeftHeader />}
           right={
-            <div>
-              {isLoggedIn && (
-                <StyledUserBox>
-                  <StyledUser>
-                    <StyledText>logged as</StyledText>
-                    <StyledFaUserAlt
-                      size={14}
-                      onClick={() => setUserCustomizationOpen(true)}
-                    />
-                    <StyledUsername
-                      onClick={() => setUserCustomizationOpen(true)}
-                    >
-                      {user ? user.name : ""}
-                    </StyledUsername>
-                  </StyledUser>
-                  <ButtonGroup>
-                    {userRole == "admin" && (
-                      <Button
-                        label="Manage Users"
-                        color="info"
-                        onClick={() => handleUsersModalClick()}
-                      />
-                    )}
-                    <Button
-                      label="Log Out"
-                      color="danger"
-                      onClick={() => handleLogOut()}
-                    />
-                  </ButtonGroup>
-                </StyledUserBox>
-              )}
-            </div>
+            isLoggedIn ? (
+              <RightHeader
+                setUserCustomizationOpen={setUserCustomizationOpen}
+                handleUsersModalClick={handleUsersModalClick}
+                handleLogOut={handleLogOut}
+                userName={user ? user.name : ""}
+                userRole={userRole || ""}
+              />
+            ) : undefined
           }
         />
         <DndProvider backend={HTML5Backend}>
@@ -254,10 +255,10 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
                 height={heightContent}
                 label="Territories"
                 isExpanded={firstPanelExpanded}
-                button={firstPanelButton()}
+                button={[firstPanelButton()]}
                 noPadding
               >
-                <TerritoryTreeBox />
+                <MemoizedTerritoryTreeBox />
               </Box>
             </Panel>
             {/* SECOND PANEL */}
@@ -269,28 +270,28 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
               }
             >
               <Box
-                height={detailId ? heightContent / 2 - 20 : heightContent}
+                height={
+                  detailIdArray.length ? heightContent / 2 - 20 : heightContent
+                }
                 label="Statements"
               >
-                <StatementListBox />
+                <MemoizedStatementListBox />
               </Box>
-              {detailId && (
+              {detailIdArray.length > 0 && (
                 <Box
                   height={heightContent / 2 + 20}
                   label="Detail"
-                  button={
-                    detailId && (
-                      <Button
-                        inverted
-                        icon={<IoMdClose />}
-                        onClick={() => {
-                          setDetailId("");
-                        }}
-                      />
-                    )
-                  }
+                  button={[
+                    <Button
+                      inverted
+                      icon={<IoMdClose />}
+                      onClick={() => {
+                        clearAllDetailIds();
+                      }}
+                    />,
+                  ]}
                 >
-                  <EntityDetailBox />
+                  <MemoizedEntityDetailBox />
                 </Box>
               )}
             </Panel>
@@ -303,7 +304,7 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
               }
             >
               <Box height={heightContent} label="Editor">
-                <StatementEditorBox />
+                <MemoizedStatementEditorBox />
               </Box>
             </Panel>
             {/* FOURTH PANEL */}
@@ -311,31 +312,31 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
               width={fourthPanelExpanded ? panelWidths[3] : collapsedPanelWidth}
             >
               <Box
-                height={heightContent / 3}
+                height={getFourthPanelBoxHeight("search")}
                 label="Search"
                 color="white"
                 isExpanded={fourthPanelExpanded}
-                button={fourthPanelButton()}
+                button={[hideBoxButton("search"), hideFourthPanelButton()]}
               >
-                <EntitySearchBox />
+                <MemoizedEntitySearchBox />
               </Box>
               <Box
-                height={heightContent / 3}
+                height={getFourthPanelBoxHeight("bookmarks")}
                 label="Bookmarks"
                 color="white"
                 isExpanded={fourthPanelExpanded}
-                button={fourthPanelButton()}
+                button={[hideBoxButton("bookmarks"), hideFourthPanelButton()]}
               >
-                <EntityBookmarkBox />
+                <MemoizedEntityBookmarkBox />
               </Box>
               <Box
-                height={heightContent / 3}
+                height={getFourthPanelBoxHeight("templates")}
                 label="Templates"
                 color="white"
                 isExpanded={fourthPanelExpanded}
-                button={fourthPanelButton()}
+                button={[hideBoxButton("templates"), hideFourthPanelButton()]}
               >
-                <TemplateListBox />
+                <MemoizedTemplateListBox />
               </Box>
             </Panel>
           </StyledPanelWrap>
@@ -352,8 +353,8 @@ const MainPage: React.FC<MainPage> = ({ size }) => {
         </DndProvider>
 
         <Toast />
-        <Footer height={heightFooter} />
-        {!isLoggedIn && <LoginModal />}
+        <MemoizedFooter height={heightFooter} />
+        {!isLoggedIn && <MemoizedLoginModal />}
       </StyledPage>
     </>
   );

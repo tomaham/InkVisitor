@@ -5,7 +5,7 @@ interface StyledTagWrapper {
   borderStyle: "solid" | "dashed" | "dotted";
   status: string;
   ltype: string;
-  isEmpty?: boolean;
+  dragDisabled?: boolean;
 }
 export const StyledTagWrapper = styled.div<StyledTagWrapper>`
   display: inline-flex;
@@ -16,7 +16,7 @@ export const StyledTagWrapper = styled.div<StyledTagWrapper>`
   border-radius: ${({ theme }) => theme.borderRadius["sm"]};
   margin-right: ${({ theme, hasMarginRight }) =>
     hasMarginRight && theme.space[1]};
-  cursor: ${({ isEmpty }) => (isEmpty ? "default" : "move")};
+  cursor: ${({ dragDisabled }) => (dragDisabled ? "default" : "move")};
   border-style: ${({ theme, ltype }) =>
     "solid solid solid " + theme.borderStyle[ltype]};
   color: ${({ theme }) => theme.color["black"]};
@@ -31,7 +31,7 @@ interface StyledEntityTag {
 export const StyledEntityTag = styled.div<StyledEntityTag>`
   background: ${({ color, isTemplate, theme }) =>
     isTemplate
-      ? `linear-gradient(-45deg, ${theme.color[color]} 0%, ${theme.color[color]} 50%, transparent 50%)`
+      ? `linear-gradient(-45deg, ${theme.color[color]} 0%, ${theme.color[color]} 50%, ${theme.color["gray"][100]} 50%)`
       : theme.color[color]};
   display: flex;
   justify-content: center;
