@@ -7,7 +7,15 @@ import {
 } from "@shared/dictionaries";
 import { allEntities } from "@shared/dictionaries/entity";
 import { EntityClass, Language, UserRoleMode } from "@shared/enums";
-import { IAction, IEntity, IOption, IProp, IReference } from "@shared/types";
+import {
+  IAction,
+  IEntity,
+  IOption,
+  IProp,
+  IReference,
+  IResponseDetail,
+  IResponseEntity,
+} from "@shared/types";
 import api from "api";
 import {
   Button,
@@ -18,7 +26,7 @@ import {
   Submit,
   TypeBar,
 } from "components";
-import { StyledUsedInTitle } from "components/Table/TableStyles";
+import { AttributeButtonGroup, EntityTag } from "components/advanced";
 import { CMetaProp } from "constructors";
 import { useSearchParams } from "hooks";
 import React, { useEffect, useMemo, useState } from "react";
@@ -32,21 +40,18 @@ import {
   DropdownItem,
   PropAttributeFilter,
 } from "types";
-import { AttributeButtonGroup } from "../../AttributeButtonGroup/AttributeButtonGroup";
 import { AuditTable } from "../../AuditTable/AuditTable";
 import { EntityReferenceTable } from "../../EntityReferenceTable/EntityReferenceTable";
-import { EntityTag } from "../../EntityTag/EntityTag";
 import { JSONExplorer } from "../../JSONExplorer/JSONExplorer";
-import { StyledHeading } from "../../LoginModal/LoginModalStyles";
 import { PropGroup } from "../../PropGroup/PropGroup";
 import { ApplyTemplateModal } from "../ApplyTemplateModal/ApplyTemplateModal";
-import { EntityDetailCreateTemplateModal } from "../EntityDetailCreateTemplateModal/EntityDetailCreateTemplateModal";
 import {
   StyledDetailContentRow,
   StyledDetailContentRowLabel,
   StyledDetailContentRowValue,
   StyledDetailForm,
 } from "../EntityDetailBoxStyles";
+import { EntityDetailCreateTemplateModal } from "../EntityDetailCreateTemplateModal/EntityDetailCreateTemplateModal";
 import { EntityDetailHeaderRow } from "../EntityDetailHeaderRow/EntityDetailHeaderRow";
 import { EntityDetailMetaPropsTable } from "../EntityDetailUsedInTable/EntityDetailMetaPropsTable/EntityDetailMetaPropsTable";
 import { EntityDetailStatementPropsTable } from "../EntityDetailUsedInTable/EntityDetailStatementPropsTable/EntityDetailStatementPropsTable";
@@ -60,6 +65,8 @@ import {
   StyledDetailSectionHeader,
   StyledDetailWrapper,
   StyledFormWrapper,
+  StyledUsedAsHeading,
+  StyledUsedAsTitle,
 } from "./EntityDetailStyles";
 
 const allowedEntityChangeClasses = [
@@ -76,6 +83,16 @@ interface EntityDetail {
 }
 export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
   const {
+    statementId,
+    setStatementId,
+    territoryId,
+    setTerritoryId,
+    removeDetailId,
+    setSelectedDetailId,
+    detailIdArray,
+    selectedDetailId,
+  } = useSearchParams();
+  const {
     status,
     data: entity,
     error,
@@ -88,14 +105,6 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
     },
     { enabled: !!detailId && api.isLoggedIn() }
   );
-
-  const {
-    statementId,
-    setStatementId,
-    territoryId,
-    setTerritoryId,
-    removeDetailId,
-  } = useSearchParams();
 
   const [createTemplateModal, setCreateTemplateModal] =
     useState<boolean>(false);
@@ -135,7 +144,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
     error: templateError,
     isFetching: isFetchingTemplates,
   } = useQuery(
-    ["entity-templates", "templates", entity?.class, detailId],
+    ["entity-templates", "templates", entity?.class],
     async () => {
       const res = await api.entitiesSearch({
         onlyTemplates: true,
@@ -189,6 +198,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
 
   // refetch audit when statement changes
   useEffect(() => {
+    // FIX: move to specific changes
     queryClient.invalidateQueries("audit");
   }, [entity]);
 
@@ -273,7 +283,6 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
         toast.info(`Entity removed!`);
 
         // hide selected territory if T removed
-
         if (
           entity &&
           entity.class == EntityClass.Territory &&
@@ -296,6 +305,8 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
         }
 
         queryClient.invalidateQueries("tree");
+
+        removeDetailId(entityId);
       },
     }
   );
@@ -438,6 +449,9 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
   useEffect(() => {
     if (error && (error as any).error === "EntityDoesNotExist") {
       removeDetailId(detailId);
+      if (detailIdArray.length) {
+        setSelectedDetailId(detailIdArray[0]);
+      }
     }
   }, [error]);
 
@@ -474,6 +488,32 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
     }
     return "entity";
   }, [entity]);
+
+  const isTerritoryWithParent = (entity: IResponseDetail): boolean => {
+    return (
+      entity.class === EntityClass.Territory &&
+      entity.data.parent &&
+      Object.keys(entity.entities).includes(entity.data.parent.id)
+    );
+  };
+
+  const isStatementWithTerritory = (entity: IResponseDetail): boolean => {
+    return (
+      entity.class === EntityClass.Statement &&
+      entity.data.territory &&
+      Object.keys(entity.entities).includes(entity.data.territory.id)
+    );
+  };
+
+  const getTerritoryId = (entity: IResponseDetail) => {
+    if (isTerritoryWithParent(entity)) {
+      return entity.entities[entity.data.parent.id].id;
+    } else if (isStatementWithTerritory(entity)) {
+      return entity.entities[entity.data.territory.id].id;
+    } else {
+      return undefined;
+    }
+  };
 
   return (
     <>
@@ -538,7 +578,6 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
                                   (option as IOption).value as EntityClass
                                 );
                                 setShowTypeSubmit(true);
-                                // TODO: submit modal => change category mutation
                               }}
                               width={76}
                               entityDropdown
@@ -621,49 +660,41 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
                     </StyledDetailContentRow>
 
                     {/* territory parent */}
-                    {entity.class === EntityClass.Territory &&
-                      entity.data.parent &&
-                      Object.keys(entity.entities).includes(
-                        entity.data.parent.id
-                      ) && (
-                        <StyledDetailContentRow>
-                          <StyledDetailContentRowLabel>
-                            Parent Territory
-                          </StyledDetailContentRowLabel>
-                          <StyledDetailContentRowValue>
-                            <EntityTag
-                              actant={entity.entities[entity.data.parent.id]}
-                              disableDoubleClick={
-                                entity.data.parent.id === rootTerritoryId
-                              }
-                              disableDrag={
-                                entity.data.parent.id === rootTerritoryId
-                              }
-                              disableTooltip={
-                                entity.data.parent.id === rootTerritoryId
-                              }
-                            />
-                          </StyledDetailContentRowValue>
-                        </StyledDetailContentRow>
-                      )}
+                    {isTerritoryWithParent(entity) && (
+                      <StyledDetailContentRow>
+                        <StyledDetailContentRowLabel>
+                          Parent Territory
+                        </StyledDetailContentRowLabel>
+                        <StyledDetailContentRowValue>
+                          <EntityTag
+                            entity={entity.entities[entity.data.parent.id]}
+                            disableDoubleClick={
+                              entity.data.parent.id === rootTerritoryId
+                            }
+                            disableDrag={
+                              entity.data.parent.id === rootTerritoryId
+                            }
+                            disableTooltip={
+                              entity.data.parent.id === rootTerritoryId
+                            }
+                          />
+                        </StyledDetailContentRowValue>
+                      </StyledDetailContentRow>
+                    )}
 
                     {/* statement  terriroty */}
-                    {entity.class === EntityClass.Statement &&
-                      entity.data.territory &&
-                      Object.keys(entity.entities).includes(
-                        entity.data.territory.id
-                      ) && (
-                        <StyledDetailContentRow>
-                          <StyledDetailContentRowLabel>
-                            Territory
-                          </StyledDetailContentRowLabel>
-                          <StyledDetailContentRowValue>
-                            <EntityTag
-                              actant={entity.entities[entity.data.territory.id]}
-                            />
-                          </StyledDetailContentRowValue>
-                        </StyledDetailContentRow>
-                      )}
+                    {isStatementWithTerritory(entity) && (
+                      <StyledDetailContentRow>
+                        <StyledDetailContentRowLabel>
+                          Territory
+                        </StyledDetailContentRowLabel>
+                        <StyledDetailContentRowValue>
+                          <EntityTag
+                            entity={entity.entities[entity.data.territory.id]}
+                          />
+                        </StyledDetailContentRowValue>
+                      </StyledDetailContentRow>
+                    )}
                     <StyledDetailContentRow>
                       <StyledDetailContentRowLabel>
                         Status
@@ -1123,7 +1154,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
                           </StyledDetailContentRowLabel>
                           <StyledDetailContentRowValue>
                             <EntityTag
-                              actant={entity.entities[entity.usedTemplate]}
+                              entity={entity.entities[entity.usedTemplate]}
                             />
                           </StyledDetailContentRowValue>
                         </StyledDetailContentRow>
@@ -1163,6 +1194,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
                   onChange={(newValues: IReference[]) => {
                     updateEntityMutation.mutate({ references: newValues });
                   }}
+                  isInsideTemplate={entity.isTemplate || false}
                 />
               </StyledDetailSectionContent>
             </StyledDetailSection>
@@ -1202,6 +1234,8 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
                           value: ["elvl", "logic", "virtuality", "partitivity"],
                         } as PropAttributeFilter
                       }
+                      isInsideTemplate={entity.isTemplate || false}
+                      territoryParentId={getTerritoryId(entity)}
                     />
                   </tbody>
                 </table>
@@ -1227,15 +1261,15 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
               {/* used as template */}
               {entity.isTemplate && entity.usedAsTemplate && (
                 <StyledDetailSectionContentUsedIn key="as template">
-                  <StyledHeading>
-                    <StyledUsedInTitle>
+                  <StyledUsedAsHeading>
+                    <StyledUsedAsTitle>
                       <b>{entity.usedAsTemplate.length}</b> As a template
-                    </StyledUsedInTitle>
-                  </StyledHeading>
+                    </StyledUsedAsTitle>
+                  </StyledUsedAsHeading>
                   <StyledDetailSectionEntityList>
                     {entity.usedAsTemplate.map((entityId) => (
                       <React.Fragment key={entityId}>
-                        <EntityTag actant={entity.entities[entityId]} />
+                        <EntityTag entity={entity.entities[entityId]} />
                       </React.Fragment>
                     ))}
                   </StyledDetailSectionEntityList>
@@ -1304,7 +1338,6 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
         submitLabel="Remove"
         onSubmit={() => {
           deleteEntityMutation.mutate(detailId);
-          removeDetailId(detailId);
         }}
         onCancel={() => setShowRemoveSubmit(false)}
         show={showRemoveSubmit}

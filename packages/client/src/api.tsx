@@ -1,4 +1,3 @@
-import { EntityClass } from "@shared/enums";
 import {
   IEntity,
   IResponseEntity,
@@ -13,6 +12,9 @@ import {
   IResponseTree,
   IResponseUser,
   RequestPermissionUpdate,
+  IStatement,
+  ITerritory,
+  IRelation,
 } from "@shared/types";
 import * as errors from "@shared/types/errors";
 import { IRequestSearch } from "@shared/types/request-search";
@@ -258,7 +260,7 @@ class Api {
   /*
     This request will restart the password of the user with userId and send the new password to his email address
   */
-  async resetPassword(
+  async resetPasswordAdmin(
     userId: string
   ): Promise<AxiosResponse<IResponseGeneric>> {
     try {
@@ -341,7 +343,7 @@ class Api {
   }
 
   async entityCreate(
-    newEntityData: IEntity
+    newEntityData: IEntity | IStatement | ITerritory
   ): Promise<AxiosResponse<IResponseGeneric>> {
     try {
       const response = await this.connection.post(`/entities`, newEntityData);
@@ -500,9 +502,9 @@ class Api {
     }
   }
 
-  async getAclPermissions(): Promise<AxiosResponse<IResponsePermission>> {
+  async getAclPermissions(): Promise<AxiosResponse<IResponsePermission[]>> {
     try {
-      const response = await this.connection.get(`/acl/index`);
+      const response = await this.connection.get(`/acls`);
       return response;
     } catch (err: any | AxiosError) {
       throw { ...err.response.data };
@@ -515,6 +517,81 @@ class Api {
   ): Promise<AxiosResponse<IResponseGeneric>> {
     try {
       const response = await this.connection.put(`/acls/${permissionId}`, data);
+      return response;
+    } catch (err: any | AxiosError) {
+      throw { ...err.response.data };
+    }
+  }
+
+  async activate(hash: string): Promise<AxiosResponse<IResponseGeneric>> {
+    try {
+      const response = await this.connection.patch(
+        `/users/active?hash=${hash}`
+      );
+      return response;
+    } catch (err: any | AxiosError) {
+      throw { ...err.response.data };
+    }
+  }
+
+  async resetPassword(
+    hash: string,
+    password: string,
+    passwordRepeat: string
+  ): Promise<AxiosResponse<IResponseGeneric>> {
+    try {
+      const response = await this.connection.patch(
+        `/users/password?hash=${hash}`,
+        {
+          password,
+          passwordRepeat,
+        }
+      );
+      return response;
+    } catch (err: any | AxiosError) {
+      throw { ...err.response.data };
+    }
+  }
+
+  /**
+   * Relations
+   */
+  async relationUpdate(
+    relationId: string,
+    changes: object
+  ): Promise<AxiosResponse<IResponseGeneric>> {
+    try {
+      const response = await this.connection.put(
+        `/relations/update/${relationId}`,
+        changes
+      );
+      return response;
+    } catch (err: any | AxiosError) {
+      throw { ...err.response.data };
+    }
+  }
+
+  async relationCreate(
+    newRelation: IRelation
+  ): Promise<AxiosResponse<IResponseGeneric>> {
+    try {
+      const response = await this.connection.post(
+        `/relations/create`,
+        newRelation
+      );
+      return response;
+    } catch (err: any | AxiosError) {
+      throw { ...err.response.data };
+    }
+  }
+
+  async relationDelete(
+    relationId: string
+  ): Promise<AxiosResponse<IResponseGeneric>> {
+    try {
+      const response = await this.connection.delete(
+        `/relations/delete/${relationId}`
+      );
       return response;
     } catch (err: any | AxiosError) {
       throw { ...err.response.data };

@@ -14,6 +14,39 @@ export enum EntityClass {
 
 export enum EntityExtension {
   Any = "*",
+  Empty = "X",
+}
+
+export enum RelationType {
+  Superclass = "SC",
+  SuperordinateLocation = "SOL",
+  Synonym = "S",
+  Antonym = "A",
+  Troponym = "T",
+  PropertyReciprocal = "PR",
+  SubjectActantReciprocal = "SAR",
+  ActionEventEquivalent = "AEE",
+  Related = "RE",
+  Classification = "C",
+  Identification = "I",
+}
+
+export function isValidRelationType(input: RelationType): boolean {
+  return (
+    [
+      RelationType.Superclass,
+      RelationType.SuperordinateLocation,
+      RelationType.Synonym,
+      RelationType.Antonym,
+      RelationType.Troponym,
+      RelationType.PropertyReciprocal,
+      RelationType.SubjectActantReciprocal,
+      RelationType.ActionEventEquivalent,
+      RelationType.Related,
+      RelationType.Classification,
+      RelationType.Identification,
+    ].indexOf(input) !== -1
+  );
 }
 
 export type ExtendedEntityClass = EntityClass | EntityExtension;

@@ -2,6 +2,7 @@ import { EntityClass, UserRole } from "@shared/enums";
 import { IEntity } from "@shared/types";
 import api from "api";
 import { ButtonGroup, Button } from "components";
+import { EntityTag } from "components/advanced";
 import { DEntity } from "constructors";
 import { useSearchParams } from "hooks";
 import React from "react";
@@ -9,7 +10,6 @@ import { FaClone, FaTrashAlt, FaRecycle, FaEdit } from "react-icons/fa";
 import { GrClone } from "react-icons/gr";
 import { useMutation, useQueryClient } from "react-query";
 import { toast } from "react-toastify";
-import { EntityTag } from "../../EntityTag/EntityTag";
 import {
   StyledActantHeaderRow,
   StyledTagWrap,
@@ -61,7 +61,7 @@ export const EntityDetailHeaderRow: React.FC<EntityDetailHeaderRow> = ({
     <StyledActantHeaderRow>
       <StyledTagWrap>
         <EntityTag
-          actant={entity}
+          entity={entity}
           propId={entity.id}
           tooltipText={entity.data.text}
           fullWidth
@@ -126,7 +126,9 @@ export const EntityDetailHeaderRow: React.FC<EntityDetailHeaderRow> = ({
             label="open"
             onClick={() => {
               setStatementId(entity.id);
-              setTerritoryId(entity.data.territory.id);
+              if (!entity.isTemplate) {
+                setTerritoryId(entity.data.territory.id);
+              }
             }}
           />
         )}

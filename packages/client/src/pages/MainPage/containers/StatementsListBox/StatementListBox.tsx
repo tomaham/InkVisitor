@@ -15,6 +15,7 @@ import {
   TagGroup,
   Tooltip,
 } from "components";
+import { EntityTag } from "components/advanced";
 import { CStatement, DStatement } from "constructors";
 import { useSearchParams } from "hooks";
 import React, { useEffect, useMemo, useState } from "react";
@@ -31,7 +32,6 @@ import { Cell, Column } from "react-table";
 import { toast } from "react-toastify";
 import { setRowsExpanded } from "redux/features/statementList/rowsExpandedSlice";
 import { useAppDispatch, useAppSelector } from "redux/hooks";
-import { EntityTag } from "./../";
 import { StatementListContextMenu } from "./StatementListContextMenu/StatementListContextMenu";
 import { StatementListHeader } from "./StatementListHeader/StatementListHeader";
 import { StatementListTable } from "./StatementListTable/StatementListTable";
@@ -59,8 +59,14 @@ export const StatementListBox: React.FC = () => {
     (state) => state.statementList.rowsExpanded
   );
 
-  const { territoryId, setTerritoryId, statementId, setStatementId } =
-    useSearchParams();
+  const {
+    territoryId,
+    setTerritoryId,
+    statementId,
+    setStatementId,
+    detailIdArray,
+    removeDetailId,
+  } = useSearchParams();
 
   const [showSubmit, setShowSubmit] = useState(false);
   const [statementToDelete, setStatementToDelete] = useState<IStatement>();
@@ -135,8 +141,12 @@ export const StatementListBox: React.FC = () => {
       await api.entityDelete(sId);
     },
     {
-      onSuccess: () => {
+      onSuccess: (data, sId) => {
         toast.info(`Statement removed!`);
+        if (detailIdArray.includes(sId)) {
+          removeDetailId(sId);
+          queryClient.invalidateQueries("detail-tab-entities");
+        }
         queryClient.invalidateQueries("territory").then(() => {
           setStatementId("");
         });
@@ -222,11 +232,15 @@ export const StatementListBox: React.FC = () => {
           ((
             statements[index - 1].data.territory as {
               order: number;
-              id: string;
+              territoryId: string;
             }
           ).order +
-            (statements[index].data.territory as { order: number; id: string })
-              .order) /
+            (
+              statements[index].data.territory as {
+                order: number;
+                territoryId: string;
+              }
+            ).order) /
           2;
       }
     }
@@ -236,8 +250,9 @@ export const StatementListBox: React.FC = () => {
         localStorage.getItem("userrole") as UserRole,
         territoryId
       );
-      (newStatement.data.territory as { order: number; id: string }).order =
-        newOrder;
+      (
+        newStatement.data.territory as { order: number; territoryId: string }
+      ).order = newOrder;
 
       actantsCreateMutation.mutate(newStatement);
     }
@@ -254,8 +269,12 @@ export const StatementListBox: React.FC = () => {
         // whether row is moving top-bottom direction
         const topDown =
           statementToMove.data.territory.order <
-          (statements[index].data.territory as { id: string; order: number })
-            .order;
+          (
+            statements[index].data.territory as {
+              territoryId: string;
+              order: number;
+            }
+          ).order;
 
         const thisOrder = statementToMove.data.territory.order;
         let allOrders: number[] = statements.map((s) =>
@@ -278,7 +297,7 @@ export const StatementListBox: React.FC = () => {
         const res = await api.entityUpdate(statementToMove.id, {
           data: {
             territory: {
-              id: statementToMove.data.territory.id,
+              id: statementToMove.data.territory.territoryId,
               order: allOrders[index],
             },
           },
@@ -293,7 +312,7 @@ export const StatementListBox: React.FC = () => {
       actantObject && (
         <EntityTag
           key={key}
-          actant={actantObject}
+          entity={actantObject}
           showOnly="entity"
           tooltipPosition="bottom center"
         />
@@ -313,7 +332,7 @@ export const StatementListBox: React.FC = () => {
           <div style={{ marginTop: "4px", display: "flex" }}>
             <EntityTag
               key={key}
-              actant={actantObject}
+              entity={actantObject}
               tooltipPosition="bottom center"
             />
           </div>
@@ -338,7 +357,7 @@ export const StatementListBox: React.FC = () => {
           const statement = row.original as IStatement;
           return (
             <EntityTag
-              actant={statement as IEntity}
+              entity={statement as IEntity}
               showOnly="entity"
               tooltipText={statement.data.text}
             />

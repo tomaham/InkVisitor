@@ -5,6 +5,7 @@ import cors from "cors";
 import { apiPath } from "@common/constants";
 import EntitiesRouter from "@modules/entities";
 import AuditsRouter from "@modules/audits";
+import RelationsRouter from "@modules/relations";
 import TerritoriesRouter from "@modules/territories";
 import UsersRouter from "@modules/users";
 import AclRouter from "@modules/acls";
@@ -30,16 +31,24 @@ server.use(
 );
 
 server.use(cors());
+
+if (process.env.STATIC_PATH && process.env.STATIC_PATH !== "") {
+  server.use(
+    process.env.STATIC_PATH as string,
+    express.static("../client/dist")
+  );
+}
+
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
 
 // Show routes called in console during development
-if (process.env.NODE_ENV === "devel") {
+if (process.env.NODE_ENV === "development") {
   server.use(morgan("dev"));
 }
 
 // Securing
-if (process.env.NODE_ENV === "prod") {
+if (process.env.NODE_ENV === "production") {
   server.use(helmet());
 }
 
@@ -53,7 +62,15 @@ server.use(profilerMiddleware);
 server.use(dbMiddleware);
 
 // uncomment this to enable auth
-server.use(validateJwt().unless({ path: [/api\/v1\/users\/signin/] }));
+server.use(
+  validateJwt().unless({
+    path: [
+      /api\/v1\/users\/signin/,
+      /api\/v1\/users\/active/,
+      /api\/v1\/users\/password/,
+    ],
+  })
+);
 server.use(customizeRequest);
 
 // Routing
@@ -66,10 +83,11 @@ const acl = new Acl();
 routerV1.use(acl.authorize);
 
 //routerV1.use('/statements', StatementRouter);
-routerV1.use("/acl", AclRouter);
+routerV1.use("/acls", AclRouter);
 routerV1.use("/users", UsersRouter);
 routerV1.use("/entities", EntitiesRouter);
 routerV1.use("/audits", AuditsRouter);
+routerV1.use("/relations", RelationsRouter);
 routerV1.use("/territories", TerritoriesRouter);
 routerV1.use("/statements", StatementsRouter);
 routerV1.use("/tree", TreeRouter);

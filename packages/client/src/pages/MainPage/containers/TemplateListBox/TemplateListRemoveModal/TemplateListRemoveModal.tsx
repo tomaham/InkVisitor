@@ -1,5 +1,5 @@
 import { EntityClass } from "@shared/enums";
-import { IEntity, IResponseEntity } from "@shared/types";
+import { IEntity } from "@shared/types";
 import api from "api";
 import {
   Button,
@@ -10,20 +10,20 @@ import {
   ModalFooter,
   ModalHeader,
 } from "components";
+import { EntityTag } from "components/advanced";
 import { useSearchParams } from "hooks";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "react-query";
 import { toast } from "react-toastify";
-import { EntityTag } from "../..";
 import { StyledModalContent } from "../TemplateListBoxStyles";
 
 interface TemplateListRemoveModal {
-  removeEntityId: string | false;
+  removeEntityId: string;
   setRemoveEntityId: (value: React.SetStateAction<string | false>) => void;
   entityToRemove: false | IEntity;
 }
 export const TemplateListRemoveModal: React.FC<TemplateListRemoveModal> = ({
-  removeEntityId = false,
+  removeEntityId,
   setRemoveEntityId,
   entityToRemove,
 }) => {
@@ -41,8 +41,9 @@ export const TemplateListRemoveModal: React.FC<TemplateListRemoveModal> = ({
     async (entityId: string) => await api.entityDelete(entityId),
     {
       onSuccess: (data, variables) => {
-        if (removeEntityId && detailIdArray.includes(removeEntityId)) {
+        if (detailIdArray.includes(removeEntityId)) {
           removeDetailId(removeEntityId);
+          queryClient.invalidateQueries("detail-tab-entities");
         }
         entityToRemove &&
           toast.warning(
@@ -67,9 +68,7 @@ export const TemplateListRemoveModal: React.FC<TemplateListRemoveModal> = ({
   );
 
   const handleRemoveTemplateAccept = () => {
-    if (removeEntityId) {
-      templateRemoveMutation.mutate(removeEntityId);
-    }
+    templateRemoveMutation.mutate(removeEntityId);
   };
 
   return (
@@ -88,7 +87,7 @@ export const TemplateListRemoveModal: React.FC<TemplateListRemoveModal> = ({
       <ModalContent>
         <StyledModalContent>
           Remove template entity?
-          {entityToRemove && <EntityTag actant={entityToRemove} />}
+          {entityToRemove && <EntityTag entity={entityToRemove} />}
         </StyledModalContent>
       </ModalContent>
       <ModalFooter>

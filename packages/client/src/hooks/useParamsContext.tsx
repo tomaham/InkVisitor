@@ -48,9 +48,12 @@ export const SearchParamsProvider = ({
   children: ReactElement;
 }) => {
   const history = useHistory();
-  const { hash } = useLocation();
+  const { hash, search } = useLocation();
   const params = new URLSearchParams(hash.substring(1));
   const parsedParams = Object.fromEntries(params);
+
+  const paramsSearch = new URLSearchParams(search);
+  const parsedParamsSearch = Object.fromEntries(paramsSearch);
 
   const [territoryId, setTerritoryId] = useState<string>(
     typeof parsedParams.territory === "string" ? parsedParams.territory : ""
@@ -93,25 +96,34 @@ export const SearchParamsProvider = ({
     const detailIdArray = getDetailIdArray();
     const index = detailIdArray.indexOf(id);
 
+    const newIds = detailIdArray
+      .filter((detailId) => detailId !== id)
+      .join(arrJoinChar);
+
     if (selectedDetailId === id) {
       if (index + 1 === detailIdArray.length) {
+        // ID to remove is the last one
         if (detailIdArray.length > 1) {
+          // More than one tab opened
           setSelectedDetailId(detailIdArray[detailIdArray.length - 2]);
+          setDetailId(newIds);
         } else {
+          // Only one tab opened
           clearAllDetailIds();
         }
       } else {
+        // ID to remove is NOT the last one
         setSelectedDetailId(detailIdArray[index + 1]);
+        setDetailId(newIds);
       }
+    } else {
+      setDetailId(newIds);
     }
-
-    const newIds = detailIdArray.filter((detailId) => detailId !== id);
-    setDetailId(newIds.join(arrJoinChar));
   };
 
   const clearAllDetailIds = () => {
-    setDetailId("");
     setSelectedDetailId("");
+    setDetailId("");
   };
 
   const handleHistoryPush = () => {
@@ -122,21 +134,11 @@ export const SearchParamsProvider = ({
     }
   };
 
-  // useEffect(() => {
-  //   setDisableHistoryListener(true);
-  //   params.delete("detail");
-  //   detailIdArray.forEach((id) => params.append("detail", id));
-
-  //   handleHistoryPush();
-  //   setDisableHistoryListener(false);
-  // }, [detailIdArray]);
-
   useEffect(() => {
     // Change from the inside of the app to this state
     territoryId
       ? params.set("territory", territoryId)
       : params.delete("territory");
-
     statementId
       ? params.set("statement", statementId)
       : params.delete("statement");
@@ -144,7 +146,6 @@ export const SearchParamsProvider = ({
     selectedDetailId
       ? params.set("selectedDetail", selectedDetailId)
       : params.delete("selectedDetail");
-
     detailId ? params.set("detail", detailId) : params.delete("detail");
 
     handleHistoryPush();
@@ -173,11 +174,14 @@ export const SearchParamsProvider = ({
 
   useEffect(() => {
     // Should be only change from the url => add state to switch of listener
-    return history.listen((location: any) => {
-      setDisablePush(true);
-      handleLocationChange(location);
-      setDisablePush(false);
-    });
+    // this condition is for redirect - don't use our lifecycle when params are set by search query (?)
+    if (!parsedParamsSearch.hash) {
+      return history.listen((location: any) => {
+        setDisablePush(true);
+        handleLocationChange(location);
+        setDisablePush(false);
+      });
+    }
   }, [history]);
 
   return (

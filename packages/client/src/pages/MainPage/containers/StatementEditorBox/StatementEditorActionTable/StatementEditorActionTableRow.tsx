@@ -1,8 +1,9 @@
 import { EntityClass } from "@shared/enums";
 import { IProp, IResponseStatement } from "@shared/types";
 import { AttributeIcon, Button, ButtonGroup } from "components";
+import { EntitySuggester, EntityTag } from "components/advanced";
 import { useSearchParams } from "hooks";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   DragSourceMonitor,
   DropTargetMonitor,
@@ -22,7 +23,6 @@ import {
   ItemTypes,
 } from "types";
 import { dndHoverFn } from "utils";
-import { EntitySuggester, EntityTag } from "../..";
 import AttributesEditor from "../../AttributesEditor/AttributesEditor";
 import { PropGroup } from "../../PropGroup/PropGroup";
 import { StyledTd, StyledTr } from "./StatementEditorActionTableStyles";
@@ -41,6 +41,7 @@ interface StatementEditorActionTableRow {
   handleClick: Function;
   visibleColumns: ColumnInstance<{}>[];
   updateActionsMutation: UseMutationResult<any, unknown, object, unknown>;
+  territoryParentId?: string;
 }
 
 export const StatementEditorActionTableRow: React.FC<
@@ -59,7 +60,9 @@ export const StatementEditorActionTableRow: React.FC<
   updateActionsMutation,
   handleClick = () => {},
   visibleColumns,
+  territoryParentId,
 }) => {
+  const isInsideTemplate = statement.isTemplate || false;
   const { statementId, territoryId } = useSearchParams();
 
   const dropRef = useRef<HTMLTableRowElement>(null);
@@ -111,7 +114,7 @@ export const StatementEditorActionTableRow: React.FC<
     return action ? (
       <EntityTag
         // fullWidth
-        actant={action}
+        entity={action}
         button={
           userCanEdit && (
             <Button
@@ -141,10 +144,14 @@ export const StatementEditorActionTableRow: React.FC<
           categoryTypes={[EntityClass.Action]}
           excludedEntities={excludedSuggesterEntities}
           placeholder={"add new action"}
+          isInsideTemplate={isInsideTemplate}
+          territoryParentId={territoryParentId}
         />
       )
     );
   };
+
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
 
   const renderButtonsCell = () => {
     const { action, sAction } = row.values.data;
@@ -154,8 +161,10 @@ export const StatementEditorActionTableRow: React.FC<
       <ButtonGroup noMarginRight>
         {sAction && (
           <AttributesEditor
+            modalOpen={modalOpen}
+            setModalOpen={setModalOpen}
             modalTitle={`Action attribute`}
-            actant={action}
+            entity={action}
             disabledAllAttributes={!userCanEdit}
             data={{
               elvl: sAction.elvl,
@@ -176,6 +185,8 @@ export const StatementEditorActionTableRow: React.FC<
             userCanEdit={userCanEdit}
             classEntitiesActant={[EntityClass.Action]}
             loading={updateActionsMutation.isLoading}
+            isInsideTemplate={isInsideTemplate}
+            territoryParentId={territoryParentId}
           />
         )}
         {userCanEdit && (
@@ -220,6 +231,7 @@ export const StatementEditorActionTableRow: React.FC<
             inverted={true}
             noBorder
             icon={sAction.bundleOperator}
+            onClick={() => setModalOpen(true)}
           />
         )}
       </ButtonGroup>
@@ -260,6 +272,8 @@ export const StatementEditorActionTableRow: React.FC<
             userCanEdit={userCanEdit}
             openDetailOnCreate={false}
             category={category}
+            isInsideTemplate={isInsideTemplate}
+            territoryParentId={territoryParentId}
           />
         );
       }

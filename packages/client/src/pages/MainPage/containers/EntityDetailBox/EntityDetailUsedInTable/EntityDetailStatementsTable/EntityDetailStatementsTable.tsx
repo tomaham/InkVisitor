@@ -6,8 +6,8 @@ import {
   IStatementAction,
 } from "@shared/types";
 import { Button, Table, TagGroup, Tooltip } from "components";
+import { EntityTag } from "components/advanced";
 import { useSearchParams } from "hooks";
-import { EntityTag } from "pages/MainPage/containers/EntityTag/EntityTag";
 import React, { useMemo } from "react";
 import { FaEdit } from "react-icons/fa";
 import { Cell, Column } from "react-table";
@@ -35,7 +35,7 @@ export const EntityDetailStatementsTable: React.FC<
       actantObject && (
         <EntityTag
           key={key}
-          actant={actantObject}
+          entity={actantObject}
           showOnly="entity"
           tooltipPosition="right center"
         />
@@ -58,7 +58,7 @@ export const EntityDetailStatementsTable: React.FC<
               {entity && (
                 <EntityTag
                   key={entity.id}
-                  actant={entity}
+                  entity={entity}
                   showOnly="entity"
                   tooltipText={entity.label}
                 />
@@ -74,7 +74,7 @@ export const EntityDetailStatementsTable: React.FC<
             row.original as IResponseUsedInStatement<UsedInPosition>;
           const subjectIds = useCase.statement.data.actants
             .filter((a: IStatementActant) => a.position === "s")
-            .map((a: IStatementActant) => a.actant);
+            .map((a: IStatementActant) => a.entityId);
 
           const subjectObjects = subjectIds.map((actantId: string) => {
             return entities[actantId];
@@ -118,7 +118,7 @@ export const EntityDetailStatementsTable: React.FC<
           const useCase =
             row.original as IResponseUsedInStatement<UsedInPosition>;
           const { actions } = useCase.statement.data;
-          const actionIds = actions.map((a: IStatementAction) => a.action);
+          const actionIds = actions.map((a: IStatementAction) => a.actionId);
           const actionObjects = actionIds.map((actionId: string) => {
             return entities[actionId];
           });
@@ -166,7 +166,7 @@ export const EntityDetailStatementsTable: React.FC<
 
           const actantIds = useCase.statement.data.actants
             .filter((a: IStatementActant) => a.position !== "s")
-            .map((a: IStatementActant) => a.actant);
+            .map((a: IStatementActant) => a.entityId);
           const isOversized = actantIds.length > 4;
 
           const actantObjects = actantIds.map((actantId: string) => {

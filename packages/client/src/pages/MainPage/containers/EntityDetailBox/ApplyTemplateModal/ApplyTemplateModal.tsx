@@ -9,11 +9,11 @@ import {
   ModalHeader,
   ModalInputForm,
 } from "components";
+import { EntityTag } from "components/advanced";
 import React from "react";
 import { UseMutationResult } from "react-query";
 import { toast } from "react-toastify";
 import { StyledContent } from "../../EntityBookmarkBox/EntityBookmarkBoxStyles";
-import { EntityTag } from "../../EntityTag/EntityTag";
 
 interface ApplyTemplateModal {
   showModal: boolean;
@@ -74,7 +74,7 @@ export const ApplyTemplateModal: React.FC<ApplyTemplateModal> = ({
       <ModalContent>
         <StyledContent>
           <ModalInputForm>{`Apply template?`}</ModalInputForm>
-          <div>{templateToApply && <EntityTag actant={templateToApply} />}</div>
+          <div>{templateToApply && <EntityTag entity={templateToApply} />}</div>
           {/* here goes the info about template #951 */}
         </StyledContent>
       </ModalContent>

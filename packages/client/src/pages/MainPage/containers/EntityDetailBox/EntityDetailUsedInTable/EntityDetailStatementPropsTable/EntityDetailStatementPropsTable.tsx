@@ -1,8 +1,8 @@
 import { IEntity } from "@shared/types";
 import { IResponseUsedInStatementProps } from "@shared/types/response-detail";
 import { Button, Table } from "components";
+import { EntityTag } from "components/advanced";
 import { useSearchParams } from "hooks";
-import { EntityTag } from "pages/MainPage/containers/EntityTag/EntityTag";
 import React, { useMemo } from "react";
 import { FaEdit } from "react-icons/fa";
 import { Cell, Column } from "react-table";
@@ -28,7 +28,7 @@ export const EntityDetailStatementPropsTable: React.FC<
     return (
       <StyledTableTextGridCell>
         <StyledTagWrap>
-          <EntityTag fullWidth actant={entity} />
+          <EntityTag fullWidth entity={entity} />
         </StyledTagWrap>
       </StyledTableTextGridCell>
     );
@@ -47,7 +47,7 @@ export const EntityDetailStatementPropsTable: React.FC<
               {entity && (
                 <EntityTag
                   key={entity.id}
-                  actant={entity}
+                  entity={entity}
                   tooltipText={entity.label}
                 />
               )}
