@@ -7,8 +7,13 @@ import {
   IStatementActant,
 } from "@shared/types";
 import { AttributeIcon, Button, ButtonGroup } from "components";
+import {
+  AttributeButtonGroup,
+  EntitySuggester,
+  EntityTag,
+} from "components/advanced";
 import { useSearchParams } from "hooks";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   DragSourceMonitor,
   DropTargetMonitor,
@@ -28,8 +33,6 @@ import {
   ItemTypes,
 } from "types";
 import { dndHoverFn } from "utils";
-import { EntitySuggester, EntityTag } from "../..";
-import { AttributeButtonGroup } from "../../AttributeButtonGroup/AttributeButtonGroup";
 import AttributesEditor from "../../AttributesEditor/AttributesEditor";
 import { PropGroup } from "../../PropGroup/PropGroup";
 import {
@@ -53,6 +56,7 @@ interface StatementEditorActantTableRow {
   statement: IResponseStatement;
   classEntitiesActant: EntityClass[];
   updateStatementDataMutation: UseMutationResult<any, unknown, object, unknown>;
+  territoryParentId?: string;
 }
 
 export const StatementEditorActantTableRow: React.FC<
@@ -72,7 +76,9 @@ export const StatementEditorActantTableRow: React.FC<
   updateProp,
   removeProp,
   movePropToIndex,
+  territoryParentId,
 }) => {
+  const isInsideTemplate = statement.isTemplate || false;
   const { statementId, territoryId } = useSearchParams();
 
   const dropRef = useRef<HTMLTableRowElement>(null);
@@ -131,7 +137,7 @@ export const StatementEditorActantTableRow: React.FC<
     return actant ? (
       <StyledTagWrapper>
         <EntityTag
-          actant={actant}
+          entity={actant}
           // fullWidth
           button={
             userCanEdit && (
@@ -143,7 +149,7 @@ export const StatementEditorActantTableRow: React.FC<
                 inverted={true}
                 onClick={() => {
                   updateActant(sActant.id, {
-                    actant: "",
+                    entityId: "",
                   });
                 }}
               />
@@ -156,12 +162,14 @@ export const StatementEditorActantTableRow: React.FC<
         <EntitySuggester
           onSelected={(newSelectedId: string) => {
             updateActant(sActant.id, {
-              actant: newSelectedId,
+              entityId: newSelectedId,
             });
           }}
           categoryTypes={classEntitiesActant}
           openDetailOnCreate
           excludedEntities={excludedSuggesterEntities}
+          isInsideTemplate={isInsideTemplate}
+          territoryParentId={territoryParentId}
         />
       )
     );
@@ -219,6 +227,8 @@ export const StatementEditorActantTableRow: React.FC<
     );
   };
 
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
+
   const renderAttributesCell = () => {
     const {
       actant,
@@ -228,13 +238,15 @@ export const StatementEditorActantTableRow: React.FC<
       sActant: IStatementActant | any;
     } = row.values.data;
 
-    const propOriginId = row.values.data.sActant.actant;
+    const propOriginId = row.values.data.sActant.enityId;
     return (
       <ButtonGroup noMarginRight>
         {sActant && (
           <AttributesEditor
+            modalOpen={modalOpen}
+            setModalOpen={setModalOpen}
             modalTitle={`Actant involvement`}
-            actant={actant}
+            entity={actant}
             disabledAllAttributes={!userCanEdit}
             userCanEdit={userCanEdit}
             data={{
@@ -255,6 +267,8 @@ export const StatementEditorActantTableRow: React.FC<
             }}
             classEntitiesActant={classEntitiesActant}
             loading={updateStatementDataMutation.isLoading}
+            isInsideTemplate={isInsideTemplate}
+            territoryParentId={territoryParentId}
           />
         )}
         {userCanEdit && (
@@ -299,6 +313,7 @@ export const StatementEditorActantTableRow: React.FC<
             inverted={true}
             noBorder
             icon={sActant.bundleOperator}
+            onClick={() => setModalOpen(true)}
           />
         )}
       </ButtonGroup>
@@ -339,6 +354,8 @@ export const StatementEditorActantTableRow: React.FC<
             userCanEdit={userCanEdit}
             openDetailOnCreate={false}
             category={category}
+            isInsideTemplate={isInsideTemplate}
+            territoryParentId={territoryParentId}
           />
         );
       }
@@ -372,7 +389,7 @@ export const StatementEditorActantTableRow: React.FC<
         draggedActantRow.category === DraggedPropRowCategory.ACTANT
       ) &&
         renderPropGroup(
-          row.values.data.sActant.actant,
+          row.values.data.sActant.entityId,
           row.values.data.sActant.props,
           DraggedPropRowCategory.ACTANT
         )}

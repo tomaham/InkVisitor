@@ -1,9 +1,9 @@
 import { UsedInPosition } from "@shared/enums";
 import { IEntity, IResponseUsedInMetaProp } from "@shared/types";
 import { Table } from "components";
+import { EntityTag } from "components/advanced";
 import React, { useMemo } from "react";
 import { Cell, Column } from "react-table";
-import { EntityTag } from "../../../EntityTag/EntityTag";
 import {
   StyledTableTextGridCell,
   StyledTagWrap,
@@ -24,7 +24,7 @@ export const EntityDetailMetaPropsTable: React.FC<
     return (
       <StyledTableTextGridCell>
         <StyledTagWrap>
-          <EntityTag fullWidth actant={entity} />
+          <EntityTag fullWidth entity={entity} />
         </StyledTagWrap>
       </StyledTableTextGridCell>
     );

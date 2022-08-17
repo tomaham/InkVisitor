@@ -15,31 +15,31 @@ import treeCache, { TreeCreator } from "@service/treeCache";
 
 export default Router()
   .get(
-    "/get",
+    "/",
     asyncRouteHandler<IResponseTree>(async (request: Request) => {
       return treeCache.forUser(request.getUserOrFail());
     })
   )
-  .post(
-    "/moveTerritory",
+  .patch(
+    "/:territoryId/position",
     asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
-      const moveId = request.body.moveId;
+      const territoryId = request.params.territoryId;
       const parentId = request.body.parentId;
       const newIndex = request.body.newIndex;
 
-      if (!moveId || !parentId || newIndex === undefined) {
+      if (!territoryId || !parentId || newIndex === undefined) {
         throw new BadParams("moveId/parentId/newIndex has be set");
       }
 
       // check child territory
       const territoryData = await findEntityById<ITerritory>(
         request.db,
-        moveId
+        territoryId
       );
       if (!territoryData || territoryData.class !== EntityClass.Territory) {
         throw new TerritoryDoesNotExits(
-          `territory ${moveId} does not exist`,
-          moveId
+          `territory ${territoryId} does not exist`,
+          territoryId
         );
       }
       if (
@@ -47,7 +47,9 @@ export default Router()
           request.getUserOrFail()
         )
       ) {
-        throw new PermissionDeniedError(`cannot edit territorty ${moveId}`);
+        throw new PermissionDeniedError(
+          `cannot edit territorty ${territoryId}`
+        );
       }
 
       // check parent territory
@@ -87,12 +89,14 @@ export default Router()
       if (!territoryData.data.parent) {
         // root territory cannot be moved - or not yet implemented
         throw new TerrytoryInvalidMove("cannot move root territory");
-      } else if (territoryData.data.parent.id !== parentId) {
+      } else if (territoryData.data.parent.territoryId !== parentId) {
         // change parent of the territory
-        territoryData.data.parent.id = parentId;
+        territoryData.data.parent.territoryId = parentId;
         territoryData.data.parent.order = -1;
       } else {
-        const currentIndex = childsArray.findIndex((ter) => ter.id === moveId);
+        const currentIndex = childsArray.findIndex(
+          (ter) => ter.id === territoryId
+        );
         if (currentIndex === -1) {
           throw new TerrytoryInvalidMove("territory not found in the array");
         }

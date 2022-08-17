@@ -15,6 +15,7 @@ import {
   TagGroup,
   Tooltip,
 } from "components";
+import { EntityTag } from "components/advanced";
 import { CStatement, DStatement } from "constructors";
 import { useSearchParams } from "hooks";
 import React, { useEffect, useMemo, useState } from "react";
@@ -31,7 +32,6 @@ import { Cell, Column } from "react-table";
 import { toast } from "react-toastify";
 import { setRowsExpanded } from "redux/features/statementList/rowsExpandedSlice";
 import { useAppDispatch, useAppSelector } from "redux/hooks";
-import { EntityTag } from "./../";
 import { StatementListContextMenu } from "./StatementListContextMenu/StatementListContextMenu";
 import { StatementListHeader } from "./StatementListHeader/StatementListHeader";
 import { StatementListTable } from "./StatementListTable/StatementListTable";
@@ -59,8 +59,14 @@ export const StatementListBox: React.FC = () => {
     (state) => state.statementList.rowsExpanded
   );
 
-  const { territoryId, setTerritoryId, statementId, setStatementId } =
-    useSearchParams();
+  const {
+    territoryId,
+    setTerritoryId,
+    statementId,
+    setStatementId,
+    detailIdArray,
+    removeDetailId,
+  } = useSearchParams();
 
   const [showSubmit, setShowSubmit] = useState(false);
   const [statementToDelete, setStatementToDelete] = useState<IStatement>();
@@ -73,7 +79,6 @@ export const StatementListBox: React.FC = () => {
     },
     {
       enabled: !!territoryId && api.isLoggedIn(),
-      retry: 2,
     }
   );
 
@@ -87,7 +92,6 @@ export const StatementListBox: React.FC = () => {
     },
     {
       enabled: !!territoryId && api.isLoggedIn(),
-      retry: 2,
     }
   );
 
@@ -137,8 +141,12 @@ export const StatementListBox: React.FC = () => {
       await api.entityDelete(sId);
     },
     {
-      onSuccess: () => {
+      onSuccess: (data, sId) => {
         toast.info(`Statement removed!`);
+        if (detailIdArray.includes(sId)) {
+          removeDetailId(sId);
+          queryClient.invalidateQueries("detail-tab-entities");
+        }
         queryClient.invalidateQueries("territory").then(() => {
           setStatementId("");
         });
@@ -224,11 +232,15 @@ export const StatementListBox: React.FC = () => {
           ((
             statements[index - 1].data.territory as {
               order: number;
-              id: string;
+              territoryId: string;
             }
           ).order +
-            (statements[index].data.territory as { order: number; id: string })
-              .order) /
+            (
+              statements[index].data.territory as {
+                order: number;
+                territoryId: string;
+              }
+            ).order) /
           2;
       }
     }
@@ -238,8 +250,9 @@ export const StatementListBox: React.FC = () => {
         localStorage.getItem("userrole") as UserRole,
         territoryId
       );
-      (newStatement.data.territory as { order: number; id: string }).order =
-        newOrder;
+      (
+        newStatement.data.territory as { order: number; territoryId: string }
+      ).order = newOrder;
 
       actantsCreateMutation.mutate(newStatement);
     }
@@ -256,8 +269,12 @@ export const StatementListBox: React.FC = () => {
         // whether row is moving top-bottom direction
         const topDown =
           statementToMove.data.territory.order <
-          (statements[index].data.territory as { id: string; order: number })
-            .order;
+          (
+            statements[index].data.territory as {
+              territoryId: string;
+              order: number;
+            }
+          ).order;
 
         const thisOrder = statementToMove.data.territory.order;
         let allOrders: number[] = statements.map((s) =>
@@ -280,7 +297,7 @@ export const StatementListBox: React.FC = () => {
         const res = await api.entityUpdate(statementToMove.id, {
           data: {
             territory: {
-              id: statementToMove.data.territory.id,
+              id: statementToMove.data.territory.territoryId,
               order: allOrders[index],
             },
           },
@@ -295,7 +312,7 @@ export const StatementListBox: React.FC = () => {
       actantObject && (
         <EntityTag
           key={key}
-          actant={actantObject}
+          entity={actantObject}
           showOnly="entity"
           tooltipPosition="bottom center"
         />
@@ -315,7 +332,7 @@ export const StatementListBox: React.FC = () => {
           <div style={{ marginTop: "4px", display: "flex" }}>
             <EntityTag
               key={key}
-              actant={actantObject}
+              entity={actantObject}
               tooltipPosition="bottom center"
             />
           </div>
@@ -340,7 +357,7 @@ export const StatementListBox: React.FC = () => {
           const statement = row.original as IStatement;
           return (
             <EntityTag
-              actant={statement as IEntity}
+              entity={statement as IEntity}
               showOnly="entity"
               tooltipText={statement.data.text}
             />
@@ -351,46 +368,49 @@ export const StatementListBox: React.FC = () => {
         Header: "Subj.",
         accessor: "data",
         Cell: ({ row }: Cell) => {
-          const subjectIds = row.values.data?.actants
+          const subjectIds: string[] = row.values.data?.actants
             ? row.values.data.actants
                 .filter((a: any) => a.position === "s")
                 .map((a: any) => a.actant)
             : [];
 
-          const subjectObjects = subjectIds.map((actantId: string) => {
-            return entities[actantId];
-          });
-
-          const isOversized = subjectIds.length > 2;
-
-          return (
-            <TagGroup>
-              {subjectObjects
-                .slice(0, 2)
-                .map((subjectObject: IEntity, key: number) =>
-                  renderListActant(subjectObject, key)
-                )}
-              {isOversized && (
-                <Tooltip
-                  offsetX={-14}
-                  position="right center"
-                  color="success"
-                  noArrow
-                  items={
-                    <TagGroup>
-                      {subjectObjects
-                        .slice(2)
-                        .map((subjectObject: IEntity, key: number) =>
-                          renderListActant(subjectObject, key)
-                        )}
-                    </TagGroup>
-                  }
-                >
-                  <StyledDots>{"..."}</StyledDots>
-                </Tooltip>
-              )}
-            </TagGroup>
+          const subjectObjects = subjectIds.map(
+            (actantId: string) => entities[actantId]
           );
+          const definedSubjects = subjectObjects.filter((s) => s !== undefined);
+
+          const isOversized = definedSubjects.length > 2;
+
+          if (definedSubjects) {
+            return (
+              <TagGroup>
+                {definedSubjects
+                  .slice(0, 2)
+                  .map((subjectObject: IEntity, key: number) =>
+                    renderListActant(subjectObject, key)
+                  )}
+                {isOversized && (
+                  <Tooltip
+                    offsetX={-14}
+                    position="right center"
+                    color="success"
+                    noArrow
+                    items={
+                      <TagGroup>
+                        {definedSubjects
+                          .slice(2)
+                          .map((subjectObject: IEntity, key: number) =>
+                            renderListActant(subjectObject, key)
+                          )}
+                      </TagGroup>
+                    }
+                  >
+                    <StyledDots>{"..."}</StyledDots>
+                  </Tooltip>
+                )}
+              </TagGroup>
+            );
+          }
         },
       },
       {
@@ -400,15 +420,17 @@ export const StatementListBox: React.FC = () => {
             ? row.values.data.actions.map((a: any) => a.action)
             : [];
 
-          const actionObjects = actionIds.map((actionId: string) => {
-            return entities[actionId];
-          });
+          const actionObjects: IAction[] = actionIds.map(
+            (actionId: string) => entities[actionId]
+          );
 
-          if (actionObjects) {
+          const definedActions = actionObjects.filter((a) => a !== undefined);
+
+          if (definedActions) {
             const isOversized = actionIds.length > 2;
             return (
               <TagGroup>
-                {actionObjects
+                {definedActions
                   .slice(0, 2)
                   .map((action: IAction, key: number) =>
                     renderListActant(action, key)
@@ -421,7 +443,7 @@ export const StatementListBox: React.FC = () => {
                     noArrow
                     items={
                       <TagGroup>
-                        {actionObjects
+                        {definedActions
                           .slice(2)
                           .map((action: IAction, key: number) =>
                             renderListActant(action, key)
@@ -434,8 +456,6 @@ export const StatementListBox: React.FC = () => {
                 )}
               </TagGroup>
             );
-          } else {
-            return <div />;
           }
         },
       },
@@ -449,37 +469,42 @@ export const StatementListBox: React.FC = () => {
             : [];
           const isOversized = actantIds.length > 4;
 
-          const actantObjects = actantIds.map((actantId: string) => {
-            return entities[actantId];
-          });
-          return (
-            <TagGroup>
-              {actantObjects
-                .slice(0, 4)
-                .map((actantObject: IEntity, key: number) =>
-                  renderListActant(actantObject, key)
-                )}
-              {isOversized && (
-                <Tooltip
-                  offsetX={-14}
-                  position="right center"
-                  color="success"
-                  noArrow
-                  items={
-                    <TagGroup>
-                      {actantObjects
-                        .slice(4)
-                        .map((actantObject: IEntity, key: number) =>
-                          renderListActant(actantObject, key)
-                        )}
-                    </TagGroup>
-                  }
-                >
-                  <StyledDots>{"..."}</StyledDots>
-                </Tooltip>
-              )}
-            </TagGroup>
+          const actantObjects: IEntity[] = actantIds.map(
+            (actantId: string) => entities[actantId]
           );
+
+          const definedObjects = actantObjects.filter((o) => o !== undefined);
+
+          if (definedObjects) {
+            return (
+              <TagGroup>
+                {actantObjects
+                  .slice(0, 4)
+                  .map((actantObject: IEntity, key: number) =>
+                    renderListActant(actantObject, key)
+                  )}
+                {isOversized && (
+                  <Tooltip
+                    offsetX={-14}
+                    position="right center"
+                    color="success"
+                    noArrow
+                    items={
+                      <TagGroup>
+                        {actantObjects
+                          .slice(4)
+                          .map((actantObject: IEntity, key: number) =>
+                            renderListActant(actantObject, key)
+                          )}
+                      </TagGroup>
+                    }
+                  >
+                    <StyledDots>{"..."}</StyledDots>
+                  </Tooltip>
+                )}
+              </TagGroup>
+            );
+          }
         },
       },
       {
@@ -674,3 +699,5 @@ export const StatementListBox: React.FC = () => {
     </>
   );
 };
+
+export const MemoizedStatementListBox = React.memo(StatementListBox);

@@ -12,7 +12,6 @@ import {
   Operator,
   Language,
 } from "../enums";
-import { IReference } from "./reference";
 
 export interface IStatement extends IEntity {
   id: string;
@@ -28,7 +27,7 @@ export interface IStatement extends IEntity {
 export interface IStatementData {
   text: string;
   territory?: {
-    id: string;
+    territoryId: string;
     order: number;
   };
   actions: IStatementAction[];
@@ -38,7 +37,7 @@ export interface IStatementData {
 
 export interface IStatementAction {
   id: string;
-  action: string;
+  actionId: string;
   elvl: Elvl;
   certainty: Certainty;
   logic: Logic;
@@ -52,7 +51,7 @@ export interface IStatementAction {
 
 export interface IStatementActant {
   id: string;
-  actant: string;
+  entityId: string;
   position: Position;
   elvl: Elvl;
   logic: Logic;
@@ -62,4 +61,26 @@ export interface IStatementActant {
   bundleStart: boolean;
   bundleEnd: boolean;
   props: IProp[];
+  classifications: IStatementClassification[];
+  identifications: IStatementIdentification[];
+}
+
+export interface IStatementClassification {
+  id: string;
+  entityId: string;
+  elvl: Elvl;
+  logic: Logic;
+  certainty: Certainty;
+  mood: Mood[];
+  moodvariant: MoodVariant;
+}
+
+export interface IStatementIdentification {
+  id: string;
+  entityId: string;
+  elvl: Elvl;
+  logic: Logic;
+  certainty: Certainty;
+  mood: Mood[];
+  moodvariant: MoodVariant;
 }

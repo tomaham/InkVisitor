@@ -10,6 +10,7 @@ import {
   Operator,
   Partitivity,
   Position,
+  RelationType,
   UserRole,
   Virtuality,
 } from "@shared/enums";
@@ -18,6 +19,8 @@ import {
   IEntity,
   IProp,
   IReference,
+  IRelation,
+  IRelationIdentification,
   IStatement,
   IStatementActant,
   IStatementAction,
@@ -33,6 +36,34 @@ export const CBookmarkFolder = (bookmarkName: string): IBookmarkFolder => ({
 
 export const CProp = (): IProp => ({
   id: uuidv4(),
+  elvl: Elvl.Textual,
+  certainty: Certainty.Empty,
+  logic: Logic.Positive,
+  mood: [Mood.Indication],
+  moodvariant: MoodVariant.Realis,
+  bundleOperator: Operator.And,
+  bundleStart: false,
+  bundleEnd: false,
+  children: [],
+
+  type: {
+    entityId: "",
+    elvl: Elvl.Textual,
+    logic: Logic.Positive,
+    virtuality: Virtuality.Reality,
+    partitivity: Partitivity.Unison,
+  },
+  value: {
+    entityId: "",
+    elvl: Elvl.Textual,
+    logic: Logic.Positive,
+    virtuality: Virtuality.Reality,
+    partitivity: Partitivity.Unison,
+  },
+});
+
+export const CMetaProp = (): IProp => ({
+  id: uuidv4(),
   elvl: Elvl.Inferential,
   certainty: Certainty.Empty,
   logic: Logic.Positive,
@@ -44,14 +75,14 @@ export const CProp = (): IProp => ({
   children: [],
 
   type: {
-    id: "",
+    entityId: "",
     elvl: Elvl.Inferential,
     logic: Logic.Positive,
     virtuality: Virtuality.Reality,
     partitivity: Partitivity.Unison,
   },
   value: {
-    id: "",
+    entityId: "",
     elvl: Elvl.Inferential,
     logic: Logic.Positive,
     virtuality: Virtuality.Reality,
@@ -90,7 +121,7 @@ export const CStatement = (
     newStatement.data = {
       ...newStatement.data,
       territory: {
-        id: territoryId,
+        territoryId: territoryId,
         order: -1,
       },
     };
@@ -101,13 +132,14 @@ export const CStatement = (
 // duplicate statement
 export const DStatement = (
   statement: IStatement,
-  userRole: UserRole
+  userRole: UserRole,
+  templateToEntity?: boolean
 ): IStatement => {
   const duplicatedStatement: IStatement = {
     id: uuidv4(),
     class: EntityClass.Statement,
     data: { ...statement.data },
-    label: statement.label + " [COPY OF]",
+    label: statement.label + templateToEntity ? "" : " [COPY OF]",
     detail: statement.detail,
     language: statement.language,
     notes: statement.notes,
@@ -120,11 +152,11 @@ export const DStatement = (
   };
 
   if (statement.isTemplate) {
-    duplicatedStatement.isTemplate = statement.isTemplate;
+    duplicatedStatement.isTemplate = templateToEntity ? false : true;
   }
-  if (statement.usedTemplate) {
-    duplicatedStatement.usedTemplate = statement.usedTemplate;
-  }
+  duplicatedStatement.usedTemplate = templateToEntity
+    ? statement.id
+    : statement.usedTemplate;
 
   duplicatedStatement.data.actants.forEach((a) => {
     a.id = uuidv4();
@@ -141,12 +173,16 @@ export const DStatement = (
 };
 
 // duplicate entity
-export const DEntity = (entity: IEntity, userRole: UserRole): IEntity => {
+export const DEntity = (
+  entity: IEntity,
+  userRole: UserRole,
+  templateToEntity?: boolean
+): IEntity => {
   const duplicatedEntity: IEntity = {
     id: uuidv4(),
     class: entity.class,
     data: entity.data,
-    label: entity.label + " [COPY OF]",
+    label: `${entity.label}${templateToEntity ? "" : " [COPY OF]"}`,
     detail: entity.detail,
     language: entity.language,
     notes: entity.notes,
@@ -157,13 +193,16 @@ export const DEntity = (entity: IEntity, userRole: UserRole): IEntity => {
         ? EntityStatus.Approved
         : EntityStatus.Pending,
   };
+  if (entity.class === EntityClass.Territory) {
+    entity.data.parent = {};
+  }
 
   if (entity.isTemplate) {
-    duplicatedEntity.isTemplate = entity.isTemplate;
+    duplicatedEntity.isTemplate = templateToEntity ? false : true;
   }
-  if (entity.usedTemplate) {
-    duplicatedEntity.usedTemplate = entity.usedTemplate;
-  }
+  duplicatedEntity.usedTemplate = templateToEntity
+    ? entity.id
+    : entity.usedTemplate;
   duplicatedEntity.references.forEach((r) => (r.id = uuidv4()));
 
   return duplicatedEntity;
@@ -185,7 +224,7 @@ export const DProps = (oldProps: IProp[]): IProp[] => {
 
 export const CStatementActant = (): IStatementActant => ({
   id: uuidv4(),
-  actant: "",
+  entityId: "",
   position: Position.Subject,
   elvl: Elvl.Textual,
   logic: Logic.Positive,
@@ -195,11 +234,13 @@ export const CStatementActant = (): IStatementActant => ({
   bundleStart: false,
   bundleEnd: false,
   props: [],
+  classifications: [],
+  identifications: [],
 });
 
 export const CStatementAction = (actionId: string): IStatementAction => ({
   id: uuidv4(),
-  action: actionId,
+  actionId: actionId,
   certainty: Certainty.Empty,
   elvl: Elvl.Textual,
   logic: Logic.Positive,
@@ -225,7 +266,7 @@ export const CTerritoryActant = (
   language: Language.Latin,
   notes: [],
   data: {
-    parent: { id: parentId, order: parentOrder },
+    parent: { territoryId: parentId, order: parentOrder },
   },
   status:
     userRole === UserRole.Admin ? EntityStatus.Approved : EntityStatus.Pending,
@@ -267,3 +308,43 @@ export const CReference = (
   resource: resourceId,
   value: valueId,
 });
+
+export const CRelationIdentity = (
+  entity1: string = "",
+  entity2: string = ""
+): IRelationIdentification => ({
+  id: uuidv4(),
+  entityIds: [entity1, entity2],
+  type: RelationType.Identification,
+  logic: Logic.Positive,
+  certainty: Certainty.Certain,
+});
+
+export const CTemplateEntity = (
+  entity: IEntity,
+  templateLabel: string,
+  templateDetail?: string
+): IEntity => {
+  const userRole = localStorage.getItem("userrole") as UserRole;
+  const templateEntity =
+    entity.class === EntityClass.Statement
+      ? DStatement(entity as IStatement, userRole)
+      : DEntity(entity as IEntity, userRole);
+
+  if (entity.class === EntityClass.Statement) {
+    delete templateEntity.data["territory"];
+  }
+  if (entity.class === EntityClass.Territory) {
+    templateEntity.data["parent"] = false;
+  }
+
+  templateEntity.isTemplate = true;
+  templateEntity.usedTemplate = "";
+  templateEntity.label = templateLabel;
+
+  if (templateDetail) {
+    templateEntity.detail = templateDetail;
+  }
+
+  return templateEntity;
+};

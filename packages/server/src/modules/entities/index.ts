@@ -2,18 +2,16 @@ import { mergeDeep } from "@common/functions";
 import { ResponseEntity, ResponseEntityDetail } from "@models/entity/response";
 import Audit from "@models/audit/audit";
 import { getEntityClass } from "@models/factory";
-import { filterEntitiesByWildcard, findEntityById } from "@service/shorthands";
-import { EntityClass } from "@shared/enums";
+import { findEntityById } from "@service/shorthands";
 import {
   IEntity,
   IResponseEntity,
   IResponseDetail,
   IResponseGeneric,
-  IResponseSearch,
   RequestSearch,
 } from "@shared/types";
 import {
-  EntityDoesNotExits,
+  EntityDoesNotExist,
   BadParams,
   InternalServerError,
   ModelNotValidError,
@@ -21,12 +19,13 @@ import {
 } from "@shared/types/errors";
 import { Request, Router } from "express";
 import { asyncRouteHandler } from "../index";
-import Statement from "@models/statement/statement";
-import { isConstructorDeclaration } from "typescript";
+import { ResponseSearch } from "@models/entity/response-search";
+import { IRequestSearch } from "@shared/types/request-search";
+import { getAuditByEntityId } from "@modules/audits";
 
 export default Router()
   .get(
-    "/get/:entityId?",
+    "/:entityId",
     asyncRouteHandler<IResponseEntity>(async (request: Request) => {
       const entityId = request.params.entityId;
 
@@ -40,7 +39,7 @@ export default Router()
       );
 
       if (!entityData) {
-        throw new EntityDoesNotExits(
+        throw new EntityDoesNotExist(
           `entity ${entityId} was not found`,
           entityId
         );
@@ -54,52 +53,26 @@ export default Router()
       return response;
     })
   )
-  .post(
-    "/getMore",
-    asyncRouteHandler<IResponseEntity[]>(async (request: Request) => {
-      const label = request.body.label;
-      const classParam = request.body.class;
-      const excluded: EntityClass[] = request.body.excluded;
-      const onlyTemplates: undefined | boolean = request.body.onlyTemplates;
-      const usedTemplate: undefined | string = request.body.usedTemplate;
-
-      if (!label && !classParam && !onlyTemplates && !usedTemplate) {
-        throw new BadParams("label or class has to be set");
-      }
-
-      if (label && label.length < 2) {
+  .get("/:entityId/audits", getAuditByEntityId)
+  .get(
+    "/",
+    asyncRouteHandler<IResponseEntity[]>(async (httpRequest: Request) => {
+      const req = new RequestSearch(httpRequest.query as IRequestSearch);
+      if (req.label && req.label.length < 2) {
         return [];
       }
 
-      if (
-        typeof excluded !== "undefined" &&
-        excluded.constructor.name !== "Array"
-      ) {
-        throw new BadParams("excluded need to be array");
+      const err = req.validate();
+      if (err) {
+        throw err;
       }
 
-      const entities = await filterEntitiesByWildcard(
-        request.db,
-        classParam,
-        excluded,
-        label,
-        undefined,
-        onlyTemplates,
-        usedTemplate
-      );
-
-      const responses: IResponseEntity[] = [];
-      for (const entityData of entities) {
-        const response = new ResponseEntity(getEntityClass(entityData));
-        await response.prepare(request);
-        responses.push(response);
-      }
-
-      return responses;
+      const response = new ResponseSearch(req);
+      return await response.prepare(httpRequest);
     })
   )
   .post(
-    "/create",
+    "/",
     asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
       const model = getEntityClass(request.body as Record<string, unknown>);
 
@@ -138,7 +111,7 @@ export default Router()
     })
   )
   .put(
-    "/update/:entityId?",
+    "/:entityId",
     asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
       const entityId = request.params.entityId;
       const entityData = request.body as Record<string, unknown>;
@@ -151,7 +124,7 @@ export default Router()
       // entityId must be already in the db
       const existingEntity = await findEntityById(request.db, entityId);
       if (!existingEntity) {
-        throw new EntityDoesNotExits(
+        throw new EntityDoesNotExist(
           `entity with id ${entityId} does not exist`,
           entityId
         );
@@ -193,7 +166,7 @@ export default Router()
     })
   )
   .delete(
-    "/delete/:entityId?",
+    "/:entityId",
     asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
       const entityId = request.params.entityId;
 
@@ -204,7 +177,7 @@ export default Router()
       // entityId must be already in the db
       const existingEntity = await findEntityById(request.db, entityId);
       if (!existingEntity) {
-        throw new EntityDoesNotExits(
+        throw new EntityDoesNotExist(
           `entity with id ${entityId} does not exist`,
           entityId
         );
@@ -234,7 +207,7 @@ export default Router()
     })
   )
   .get(
-    "/detail/:entityId?",
+    "/:entityId/detail",
     asyncRouteHandler<IResponseDetail>(async (request: Request) => {
       const entityId = request.params.entityId;
 
@@ -244,7 +217,7 @@ export default Router()
 
       const entityData = await findEntityById(request.db, entityId);
       if (!entityData) {
-        throw new EntityDoesNotExits(
+        throw new EntityDoesNotExist(
           `entity ${entityId} was not found`,
           entityId
         );
@@ -261,57 +234,5 @@ export default Router()
       await response.prepare(request);
 
       return response;
-    })
-  )
-  .post(
-    "/search",
-    asyncRouteHandler<IResponseSearch[]>(async (httpRequest: Request) => {
-      const req = new RequestSearch(httpRequest.body);
-      if (req.label && req.label.length < 2) {
-        return [];
-      }
-
-      const err = req.validate();
-      if (err) {
-        throw err;
-      }
-
-      let associatedEntityIds: string[] | undefined = undefined;
-      if (req.entityId) {
-        associatedEntityIds = await Statement.findUsedInDataEntitiesIds(
-          httpRequest.db.connection,
-          req.entityId
-        );
-
-        // entity id provided, but not found within statements - end now
-        if (!associatedEntityIds.length) {
-          return [];
-        }
-      }
-
-      // filter out duplicates
-      associatedEntityIds = [...new Set(associatedEntityIds)];
-
-      const entities = await filterEntitiesByWildcard(
-        httpRequest.db,
-        req.class,
-        req.excluded,
-        req.label,
-        associatedEntityIds
-      );
-
-      return entities.map((a: IEntity) => {
-        const out: IResponseSearch = {
-          entityId: a.id,
-          entityLabel: a.label,
-          class: a.class,
-        };
-
-        // only for Entity (grouped entity of EntityClass)
-        if (a.data.logicalType) {
-          out.logicalType = (a as IEntity).data.logicalType;
-        }
-        return out;
-      });
     })
   );

@@ -7,7 +7,12 @@ import {
 import api from "api";
 import React, { useCallback } from "react";
 import { useQuery } from "react-query";
-import { AttributeName, DraggedPropRowCategory, ItemTypes } from "types";
+import {
+  PropAttributeFilter,
+  PropAttributeName,
+  DraggedPropRowCategory,
+  ItemTypes,
+} from "types";
 import { FirstLevelPropGroup } from "./FirstLevelPropGroup/FirstLevelPropGroup";
 import { PropGroupRow } from "./PropGroupRow/PropGroupRow";
 import { StyledGrid, StyledListHeaderColumn } from "./PropGroupStyles";
@@ -29,7 +34,9 @@ interface PropGroup {
   userCanEdit: boolean;
   openDetailOnCreate: boolean;
   category: DraggedPropRowCategory;
-  disabledAttributes?: AttributeName[];
+  disabledAttributes?: PropAttributeFilter;
+  isInsideTemplate: boolean;
+  territoryParentId?: string;
 }
 
 export const PropGroup: React.FC<PropGroup> = ({
@@ -47,7 +54,9 @@ export const PropGroup: React.FC<PropGroup> = ({
   userCanEdit,
   openDetailOnCreate = false,
   category,
-  disabledAttributes = [],
+  disabledAttributes = {} as PropAttributeFilter,
+  isInsideTemplate,
+  territoryParentId,
 }) => {
   // territory query
   const {
@@ -97,6 +106,8 @@ export const PropGroup: React.FC<PropGroup> = ({
             movePropToIndex={movePropToIndex}
             category={category}
             disabledAttributes={disabledAttributes}
+            isInsideTemplate={isInsideTemplate}
+            territoryParentId={territoryParentId}
           />
           {/* 2nd level */}
           <SecondLevelPropGroup
@@ -138,6 +149,8 @@ export const PropGroup: React.FC<PropGroup> = ({
             movePropToIndex={movePropToIndex}
             category={category}
             disabledAttributes={disabledAttributes}
+            isInsideTemplate={isInsideTemplate}
+            territoryParentId={territoryParentId}
           />
           {/* 3rd level */}
           <ThirdLevelPropGroup
@@ -179,6 +192,8 @@ export const PropGroup: React.FC<PropGroup> = ({
             movePropToIndex={movePropToIndex}
             category={category}
             disabledAttributes={disabledAttributes}
+            isInsideTemplate={isInsideTemplate}
+            territoryParentId={territoryParentId}
           />
         </React.Fragment>
       );

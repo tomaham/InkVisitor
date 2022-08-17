@@ -1,10 +1,10 @@
 import { EntityClass } from "@shared/enums";
 import { IEntity, IReference } from "@shared/types";
 import { Button } from "components";
+import { EntitySuggester, EntityTag } from "components/advanced";
 import React from "react";
 import { FaExternalLinkAlt, FaTrashAlt, FaUnlink } from "react-icons/fa";
-import { EntitySuggester } from "../EntitySuggester/EntitySuggester";
-import { EntityTag } from "../EntityTag/EntityTag";
+import { excludedSuggesterEntities } from "Theme/constants";
 import {
   StyledReferencesListButtons,
   StyledReferencesListColumn,
@@ -22,6 +22,8 @@ interface EntityReferenceTableRow {
   handleChangeResource: (refId: string, newResource: string) => void;
   handleChangeValue: (refId: string, newValue: string) => void;
   openDetailOnCreate?: boolean;
+  isInsideTemplate: boolean;
+  territoryParentId?: string;
 }
 
 export const EntityReferenceTableRow: React.FC<EntityReferenceTableRow> = ({
@@ -34,6 +36,8 @@ export const EntityReferenceTableRow: React.FC<EntityReferenceTableRow> = ({
   handleChangeResource,
   handleChangeValue,
   openDetailOnCreate = false,
+  isInsideTemplate = false,
+  territoryParentId,
 }) => {
   return (
     <React.Fragment>
@@ -42,7 +46,7 @@ export const EntityReferenceTableRow: React.FC<EntityReferenceTableRow> = ({
         {resource ? (
           <StyledTagWrapper>
             <EntityTag
-              actant={resource}
+              entity={resource}
               fullWidth
               button={
                 !disabled && (
@@ -70,6 +74,8 @@ export const EntityReferenceTableRow: React.FC<EntityReferenceTableRow> = ({
                   handleChangeResource(reference.id, newSelectedId);
                 }}
                 categoryTypes={[EntityClass.Resource]}
+                isInsideTemplate={isInsideTemplate}
+                territoryParentId={territoryParentId}
               />
             </div>
           )
@@ -86,7 +92,7 @@ export const EntityReferenceTableRow: React.FC<EntityReferenceTableRow> = ({
         {value ? (
           <StyledTagWrapper>
             <EntityTag
-              actant={value}
+              entity={value}
               fullWidth
               button={
                 !disabled && (
@@ -114,6 +120,9 @@ export const EntityReferenceTableRow: React.FC<EntityReferenceTableRow> = ({
                   handleChangeValue(reference.id, newSelectedId);
                 }}
                 categoryTypes={[EntityClass.Value]}
+                excludedEntities={excludedSuggesterEntities}
+                isInsideTemplate={isInsideTemplate}
+                territoryParentId={territoryParentId}
               />
             </div>
           )

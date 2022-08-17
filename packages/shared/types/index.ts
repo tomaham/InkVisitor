@@ -14,6 +14,19 @@ import { RequestPermissionUpdate } from "./request-permission";
 import { RequestSearch } from "./request-search";
 import { IResource } from "./resource";
 import {
+  IRelation,
+  IRelationActionEventEquivalent,
+  IRelationAntonym,
+  IRelationClassification,
+  IRelationIdentification,
+  IRelationPropertyReciprocal,
+  IRelationRelated,
+  IRelationSubjectActantReciprocal,
+  IRelationSuperClass,
+  IRelationSynonym,
+  IRelationTroponym,
+} from "./relation";
+import {
   IResponseDetail,
   IResponseUsedInMetaProp,
   IResponseUsedInStatement,
@@ -23,7 +36,6 @@ import { IResponseAdministration } from "./response-administration";
 import { IResponseAudit } from "./response-audit";
 import { IResponseGeneric } from "./response-generic";
 import { IResponsePermission } from "./response-permission";
-import { IResponseSearch } from "./response-search";
 import { IResponseStatement } from "./response-statement";
 import { IResponseTerritory } from "./response-territory";
 import {
@@ -67,6 +79,17 @@ export type {
   ILabel,
   IOption,
   IProp,
+  IRelation,
+  IRelationActionEventEquivalent,
+  IRelationAntonym,
+  IRelationClassification,
+  IRelationIdentification,
+  IRelationPropertyReciprocal,
+  IRelationRelated,
+  IRelationSubjectActantReciprocal,
+  IRelationSuperClass,
+  IRelationSynonym,
+  IRelationTroponym,
   IStatementData,
   IStatementAction,
   IStatementActant,
@@ -90,7 +113,6 @@ export type {
   IResponseUser,
   IResponseStoredTerritory,
   IResponseGeneric,
-  IResponseSearch,
   IResponsePermission,
   IResponseStats,
 };

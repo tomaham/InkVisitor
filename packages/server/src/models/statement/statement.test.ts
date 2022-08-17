@@ -126,10 +126,7 @@ describe("findDependentStatementIds", function () {
 
   describe("empty db", () => {
     it("should return empty array", async (done) => {
-      const statements = await Statement.findUsedInDataEntities(
-        db.connection,
-        ""
-      );
+      const statements = await Statement.findByDataEntityId(db.connection, "");
       expect(statements).toHaveLength(0);
       done();
     });
@@ -140,7 +137,7 @@ describe("findDependentStatementIds", function () {
       const territory = new Territory(undefined);
       await territory.save(db.connection);
 
-      const statements = await Statement.findUsedInDataEntities(
+      const statements = await Statement.findByDataEntityId(
         db.connection,
         territory.id
       );
@@ -158,7 +155,7 @@ describe("findDependentStatementIds", function () {
       });
       await statement.save(db.connection);
 
-      const statements = await Statement.findUsedInDataEntities(
+      const statements = await Statement.findByDataEntityId(
         db.connection,
         territory.id
       );
@@ -181,7 +178,7 @@ describe("findDependentStatementIds", function () {
       ];
       await statement.save(db.connection);
 
-      const statements = await Statement.findUsedInDataEntities(
+      const statements = await Statement.findByDataEntityId(
         db.connection,
         territory.id
       );
@@ -200,7 +197,7 @@ describe("findDependentStatementIds", function () {
       statement.data.tags = [territory.id];
       await statement.save(db.connection);
 
-      const statements = await Statement.findUsedInDataEntities(
+      const statements = await Statement.findByDataEntityId(
         db.connection,
         territory.id
       );
@@ -219,7 +216,7 @@ describe("findDependentStatementIds", function () {
       statement.props = [new Prop({ origin: territory.id })];
       await statement.save(db.connection);
 
-      const statements = await Statement.findUsedInDataEntities(
+      const statements = await Statement.findByDataEntityId(
         db.connection,
         territory.id
       );
@@ -238,7 +235,7 @@ describe("findDependentStatementIds", function () {
       statement.props = [new Prop({ type: { id: territory.id } })];
       await statement.save(db.connection);
 
-      const statements = await Statement.findUsedInDataEntities(
+      const statements = await Statement.findByDataEntityId(
         db.connection,
         territory.id
       );
@@ -257,7 +254,7 @@ describe("findDependentStatementIds", function () {
       statement.props = [new Prop({ value: { id: territory.id } })];
       await statement.save(db.connection);
 
-      const statements = await Statement.findUsedInDataEntities(
+      const statements = await Statement.findByDataEntityId(
         db.connection,
         territory.id
       );
@@ -277,7 +274,7 @@ describe("findDependentStatementIds", function () {
 
       await statement.save(db.connection);
 
-      const statements = await Statement.findUsedInDataEntities(
+      const statements = await Statement.findByDataEntityId(
         db.connection,
         territory.id
       );
@@ -304,7 +301,7 @@ describe("findDependentStatementIds", function () {
       statement2.data.tags = [territory.id];
       await statement2.save(db.connection);
 
-      const statements = await Statement.findUsedInDataEntities(
+      const statements = await Statement.findByDataEntityId(
         db.connection,
         territory.id
       );
@@ -330,7 +327,7 @@ describe("findDependentStatementIds", function () {
       await statement1.save(db.connection);
       await statement2.save(db.connection);
 
-      const statements = await Statement.findUsedInDataEntities(
+      const statements = await Statement.findByDataEntityId(
         db.connection,
         territory.id
       );
@@ -360,8 +357,8 @@ describe("Statement - save territory order", function () {
       await statement.save(db.connection);
 
       const createdData = await findEntityById<IStatement>(db, statement.id);
-      expect(createdData.data.territory?.id).toEqual(
-        statement.data.territory?.id
+      expect(createdData.data.territory?.territoryId).toEqual(
+        statement.data.territory?.territoryId
       );
       expect(createdData.data.territory?.order).toEqual(0);
 
@@ -377,8 +374,8 @@ describe("Statement - save territory order", function () {
       await statement.save(db.connection);
 
       const createdData = await findEntityById<IStatement>(db, statement.id);
-      expect(createdData.data.territory?.id).toEqual(
-        statement.data.territory?.id
+      expect(createdData.data.territory?.territoryId).toEqual(
+        statement.data.territory?.territoryId
       );
       expect(createdData.data.territory?.order).toEqual(
         statement.data.territory?.order
@@ -402,16 +399,16 @@ describe("Statement - save territory order", function () {
       // first statement provides order = -1, which should result in save '0'
       // value
       const createdData1 = await findEntityById<IStatement>(db, statement1.id);
-      expect(createdData1.data.territory?.id).toEqual(
-        createdData1.data.territory?.id
+      expect(createdData1.data.territory?.territoryId).toEqual(
+        createdData1.data.territory?.territoryId
       );
       expect(createdData1.data.territory?.order).toEqual(0);
 
       // second statement provides order = -1, which should result in save '1'
       // value
       const createdData2 = await findEntityById<IStatement>(db, statement2.id);
-      expect(createdData2.data.territory?.id).toEqual(
-        createdData2.data.territory?.id
+      expect(createdData2.data.territory?.territoryId).toEqual(
+        createdData2.data.territory?.territoryId
       );
       expect(createdData2.data.territory?.order).toEqual(1);
       done();
@@ -619,12 +616,12 @@ describe("test Statement.findUsedInDataProps", function () {
 
   describe("detail id in actants[0].props[0].type.id", () => {
     const [detailId, st] = prepareStatement();
-    st.data.actants[0].props[0].type.id = detailId;
+    st.data.actants[0].props[0].type.entityId = detailId;
 
     it("should find the statement successfully", async () => {
       await st.save(db.connection);
 
-      const foundStatements = await Statement.findUsedInDataProps(
+      const foundStatements = await Statement.findByDataPropsId(
         db.connection,
         detailId
       );
@@ -635,12 +632,12 @@ describe("test Statement.findUsedInDataProps", function () {
 
   describe("detail id in actants[0].props[0].value.id", () => {
     const [detailId, st] = prepareStatement();
-    st.data.actants[0].props[0].value.id = detailId;
+    st.data.actants[0].props[0].value.entityId = detailId;
 
     it("should find the statement successfully", async () => {
       await st.save(db.connection);
 
-      const foundStatements = await Statement.findUsedInDataProps(
+      const foundStatements = await Statement.findByDataPropsId(
         db.connection,
         detailId
       );
@@ -651,12 +648,12 @@ describe("test Statement.findUsedInDataProps", function () {
 
   describe("detail id in actants[0].props[0].children[0].type.id", () => {
     const [detailId, st] = prepareStatement();
-    st.data.actants[0].props[0].children[0].value.id = detailId;
+    st.data.actants[0].props[0].children[0].value.entityId = detailId;
 
     it("should find the statement successfully", async () => {
       await st.save(db.connection);
 
-      const foundStatements = await Statement.findUsedInDataProps(
+      const foundStatements = await Statement.findByDataPropsId(
         db.connection,
         detailId
       );
@@ -667,12 +664,13 @@ describe("test Statement.findUsedInDataProps", function () {
 
   describe("detail id in actants[0].props[0].children[0].type.id", () => {
     const [detailId, st] = prepareStatement();
-    st.data.actants[0].props[0].children[0].children[0].value.id = detailId;
+    st.data.actants[0].props[0].children[0].children[0].value.entityId =
+      detailId;
 
     it("should find the statement successfully", async () => {
       await st.save(db.connection);
 
-      const foundStatements = await Statement.findUsedInDataProps(
+      const foundStatements = await Statement.findByDataPropsId(
         db.connection,
         detailId
       );
@@ -683,13 +681,13 @@ describe("test Statement.findUsedInDataProps", function () {
 
   describe("detail id in actants[0].props[0].children[0].children[0].type.id", () => {
     const [detailId, st] = prepareStatement();
-    st.data.actants[0].props[0].children[0].children[0].children[0].value.id =
+    st.data.actants[0].props[0].children[0].children[0].children[0].value.entityId =
       detailId;
 
     it("should find the statement successfully", async () => {
       await st.save(db.connection);
 
-      const foundStatements = await Statement.findUsedInDataProps(
+      const foundStatements = await Statement.findByDataPropsId(
         db.connection,
         detailId
       );
@@ -698,15 +696,15 @@ describe("test Statement.findUsedInDataProps", function () {
     });
   });
 
-  describe("multiple same-id occurences in one statement", () => {
+  describe("multiple same-id occurrences in one statement", () => {
     const [detailId, st] = prepareStatement();
-    st.data.actants[0].props[0].type.id = detailId;
-    st.data.actants[0].props[1].type.id = detailId;
+    st.data.actants[0].props[0].type.entityId = detailId;
+    st.data.actants[0].props[1].type.entityId = detailId;
 
     it("should find one statement", async () => {
       await st.save(db.connection);
 
-      const foundStatements = await Statement.findUsedInDataProps(
+      const foundStatements = await Statement.findByDataPropsId(
         db.connection,
         detailId
       );
@@ -719,14 +717,14 @@ describe("test Statement.findUsedInDataProps", function () {
     const [detailId, st1] = prepareStatement();
     const [, st2] = prepareStatement();
 
-    st1.data.actants[0].props[0].type.id = detailId;
-    st2.data.actants[0].props[0].type.id = detailId;
+    st1.data.actants[0].props[0].type.entityId = detailId;
+    st2.data.actants[0].props[0].type.entityId = detailId;
 
     it("should find both statements", async () => {
       await st1.save(db.connection);
       await st2.save(db.connection);
 
-      const foundStatements = await Statement.findUsedInDataProps(
+      const foundStatements = await Statement.findByDataPropsId(
         db.connection,
         detailId
       );

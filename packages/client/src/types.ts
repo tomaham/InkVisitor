@@ -11,7 +11,10 @@ import {
   Operator,
   Partitivity,
   Virtuality,
+  ExtendedEntityClass,
+  EntityExtension,
 } from "@shared/enums";
+import { IEntity } from "@shared/types";
 
 export const Colors = [
   "black",
@@ -36,81 +39,68 @@ export const Colors = [
   "entityV",
 ];
 
-interface IEntity {
-  id: string;
-  label: string;
+interface IEntityColor {
+  entityClass: ExtendedEntityClass;
   color: typeof Colors[number];
 }
 
-export const Entities: { [key: string]: IEntity } = {
+// Use for colors, for dropdowns use entity.ts dictionary
+export const EntityColors: { [key: string]: IEntityColor } = {
   T: {
-    id: "T",
-    label: "Territory",
+    entityClass: EntityClass.Territory,
     color: "entityT",
   },
   R: {
-    id: "R",
-    label: "Resource",
+    entityClass: EntityClass.Resource,
     color: "entityR",
   },
   A: {
-    id: "A",
-    label: "Action",
+    entityClass: EntityClass.Action,
     color: "entityA",
   },
   S: {
-    id: "S",
-    label: "Statement",
+    entityClass: EntityClass.Statement,
     color: "entityS",
   },
   C: {
-    id: "C",
-    label: "Concept",
+    entityClass: EntityClass.Concept,
     color: "entityC",
   },
   E: {
-    id: "E",
-    label: "Event",
+    entityClass: EntityClass.Event,
     color: "entityE",
   },
   G: {
-    id: "G",
-    label: "Group",
+    entityClass: EntityClass.Group,
     color: "entityG",
   },
   L: {
-    id: "L",
-    label: "Location",
+    entityClass: EntityClass.Location,
     color: "entityL",
   },
   O: {
-    id: "O",
-    label: "Object",
+    entityClass: EntityClass.Object,
     color: "entityO",
   },
   P: {
-    id: "P",
-    label: "Person",
+    entityClass: EntityClass.Person,
     color: "entityP",
   },
   V: {
-    id: "V",
-    label: "Value",
+    entityClass: EntityClass.Value,
     color: "entityV",
   },
   X: {
-    id: "X",
-    label: "unset",
+    entityClass: EntityExtension.Empty,
     color: "white",
   },
   all: {
-    id: "all",
-    label: "*",
+    entityClass: EntityExtension.Any,
     color: "white",
   },
 };
 
-export type EntityKeys = keyof typeof Entities;
+export type EntityKeys = keyof typeof EntityColors;
 
 export interface Node {
   id: string;
@@ -134,13 +124,19 @@ export enum ItemTypes {
 export type DragItem = {
   index: number;
   id: string;
-  type: string;
+  type: ItemTypes;
 };
+export interface EntityDragItem extends DragItem {
+  entity: IEntity | false;
+  entityClass: ExtendedEntityClass;
+  isTemplate: boolean;
+  isDiscouraged: boolean;
+}
 export interface DraggedTerritoryItem {
+  index?: number;
   id?: string;
   parentId?: string;
   lvl?: number;
-  index?: number;
 }
 export enum DraggedPropRowCategory {
   ACTANT = "ACTANT",
@@ -148,10 +144,10 @@ export enum DraggedPropRowCategory {
   META_PROP = "META_PROP",
 }
 export interface DraggedPropRowItem {
+  index?: number;
   id?: string;
   parentId?: string;
   lvl?: number;
-  index?: number;
   category?: DraggedPropRowCategory;
 }
 export interface DraggedActantRowItem {
@@ -234,8 +230,7 @@ export type SearchParams = {
 };
 
 // Attribute Editor
-// TODO: delete what is not used
-export type AttributeName =
+export type PropAttributeName =
   | "certainty"
   | "elvl"
   | "logic"
@@ -247,7 +242,11 @@ export type AttributeName =
   | "bundleStart"
   | "bundleEnd";
 
-export type GroupName = "type" | "value" | "statement";
+export type PropAttributeGroup = "type" | "value" | "statement";
+
+export type PropAttributeFilter = {
+  [key in PropAttributeGroup]: PropAttributeName[];
+};
 
 export interface AttributeData {
   // id: string;
@@ -262,25 +261,12 @@ export interface AttributeData {
   bundleStart?: boolean;
   bundleEnd?: boolean;
 }
-export interface AttributeGroupDataObject {
+export interface PropAttributeGroupDataObject {
   statement: AttributeData;
   type: AttributeData;
   value: AttributeData;
 }
 
-export const classesAll = [
-  EntityClass.Action,
-  EntityClass.Person,
-  EntityClass.Group,
-  EntityClass.Object,
-  EntityClass.Concept,
-  EntityClass.Location,
-  EntityClass.Value,
-  EntityClass.Event,
-  EntityClass.Statement,
-  EntityClass.Territory,
-  EntityClass.Resource,
-];
 export const classesPropType = [EntityClass.Concept];
 export const classesPropValue = [
   EntityClass.Action,
@@ -295,3 +281,14 @@ export const classesPropValue = [
   EntityClass.Territory,
   EntityClass.Resource,
 ];
+
+export interface EntitySuggestion {
+  entity: IEntity;
+  icons?: React.ReactNode[];
+}
+export interface SuggesterItemToCreate {
+  label: string;
+  entityClass: EntityClass;
+  detail?: string;
+  territoryId?: string;
+}
