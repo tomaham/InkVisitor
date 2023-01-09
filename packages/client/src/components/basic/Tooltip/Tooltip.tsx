@@ -1,154 +1,106 @@
-import {
-  AutoPlacement,
-  BasePlacement,
-  VariationPlacement,
-  VirtualElement,
-} from "@popperjs/core";
-import React, { ReactElement, useEffect, useState } from "react";
-import ReactDOM from "react-dom";
-import { usePopper } from "react-popper";
-import { useSpring } from "react-spring";
+import React, { ReactElement } from "react";
+import { AiOutlineTag } from "react-icons/ai";
+import { BiCommentDetail } from "react-icons/bi";
+import { BsCardText } from "react-icons/bs";
+import { ImListNumbered } from "react-icons/im";
+import { EventType, PopupPosition } from "reactjs-popup/dist/types";
 import { Colors } from "types";
 import {
-  StyledArrow,
-  StyledContainer,
-  StyledContent,
+  StyledContentWrap,
+  StyledDetail,
+  StyledIconWrap,
+  StyledItemsWrap,
   StyledLabel,
+  StyledPopup,
   StyledRow,
 } from "./TooltipStyles";
 
 interface Tooltip {
-  // essential
-  visible: boolean;
-  referenceElement: Element | VirtualElement | null;
-  // content
+  children: ReactElement;
+  position?: PopupPosition | PopupPosition[];
+  on?: EventType | EventType[];
   label?: string;
-  content?: ReactElement[] | ReactElement;
-  tagGroup?: boolean;
-  // style
+  detail?: string;
+  text?: string;
+  itemsCount?: number;
+  attributes?: ReactElement;
+  items?: ReactElement[] | ReactElement;
   color?: typeof Colors[number];
-  position?: AutoPlacement | BasePlacement | VariationPlacement;
+  tagTooltip?: boolean;
   noArrow?: boolean;
+  disabled?: boolean;
   offsetX?: number;
   offsetY?: number;
-
-  disabled?: boolean;
-  disableAutoPosition?: boolean;
-  onMouseLeave?: () => void;
 }
 export const Tooltip: React.FC<Tooltip> = ({
-  // essential
-  visible = false,
-  referenceElement,
-  // content
+  children,
+  position = ["bottom center", "right center", "top center"],
+  on = ["hover", "focus"],
   label = "",
-  content,
-  tagGroup = false,
-  // style
-  color = "black",
-  position = "bottom",
-  noArrow = false,
-  offsetX = 0,
-  offsetY = 7,
-
+  detail,
+  text,
+  attributes,
+  itemsCount,
+  tagTooltip = false,
   disabled = false,
-  disableAutoPosition = false,
-  onMouseLeave = () => {},
+  noArrow = false,
+  items,
+  color = "black",
+  offsetX,
+  offsetY,
 }) => {
-  const [popperElement, setPopperElement] =
-    useState<HTMLDivElement | null>(null);
-  const [arrowElement, setArrowElement] = useState<HTMLDivElement | null>(null);
-  const { styles, attributes, update, state, forceUpdate } = usePopper(
-    referenceElement,
-    popperElement,
-    {
-      placement: position,
-      modifiers: [
-        { name: "arrow", options: { element: arrowElement } },
-        {
-          name: "offset",
-          options: {
-            offset: [offsetX, offsetY],
-          },
-        },
-        {
-          name: "flip",
-          enabled: !disableAutoPosition,
-          options: {
-            fallbackPlacements: ["auto"],
-          },
-        },
-      ],
-    }
-  );
-
-  const [showTooltip, setShowTooltip] = useState(false);
-  useEffect(() => {
-    visible ? setShowTooltip(true) : setShowTooltip(false);
-  }, [visible]);
-
-  const [tooltipHovered, setTooltipHovered] = useState(false);
-
-  const animatedTooltip = useSpring({
-    opacity: showTooltip ? 1 : 0,
-    config: { mass: 2, friction: 2, tension: 100, clamp: true },
-  });
-
-  // Needed for state update
-  useEffect(() => {
-    if (!update) {
-      return;
-    }
-    if (visible) {
-      update();
-    }
-  }, [update, visible, label, content]);
-
   return (
-    <>
-      {!disabled && (showTooltip || tooltipHovered) && (
-        <>
-          {ReactDOM.createPortal(
-            <StyledContainer
-              ref={setPopperElement}
-              style={{ ...styles.popper, ...animatedTooltip }}
-              color={color}
-              onMouseLeave={() => {
-                onMouseLeave();
-                setTooltipHovered(false);
-              }}
-              arrowoffset={-offsetY}
-              onMouseEnter={() => {
-                setTooltipHovered(true);
-              }}
-              {...attributes.popper}
-            >
-              {!noArrow && (
-                <StyledArrow
-                  id="arrow"
-                  ref={setArrowElement}
-                  style={styles.arrow}
-                />
+    <StyledPopup
+      trigger={children}
+      mouseLeaveDelay={0}
+      position={position}
+      on={on}
+      disabled={disabled}
+      color={color}
+      arrow={!noArrow}
+      offsetX={offsetX}
+      offsetY={offsetY}
+    >
+      <div>
+        {attributes && <StyledContentWrap>{attributes}</StyledContentWrap>}
+        {(tagTooltip || text || detail || label) && (
+          <StyledContentWrap>
+            <StyledRow>
+              {tagTooltip && (
+                <StyledIconWrap>
+                  <AiOutlineTag />
+                </StyledIconWrap>
               )}
-              <div>
-                {label && (
-                  <StyledContent color={color}>
-                    <StyledRow>
-                      <StyledLabel>{label}</StyledLabel>
-                    </StyledRow>
-                  </StyledContent>
+              <StyledLabel>{label}</StyledLabel>
+            </StyledRow>
+            {text && (
+              <StyledRow>
+                <StyledIconWrap>{<BsCardText />}</StyledIconWrap>
+                <StyledDetail>{text}</StyledDetail>
+              </StyledRow>
+            )}
+            {(tagTooltip || detail) && (
+              <StyledRow>
+                {tagTooltip && (
+                  <StyledIconWrap>
+                    <BiCommentDetail />
+                  </StyledIconWrap>
                 )}
-                {content && (
-                  <StyledContent color={color} tagGroup={tagGroup}>
-                    {content}
-                  </StyledContent>
-                )}
-              </div>
-            </StyledContainer>,
-            document.getElementById("page")!
-          )}
-        </>
-      )}
-    </>
+                <StyledDetail>{detail}</StyledDetail>
+              </StyledRow>
+            )}
+            {itemsCount !== undefined && (
+              <StyledRow>
+                <StyledIconWrap>
+                  <ImListNumbered />
+                </StyledIconWrap>
+                <StyledDetail>{itemsCount}</StyledDetail>
+              </StyledRow>
+            )}
+          </StyledContentWrap>
+        )}
+        {items && <StyledItemsWrap>{items}</StyledItemsWrap>}
+      </div>
+    </StyledPopup>
   );
 };

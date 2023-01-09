@@ -1,13 +1,22 @@
-import { EntityEnums } from "../enums";
+import {
+  Certainty,
+  Elvl,
+  Logic,
+  Mood,
+  MoodVariant,
+  Operator,
+  Partitivity,
+  Virtuality,
+} from "../enums";
 
 export interface IProp {
   id: string;
-  elvl: EntityEnums.Elvl;
-  certainty: EntityEnums.Certainty;
-  logic: EntityEnums.Logic;
-  mood: EntityEnums.Mood[];
-  moodvariant: EntityEnums.MoodVariant;
-  bundleOperator: EntityEnums.Operator;
+  elvl: Elvl;
+  certainty: Certainty;
+  logic: Logic;
+  mood: Mood[];
+  moodvariant: MoodVariant;
+  bundleOperator: Operator;
   bundleStart: boolean;
   bundleEnd: boolean;
 
@@ -19,8 +28,8 @@ export interface IProp {
 
 export interface IPropSpec {
   entityId: string;
-  elvl: EntityEnums.Elvl;
-  logic: EntityEnums.Logic;
-  virtuality: EntityEnums.Virtuality;
-  partitivity: EntityEnums.Partitivity;
+  elvl: Elvl;
+  logic: Logic;
+  virtuality: Virtuality;
+  partitivity: Partitivity;
 }

@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, Request } from "express";
 import { findEntityById } from "@service/shorthands";
 import {
   BadParams,
@@ -10,86 +10,33 @@ import { asyncRouteHandler } from "..";
 import { IResponseGeneric, IResponseTree, ITerritory } from "@shared/types";
 import Territory from "@models/territory/territory";
 import { IParentTerritory } from "@shared/types/territory";
-import { EntityEnums } from "@shared/enums";
+import { EntityClass } from "@shared/enums";
 import treeCache, { TreeCreator } from "@service/treeCache";
-import { IRequest } from "src/custom_typings/request";
 
 export default Router()
-  /**
-   * @openapi
-   * /tree:
-   *   get:
-   *     description: Returns available territories tree
-   *     tags:
-   *       - tree
-   *     responses:
-   *       200:
-   *         description: Returns IResponseTree object
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: array
-   *               items: 
-   *                 $ref: "#/components/schemas/IResponseTree"
-   */
   .get(
     "/",
-    asyncRouteHandler<IResponseTree>(async (request: IRequest) => {
+    asyncRouteHandler<IResponseTree>(async (request: Request) => {
       return treeCache.forUser(request.getUserOrFail());
     })
   )
-  /**
-   * @openapi
-   * /tree/{territoryId}/position:
-   *   patch:
-   *     description: Updates the position of child territory
-   *     tags:
-   *       - tree
-   *     parameters:
-   *       - in: path
-   *         name: territoryId
-   *         schema:
-   *           type: string
-   *         required: true
-   *         description: ID of the territory entry
-   *     requestBody:
-   *       description: Position data
-   *       content: 
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             properties:
-   *               parentId: 
-   *                 type: string
-   *               newIndex:
-   *                 type: integer
-   *     responses:
-   *       200:
-   *         description: Returns generic response
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: "#/components/schemas/IResponseGeneric"
-   */
   .patch(
     "/:territoryId/position",
-    asyncRouteHandler<IResponseGeneric>(async (request: IRequest) => {
-      const territoryId = request.params.territoryId as string;
-      const parentId = request.body.parentId as string;
-      const newIndex = request.body.newIndex as number;
+    asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
+      const territoryId = request.params.territoryId;
+      const parentId = request.body.parentId;
+      const newIndex = request.body.newIndex;
 
       if (!territoryId || !parentId || newIndex === undefined) {
         throw new BadParams("moveId/parentId/newIndex has be set");
       }
-
-      await request.db.lock();
 
       // check child territory
       const territoryData = await findEntityById<ITerritory>(
         request.db,
         territoryId
       );
-      if (!territoryData || territoryData.class !== EntityEnums.Class.Territory) {
+      if (!territoryData || territoryData.class !== EntityClass.Territory) {
         throw new TerritoryDoesNotExits(
           `territory ${territoryId} does not exist`,
           territoryId
@@ -107,7 +54,7 @@ export default Router()
 
       // check parent territory
       const parent = await findEntityById<ITerritory>(request.db, parentId);
-      if (!parent || parent.class !== EntityEnums.Class.Territory) {
+      if (!parent || parent.class !== EntityClass.Territory) {
         throw new TerritoryDoesNotExits(
           `parent territory ${parentId} does not exist`,
           parentId

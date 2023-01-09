@@ -1,12 +1,10 @@
-import { EntityEnums } from "@shared/enums";
-import { IEntity } from "@shared/types";
-import { Button, ButtonGroup } from "components";
-import { EntityTag } from "components/advanced";
+import { EntityClass, EntityStatus } from "@shared/enums";
+
 import memoize from "memoize-one";
 import React from "react";
-import { FaLink, FaPlusSquare } from "react-icons/fa";
-import { areEqual } from "react-window";
-import { EntitySuggestion } from "types";
+import { FaPlayCircle } from "react-icons/fa";
+import theme from "Theme/theme";
+
 import {
   StyledSuggestionLineActions,
   StyledSuggestionLineIcons,
@@ -14,6 +12,12 @@ import {
   StyledSuggestionRow,
   StyledTagWrapper,
 } from "../SuggesterStyles";
+import { areEqual } from "react-window";
+import { Tag, Tooltip } from "components";
+import { EntitySuggestion } from "types";
+import { IEntity } from "@shared/types";
+import { ImInsertTemplate } from "react-icons/im";
+import { BiDuplicate } from "react-icons/bi";
 
 export const createItemData = memoize(
   (
@@ -44,72 +48,64 @@ interface EntityRow {
   index: number;
   style: any;
 }
-
 const EntityRow: React.FC<EntityRow> = ({ data, index, style }) => {
   const { items, onPick, selected, isInsideTemplate, territoryParentId } = data;
   const { entity, icons } = items[index];
-  const isNotDiscouraged = entity.status !== EntityEnums.Status.Discouraged;
+  const isNotDiscouraged = entity.status !== EntityStatus.Discouraged;
   const territoryWithoutParent =
-    entity.class === EntityEnums.Class.Territory && !territoryParentId;
+    entity.class === EntityClass.Territory && !territoryParentId;
 
   const renderIcons = () => {
-    return (
-      <ButtonGroup noMarginRight>
-        {!entity.isTemplate && (
-          <Button
-            tooltipLabel="link entity"
-            inverted
-            noBorder
-            noBackground
-            color="none"
-            key="link entity"
-            noIconMargin
-            icon={
-              <FaLink
-                onClick={() => {
-                  // onPick nonTemplate entity
-                  onPick(entity);
-                }}
-              />
-            }
+    if (!entity.isTemplate) {
+      return (
+        <FaPlayCircle
+          color={theme.color["black"]}
+          onClick={() => {
+            // onPick nonTemplate entity
+            onPick(entity);
+          }}
+          style={{ marginLeft: "0.5rem", cursor: "pointer" }}
+        />
+      );
+    } else if (entity.isTemplate && !isInsideTemplate) {
+      return (
+        <>
+          {!territoryWithoutParent && (
+            <BiDuplicate
+              color={theme.color["black"]}
+              onClick={() => {
+                // onPick template inside nonTemplate
+                onPick(entity, true);
+              }}
+              style={{ marginLeft: "0.5rem", cursor: "pointer" }}
+            />
+          )}
+        </>
+      );
+    } else if (entity.isTemplate && isInsideTemplate) {
+      return (
+        <div>
+          {!territoryWithoutParent && (
+            <BiDuplicate
+              color={theme.color["black"]}
+              onClick={() => {
+                // onPick duplicate template to entity
+                onPick(entity, true);
+              }}
+              style={{ marginLeft: "0.5rem", cursor: "pointer" }}
+            />
+          )}
+          <ImInsertTemplate
+            color={theme.color["black"]}
+            onClick={() => {
+              // onPick template entity
+              onPick(entity);
+            }}
+            style={{ marginLeft: "0.5rem", cursor: "pointer" }}
           />
-        )}
-        {entity.isTemplate && !territoryWithoutParent && (
-          <Button
-            tooltipLabel="link a new template instance"
-            key="instantiate template"
-            inverted
-            noBorder
-            noBackground
-            icon={
-              <FaPlusSquare
-                onClick={() => {
-                  // onPick template inside nonTemplate
-                  onPick(entity, true);
-                }}
-              />
-            }
-          />
-        )}
-        {entity.isTemplate && isInsideTemplate && (
-          <Button
-            tooltipLabel="link template"
-            key="link template"
-            inverted
-            noBorder
-            noBackground
-            icon={
-              <FaLink
-                onClick={() => {
-                  // onPick template entity
-                  onPick(entity);
-                }}
-              />
-            }
-          />
-        )}
-      </ButtonGroup>
-    );
+        </div>
+      );
+    }
   };
 
   const entityIsTemplate = entity.isTemplate || false;
@@ -125,7 +121,16 @@ const EntityRow: React.FC<EntityRow> = ({ data, index, style }) => {
       </StyledSuggestionLineActions>
       <StyledSuggestionLineTag isSelected={selected === index}>
         <StyledTagWrapper>
-          <EntityTag fullWidth entity={entity} tooltipPosition="right" />
+          <Tag
+            fullWidth
+            propId={entity.id}
+            label={entity.label}
+            status={entity.status}
+            ltype={entity.data.logicalType}
+            tooltipDetail={entity.detail}
+            entityClass={entity.class}
+            isTemplate={entity.isTemplate}
+          />
         </StyledTagWrapper>
       </StyledSuggestionLineTag>
       <StyledSuggestionLineIcons isSelected={selected === index}>

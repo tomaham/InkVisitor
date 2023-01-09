@@ -5,7 +5,7 @@ import { StyledRow } from "./MultiInputStyles";
 
 interface MultiInput {
   values: string[];
-  onChange: (values: string[]) => void;
+  onChange: Function;
   width?: number | "full";
   disabled?: boolean;
 }

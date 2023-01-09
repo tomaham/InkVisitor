@@ -1,88 +1,82 @@
-import { EntityEnums } from "../enums";
+import { EntityClass, EntityExtension } from "../enums";
 export type DropdownItem = { value: string; label: string; info?: string };
 
 export const allEntities: DropdownItem = {
-  value: EntityEnums.Extension.Any,
+  value: EntityExtension.Any,
   label: "Any",
   info: "",
 };
 
 export const entitiesDictKeys = {
   A: {
-    value: EntityEnums.Class.Action,
+    value: EntityClass.Action,
     label: "Action",
     info: "",
   },
   T: {
-    value: EntityEnums.Class.Territory,
+    value: EntityClass.Territory,
     label: "Territory",
     info: "",
   },
   S: {
-    value: EntityEnums.Class.Statement,
+    value: EntityClass.Statement,
     label: "Statement",
     info: "",
   },
   R: {
-    value: EntityEnums.Class.Resource,
+    value: EntityClass.Resource,
     label: "Resource",
     info: "",
   },
   P: {
-    value: EntityEnums.Class.Person,
+    value: EntityClass.Person,
     label: "Person",
     info: "",
   },
-  B: {
-    value: EntityEnums.Class.Being,
-    label: "Living Being",
-    info: "",
-  },
   G: {
-    value: EntityEnums.Class.Group,
+    value: EntityClass.Group,
     label: "Group",
     info: "",
   },
   O: {
-    value: EntityEnums.Class.Object,
+    value: EntityClass.Object,
     label: "Object",
     info: "",
   },
   C: {
-    value: EntityEnums.Class.Concept,
+    value: EntityClass.Concept,
     label: "Concept",
     info: "",
   },
   L: {
-    value: EntityEnums.Class.Location,
+    value: EntityClass.Location,
     label: "Location",
     info: "",
   },
   V: {
-    value: EntityEnums.Class.Value,
+    value: EntityClass.Value,
     label: "Value",
     info: "",
   },
   E: {
-    value: EntityEnums.Class.Event,
+    value: EntityClass.Event,
     label: "Event",
     info: "",
   },
 };
 
 export const classesAll = [
-  EntityEnums.Class.Concept,
-  EntityEnums.Class.Action,
-  EntityEnums.Class.Person,
-  EntityEnums.Class.Group,
-  EntityEnums.Class.Being,
-  EntityEnums.Class.Object,
-  EntityEnums.Class.Location,
-  EntityEnums.Class.Event,
-  EntityEnums.Class.Statement,
-  EntityEnums.Class.Territory,
-  EntityEnums.Class.Resource,
-  EntityEnums.Class.Value,
+  EntityClass.Action,
+  EntityClass.Person,
+  EntityClass.Group,
+  EntityClass.Object,
+  EntityClass.Concept,
+  EntityClass.Location,
+  EntityClass.Value,
+  EntityClass.Event,
+  EntityClass.Statement,
+  EntityClass.Territory,
+  EntityClass.Resource,
 ];
 
 export const entitiesDict: DropdownItem[] = classesAll.map(

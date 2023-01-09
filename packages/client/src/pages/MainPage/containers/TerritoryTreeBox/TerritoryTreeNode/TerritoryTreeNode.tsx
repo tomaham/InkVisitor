@@ -1,5 +1,9 @@
-import { UserEnums } from "@shared/enums";
-import { IResponseTreeTerritoryComponent, ITerritory } from "@shared/types";
+import { UserRoleMode } from "@shared/enums";
+import {
+  IEntity,
+  IResponseTreeTerritoryComponent,
+  ITerritory,
+} from "@shared/types";
 import { IParentTerritory } from "@shared/types/territory";
 import api from "api";
 import { EntityTag } from "components/advanced";
@@ -18,7 +22,7 @@ import { setTreeInitialized } from "redux/features/territoryTree/treeInitializeS
 import { useAppDispatch, useAppSelector } from "redux/hooks";
 import { rootTerritoryId } from "Theme/constants";
 import theme from "Theme/theme";
-import { DraggedTerritoryItem, EntityDragItem } from "types";
+import { DraggedTerritoryItem, DragItem } from "types";
 import { TerritoryTreeContextMenu } from "../TerritoryTreeContextMenu/TerritoryTreeContextMenu";
 import {
   StyledChildrenWrap,
@@ -39,7 +43,7 @@ interface TerritoryTreeNode {
   index?: number;
   moveFn?: (dragIndex: number, hoverIndex: number) => void;
   empty?: boolean;
-  right: UserEnums.RoleMode;
+  right: UserRoleMode;
   storedTerritories: string[];
   updateUserMutation: UseMutationResult<void, unknown, object, unknown>;
 }
@@ -78,7 +82,7 @@ export const TerritoryTreeNode: React.FC<TerritoryTreeNode> = ({
   });
 
   const symbolColor = useMemo(() => {
-    return right === UserEnums.RoleMode.Read
+    return right === UserRoleMode.Read
       ? theme.color.gray[600]
       : theme.color.gray[800];
   }, [right]);
@@ -121,7 +125,7 @@ export const TerritoryTreeNode: React.FC<TerritoryTreeNode> = ({
   );
 
   const moveTerritoryMutation = useMutation(
-    async (item: EntityDragItem) => {
+    async (item: DragItem) => {
       if (territory.data.parent && item.index !== -1) {
         const parent = territory.data.parent as IParentTerritory;
         await api.treeMoveTerritory(item.id, parent.territoryId, item.index);
@@ -139,8 +143,7 @@ export const TerritoryTreeNode: React.FC<TerritoryTreeNode> = ({
     setIsExpanded(!isExpanded);
   };
 
-  const renderArrowIcon = () => {
-    const { id } = territory;
+  const getArrowIcon = (id: string) => {
     if (!empty) {
       // filled
       return (
@@ -233,21 +236,24 @@ export const TerritoryTreeNode: React.FC<TerritoryTreeNode> = ({
     }
   }, [draggedTerritory]);
 
-  const renderTreeNode = () => {
-    const hasChildren = children.length > 0;
-    const { id, data } = territory;
-    const parent = data.parent as IParentTerritory;
-    const isFavorited = storedTerritories?.includes(id);
+  // TODO: move to useCallback with all dependencies!
+  const renderTerritoryTag = (
+    territoryActant: IEntity,
+    id: string,
+    hasChildren: boolean
+  ) => {
+    const parent = territory.data.parent as IParentTerritory;
+    const isFavorited = storedTerritories?.includes(territoryActant.id);
 
     return (
       <>
         {id !== rootTerritoryId && (
           <>
             {!tempDisabled ? (
-              <StyledTerritoryTagWrap id={`territory${id}`}>
+              <StyledTerritoryTagWrap id={`territory${territory.id}`}>
                 <StyledIconWrap>
                   {hasChildren ? (
-                    <>{renderArrowIcon()}</>
+                    <>{getArrowIcon(id)}</>
                   ) : (
                     <>
                       {statementsCount > 0 ? (
@@ -272,10 +278,11 @@ export const TerritoryTreeNode: React.FC<TerritoryTreeNode> = ({
                 </StyledIconWrap>
                 <animated.div style={animatedStyle}>
                   <EntityTag
-                    entity={territory}
+                    entity={territoryActant}
                     parentId={parent.territoryId}
                     lvl={lvl}
                     isSelected={isSelected}
+                    propId={propId}
                     index={index}
                     fullWidth
                     moveFn={moveFn}
@@ -283,11 +290,10 @@ export const TerritoryTreeNode: React.FC<TerritoryTreeNode> = ({
                     statementsCount={statementsCount}
                     isFavorited={isFavorited}
                     showOnly="label"
-                    tooltipPosition="right"
                   />
                 </animated.div>
                 <TerritoryTreeContextMenu
-                  territoryActant={territory}
+                  territoryActant={territoryActant}
                   onMenuOpen={() => setContextMenuOpen(true)}
                   onMenuClose={() => setContextMenuOpen(false)}
                   right={right}
@@ -308,7 +314,7 @@ export const TerritoryTreeNode: React.FC<TerritoryTreeNode> = ({
 
   return (
     <>
-      {renderTreeNode()}
+      {renderTerritoryTag(territory, territory.id, children.length > 0)}
 
       <StyledChildrenWrap noIndent={lvl === 0}>
         {!hideChildTerritories &&
@@ -316,15 +322,15 @@ export const TerritoryTreeNode: React.FC<TerritoryTreeNode> = ({
           childTerritories.map(
             (child: IResponseTreeTerritoryComponent, key: number) => (
               <TerritoryTreeNode
-                key={key}
-                index={key}
-                propId={child.territory.id}
+                key={`${key}_${child.territory.id}`}
                 territory={child.territory}
                 children={child.children}
                 right={child.right}
                 lvl={child.lvl}
                 statementsCount={child.statementsCount}
                 initExpandedNodes={initExpandedNodes}
+                propId={child.territory.id}
+                index={key}
                 empty={child.empty}
                 moveFn={moveChildFn}
                 storedTerritories={storedTerritories}

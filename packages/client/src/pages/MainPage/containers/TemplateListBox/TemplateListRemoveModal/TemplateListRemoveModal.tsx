@@ -1,4 +1,4 @@
-import { EntityEnums } from "@shared/enums";
+import { EntityClass } from "@shared/enums";
 import { IEntity } from "@shared/types";
 import api from "api";
 import {
@@ -57,7 +57,7 @@ export const TemplateListRemoveModal: React.FC<TemplateListRemoveModal> = ({
         if (
           statementId &&
           entityToRemove &&
-          entityToRemove.class === EntityEnums.Class.Statement
+          entityToRemove.class === EntityClass.Statement
         ) {
           queryClient.invalidateQueries("statement-templates");
         }

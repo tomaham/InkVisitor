@@ -7,7 +7,7 @@ import {
 } from "@shared/types/errors";
 import { UnauthorizedError as JwtUnauthorizedError } from "express-jwt";
 import { IResponseGeneric, errorTypes } from "@shared/types/response-generic";
-import { red } from "cli-color";
+import logger from "@common/Logger";
 
 export const unauthorizedError = new UnauthorizedError("unauthorized");
 export const unknownRouteError = new NotFound("route does not exist");
@@ -23,20 +23,18 @@ export default function errorsMiddleware(
 ): void {
   // should expect customized errors, unknown unhandled errors, or errors thrown from some lib
   const isCustomError = typeof (err as CustomError).statusCode === "function";
+
   if (!isCustomError) {
     if (err instanceof JwtUnauthorizedError) {
       // customized unauthorized error
       err = unauthorizedError;
     } else {
       // unknown unhandled error - should log the message
-      console.error(red(`[Unhandled error] ${err.message}`))
-      console.error(err);
-
-      // hide details for client
+      logger.error(err.message, err);
       err = internalServerError;
     }
   } else if ((err as CustomError).shouldLog()) {
-    console.error(red(`[Error] ${(err as CustomError).name}: ${(err as CustomError).log}`));
+    logger.warn(`${(err as CustomError).name}: ${(err as CustomError).log}`);
   }
 
   // in any case, the error should be wrapper in IResponseGeneric

@@ -1,4 +1,4 @@
-import { EntityEnums, UserEnums } from "@shared/enums";
+import { EntityClass, UserRole } from "@shared/enums";
 import { IOption } from "@shared/types";
 import api from "api";
 import {
@@ -16,7 +16,7 @@ import {
   Tag,
   TypeBar,
 } from "components";
-import { EntitySuggester, EntityTag } from "components/advanced";
+import { EntitySuggester } from "components/advanced";
 import React, { useEffect, useState } from "react";
 import { FaUnlink } from "react-icons/fa";
 import { useQuery } from "react-query";
@@ -54,7 +54,7 @@ export const SuggesterCreateModal: React.FC<SuggesterCreateModal> = ({
   const [detail, setDetail] = useState<string>("");
   const [territoryId, setTerritoryId] = useState<string>("");
 
-  const userRole = localStorage.getItem("userrole") as UserEnums.Role;
+  const userRole = localStorage.getItem("userrole") as UserRole;
 
   const handleCreateActant = () => {
     onCreate({
@@ -94,7 +94,7 @@ export const SuggesterCreateModal: React.FC<SuggesterCreateModal> = ({
         } else if (
           selectedCategory.value === "T" &&
           !territoryId &&
-          userRole !== UserEnums.Role.Admin
+          userRole !== UserRole.Admin
         ) {
           toast.warning("Parent territory is required!");
         } else {
@@ -153,16 +153,18 @@ export const SuggesterCreateModal: React.FC<SuggesterCreateModal> = ({
                 </ModalInputLabel>
                 <ModalInputWrap>
                   {territory ? (
-                    <EntityTag
-                      entity={territory}
-                      tooltipPosition="left"
+                    <Tag
+                      propId={territory.id}
+                      label={territory.label}
+                      entityClass={territory.class}
+                      tooltipPosition={"left center"}
                       button={
                         <Button
                           key="d"
                           icon={<FaUnlink />}
                           color="danger"
-                          inverted
-                          tooltipLabel="unlink actant"
+                          inverted={true}
+                          tooltip="unlink actant"
                           onClick={() => {
                             setTerritoryId("");
                           }}
@@ -175,7 +177,7 @@ export const SuggesterCreateModal: React.FC<SuggesterCreateModal> = ({
                       filterEditorRights
                       inputWidth={96}
                       disableCreate
-                      categoryTypes={[EntityEnums.Class.Territory]}
+                      categoryTypes={[EntityClass.Territory]}
                       onSelected={(newSelectedId: string) => {
                         setTerritoryId(newSelectedId);
                       }}
@@ -185,7 +187,7 @@ export const SuggesterCreateModal: React.FC<SuggesterCreateModal> = ({
               </>
             )}
           </ModalInputForm>
-          {userRole === UserEnums.Role.Admin && (
+          {userRole === UserRole.Admin && (
             <>
               {selectedCategory.value === "T" && !territoryId ? (
                 <StyledNote>
@@ -222,7 +224,7 @@ export const SuggesterCreateModal: React.FC<SuggesterCreateModal> = ({
               } else if (
                 selectedCategory.value === "T" &&
                 !territoryId &&
-                userRole !== UserEnums.Role.Admin
+                userRole !== UserRole.Admin
               ) {
                 toast.warning("Parent territory is required!");
               } else {

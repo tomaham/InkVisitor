@@ -6,7 +6,7 @@ import Territory from "@models/territory/territory";
 import request from "supertest";
 import { apiPath } from "@common/constants";
 import app from "../../Server";
-import Statement, { StatementData } from "@models/statement/statement";
+import Statement from "@models/statement/statement";
 import { supertestConfig } from "..";
 
 describe("Territories get query", function () {
@@ -48,23 +48,23 @@ describe("Territories get query", function () {
 
       const statement1 = new Statement({
         id: linkedStatementId,
-        data: new StatementData({
+        data: {
           territory: {
-            territoryId: "some random",
+            id: "some random",
             order: 1,
           },
-        }),
+        },
       });
       await createEntity(db, statement1);
 
       const statement2 = new Statement({
-        data: new StatementData({
+        data: {
           tags: [statement1.id],
           territory: {
-            territoryId: testTerritoryId,
+            id: testTerritoryId,
             order: 2,
           },
-        }),
+        },
       });
       await createEntity(db, statement2);
 

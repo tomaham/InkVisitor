@@ -30,27 +30,27 @@ datasets = {
       r
         .table("entities")
         .index_create(
-        "data.actants.entityId",
-        r.row["data"]["actants"]["entityId"]
+        "data.actants.actant",
+        r.row["data"]["actants"]["actant"]
       ),
       r
         .table("entities")
         .index_create(
-        "data.actions.actionId",
-        r.row["data"]["actions"]["actionId"]
+        "data.actions.action",
+        r.row["data"]["actions"]["action"]
       ),
       r.table("entities").index_create("data.tags", r.row["data"]["tags"]),
       r
         .table("entities")
         .index_create(
-        "data.props.type.entityId",
-        r.row["data"]["props"]["type"]["entityId"]
+        "data.props.type.id",
+        r.row["data"]["props"]["type"]["id"]
       ),
       r
         .table("entities")
         .index_create(
-        "data.props.value.entityId",
-        r.row["data"]["props"]["value"]["entityId"]
+        "data.props.value.id",
+        r.row["data"]["props"]["value"]["id"]
       ),
       r
         .table("entities")
@@ -63,10 +63,10 @@ datasets = {
         .index_create("data.props.origin", r.row["data"]["props"]["origin"]),
       r
         .table("entities")
-        .index_create("data.territory.territoryId", r.row["data"]["territory"]["territoryId"]),
+        .index_create("data.territory.id", r.row["data"]["territory"]["id"]),
       r
         .table("entities")
-        .index_create("data.parent.territoryId", r.row["data"]["parent"]["territoryId"]),
+        .index_create("data.parent.id", r.row["data"]["parent"]["id"]),
     ],
   },
   {
@@ -91,27 +91,27 @@ datasets = {
       r
         .table("entities")
         .index_create(
-        "data.actants.entityId",
-        r.row["data"]["actants"]["entityId"]
+        "data.actants.actant",
+        r.row["data"]["actants"]["actant"]
       ),
       r
         .table("entities")
         .index_create(
-        "data.actions.actionId",
-        r.row["data"]["actions"]["actionId"]
+        "data.actions.action",
+        r.row["data"]["actions"]["action"]
       ),
       r.table("actants").index_create("data.tags", r.row["data"]["tags"]),
       r
         .table("entities")
         .index_create(
-        "data.props.type.entityId",
-        r.row["data"]["props"]["type"]["entityId"]
+        "data.props.type.id",
+        r.row["data"]["props"]["type"]["id"]
       ),
       r
         .table("entities")
         .index_create(
-        "data.props.value.entityId",
-        r.row["data"]["props"]["value"]["entityId"]
+        "data.props.value.id",
+        r.row["data"]["props"]["value"]["id"]
       ),
       r
         .table("entities")
@@ -124,10 +124,10 @@ datasets = {
         .index_create("data.props.origin", r.row["data"]["props"]["origin"]),
       r
         .table("entities")
-        .index_create("data.territory.territoryId", r.row["data"]["territory"]["territoryId"]),
+        .index_create("data.territory.id", r.row["data"]["territory"]["id"]),
       r
         .table("entities")
-        .index_create("data.parent.territoryId", r.row["data"]["parent"]["territoryId"]),
+        .index_create("data.parent.id", r.row["data"]["parent"]["id"]),
     ],
   },
   {
@@ -152,27 +152,27 @@ datasets = {
       r
         .table("entities")
         .index_create(
-        "data.actants.entityId",
-        r.row["data"]["actants"]["entityId"]
+        "data.actants.actant",
+        r.row["data"]["actants"]["actant"]
       ),
       r
         .table("entities")
         .index_create(
-        "data.actions.actionId",
-        r.row["data"]["actions"]["actionId"]
+        "data.actions.action",
+        r.row["data"]["actions"]["action"]
       ),
       r.table("actants").index_create("data.tags", r.row["data"]["tags"]),
       r
         .table("entities")
         .index_create(
-        "data.props.type.entityId",
-        r.row["data"]["props"]["type"]["entityId"]
+        "data.props.type.id",
+        r.row["data"]["props"]["type"]["id"]
       ),
       r
         .table("entities")
         .index_create(
-        "data.props.value.entityId",
-        r.row["data"]["props"]["value"]["entityId"]
+        "data.props.value.id",
+        r.row["data"]["props"]["value"]["id"]
       ),
       r
         .table("entities")
@@ -185,10 +185,10 @@ datasets = {
         .index_create("data.props.origin", r.row["data"]["props"]["origin"]),
       r
         .table("entities")
-        .index_create("data.territory.territoryId", r.row["data"]["territory"]["territoryId"]),
+        .index_create("data.territory.id", r.row["data"]["territory"]["id"]),
       r
         .table("entities")
-        .index_create("data.parent.territoryId", r.row["data"]["parent"]["territoryId"]),
+        .index_create("data.parent.id", r.row["data"]["parent"]["id"]),
     ],
   },
   {

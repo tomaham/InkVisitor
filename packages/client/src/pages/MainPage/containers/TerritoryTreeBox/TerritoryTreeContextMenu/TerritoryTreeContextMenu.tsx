@@ -1,4 +1,4 @@
-import { UserEnums } from "@shared/enums";
+import { UserRoleMode } from "@shared/enums";
 import { IEntity } from "@shared/types";
 import { Button } from "components";
 import React, { useRef, useState } from "react";
@@ -16,7 +16,7 @@ import {
 
 interface TerritoryTreeContextMenu {
   territoryActant: IEntity;
-  right: UserEnums.RoleMode;
+  right: UserRoleMode;
   empty: boolean;
   onMenuOpen: () => void;
   onMenuClose: () => void;
@@ -85,10 +85,10 @@ export const TerritoryTreeContextMenu: React.FC<TerritoryTreeContextMenu> = ({
             height={currentPosition.height}
             style={animatedMount}
           >
-            {right !== UserEnums.RoleMode.Read && (
+            {right !== UserRoleMode.Read && (
               <Button
                 key="add"
-                tooltipLabel="add child territory"
+                tooltip="add child territory"
                 icon={<FaPlus size={14} />}
                 color="info"
                 onClick={() => {
@@ -101,7 +101,7 @@ export const TerritoryTreeContextMenu: React.FC<TerritoryTreeContextMenu> = ({
             )}
             <Button
               key="favorites"
-              tooltipLabel={
+              tooltip={
                 isFavorited ? "remove from favorites" : "add to favorites"
               }
               icon={<FaStar size={14} />}
@@ -133,20 +133,20 @@ export const TerritoryTreeContextMenu: React.FC<TerritoryTreeContextMenu> = ({
                 onMenuClose();
               }}
             />
-            {((right === UserEnums.RoleMode.Admin && empty) ||
-              (right === UserEnums.RoleMode.Write && empty)) && (
-                <Button
-                  key="delete"
-                  tooltipLabel="delete territory"
-                  icon={<FaTrashAlt size={14} />}
-                  color="danger"
-                  onClick={() => {
-                    setShowSubmit(true);
-                    setShowMenu(false);
-                    onMenuClose();
-                  }}
-                />
-              )}
+            {((right === UserRoleMode.Admin && empty) ||
+              (right === UserRoleMode.Write && empty)) && (
+              <Button
+                key="delete"
+                tooltip="delete territory"
+                icon={<FaTrashAlt size={14} />}
+                color="danger"
+                onClick={() => {
+                  setShowSubmit(true);
+                  setShowMenu(false);
+                  onMenuClose();
+                }}
+              />
+            )}
           </StyledContextButtonGroup>
         )}
       </StyledWrapper>

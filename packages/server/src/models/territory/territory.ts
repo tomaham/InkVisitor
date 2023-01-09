@@ -1,7 +1,7 @@
-import { EntityEnums, UserEnums } from "@shared/enums";
-import { ITerritory, IParentTerritory, ITerritoryData } from "@shared/types";
+import { EntityClass, UserRole, UserRoleMode } from "@shared/enums";
+import { ITerritory, IParentTerritory } from "@shared/types/territory";
 import { r as rethink, Connection, WriteResult, RDatum } from "rethinkdb-ts";
-import { IModel, determineOrder } from "@models/common";
+import { fillFlatObject, UnknownObject, IModel } from "@models/common";
 import Entity from "@models/entity/entity";
 import { InternalServerError, InvalidDeleteError } from "@shared/types/errors";
 import User from "@models/user/user";
@@ -9,12 +9,15 @@ import treeCache from "@service/treeCache";
 import { nonenumerable } from "@common/decorators";
 
 export class TerritoryParent implements IParentTerritory, IModel {
-  territoryId: string;
-  order: number;
+  territoryId = "";
+  order = -1;
 
-  constructor(data: Partial<IParentTerritory>) {
-    this.territoryId = data.territoryId as string;
-    this.order = data.order !== undefined ? data.order : -1;
+  constructor(data: UnknownObject) {
+    if (!data) {
+      return;
+    }
+
+    fillFlatObject(this, data as Record<string, unknown>);
   }
 
   isValid(): boolean {
@@ -26,12 +29,17 @@ export class TerritoryParent implements IParentTerritory, IModel {
   }
 }
 
-export class TerritoryData implements ITerritoryData, IModel {
+export class TerritoryData implements IModel {
   parent: TerritoryParent | false = false;
 
-  constructor(data: Partial<ITerritoryData>) {
+  constructor(data: UnknownObject) {
+    if (!data) {
+      return;
+    }
+    fillFlatObject(this, data);
+
     if (data.parent) {
-      this.parent = new TerritoryParent(data.parent || {});
+      this.parent = new TerritoryParent(data.parent as UnknownObject);
     }
   }
 
@@ -45,23 +53,28 @@ export class TerritoryData implements ITerritoryData, IModel {
 }
 
 class Territory extends Entity implements ITerritory {
-  class: EntityEnums.Class.Territory = EntityEnums.Class.Territory;
+  class: EntityClass.Territory = EntityClass.Territory;
   data: TerritoryData;
 
   @nonenumerable
-  _siblings?: Record<number, ITerritory>;
+  _siblings: Record<number, ITerritory> = {};
 
-  constructor(data: Partial<ITerritory>) {
+  constructor(data: UnknownObject) {
     super(data);
-    this.data = new TerritoryData(data.data || {});
+
+    if (!data) {
+      data = {};
+    }
+
+    this.data = new TerritoryData(data.data as UnknownObject);
   }
 
   isValid(): boolean {
-    if (this.class !== EntityEnums.Class.Territory) {
+    if (this.class !== EntityClass.Territory) {
       return false;
     }
 
-    return super.isValid() && this.data.isValid();
+    return this.data.isValid();
   }
 
   setSiblings(childsMap: Record<number, ITerritory>) {
@@ -78,7 +91,7 @@ class Territory extends Entity implements ITerritory {
       );
 
       const wantedOrder = this.data.parent.order;
-      this.data.parent.order = determineOrder(wantedOrder, childs);
+      this.data.parent.order = Entity.determineOrder(wantedOrder, childs);
     } else if (this.id !== "T0" && !this.isTemplate) {
       return {
         deleted: 0,
@@ -104,26 +117,20 @@ class Territory extends Entity implements ITerritory {
   ): Promise<WriteResult> {
     if (updateData["data"] && (updateData["data"] as any)["parent"]) {
       const parentData = (updateData["data"] as any)["parent"];
-
       let parentId: string;
-      if (parentData.territoryId) {
-        parentId = parentData.territoryId;
+      if (parentData.id) {
+        parentId = parentData.id;
       } else if (this.data.parent) {
         parentId = this.data.parent.territoryId;
       } else {
-        throw new InternalServerError("parent for territory must be set");
+        throw new InternalServerError("parent for category must be set");
       }
-
-      if (!this._siblings) {
-        this._siblings = await new Territory({ id: parentId }).findChilds(db);
-      }
-
-      parentData.order = determineOrder(parentData.order, this._siblings);
 
       this.data.parent = new TerritoryParent({
-        territoryId: parentId,
-        order: parentData.order,
+        id: parentId,
+        order: Entity.determineOrder(parentData.order, this._siblings),
       });
+      parentData.order = this.data.parent.order;
     }
 
     const result = await rethink
@@ -162,7 +169,7 @@ class Territory extends Entity implements ITerritory {
     const list: ITerritory[] = await rethink
       .table(Territory.table)
       .filter({
-        class: EntityEnums.Class.Territory,
+        class: EntityClass.Territory,
       })
       .filter((territory: RDatum) => {
         return rethink.and(
@@ -184,7 +191,7 @@ class Territory extends Entity implements ITerritory {
 
   canBeViewedByUser(user: User): boolean {
     // admin role has always the right
-    if (user.role === UserEnums.Role.Admin) {
+    if (user.role === UserRole.Admin) {
       return true;
     }
 
@@ -193,7 +200,7 @@ class Territory extends Entity implements ITerritory {
 
   canBeEditedByUser(user: User): boolean {
     // admin role has always the right
-    if (user.role === UserEnums.Role.Admin) {
+    if (user.role === UserRole.Admin) {
       return true;
     }
 
@@ -204,8 +211,8 @@ class Territory extends Entity implements ITerritory {
     }
 
     return (
-      closestRight.mode === UserEnums.RoleMode.Admin ||
-      closestRight.mode === UserEnums.RoleMode.Write
+      closestRight.mode === UserRoleMode.Admin ||
+      closestRight.mode === UserRoleMode.Write
     );
   }
 
@@ -216,7 +223,7 @@ class Territory extends Entity implements ITerritory {
     }
 
     // admin role has always the right
-    if (user.role === UserEnums.Role.Admin) {
+    if (user.role === UserRole.Admin) {
       return true;
     }
 
@@ -234,14 +241,14 @@ class Territory extends Entity implements ITerritory {
     }
 
     return (
-      closestRight.mode === UserEnums.RoleMode.Admin ||
-      closestRight.mode === UserEnums.RoleMode.Write
+      closestRight.mode === UserRoleMode.Admin ||
+      closestRight.mode === UserRoleMode.Write
     );
   }
 
   canBeDeletedByUser(user: User): boolean {
     // admin role has always the right
-    if (user.role === UserEnums.Role.Admin) {
+    if (user.role === UserRole.Admin) {
       return true;
     }
 

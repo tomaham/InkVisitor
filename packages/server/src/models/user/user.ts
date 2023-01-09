@@ -12,7 +12,7 @@ import {
   fillFlatObject,
   UnknownObject,
 } from "@models/common";
-import { UserEnums } from "@shared/enums";
+import { UserRole, UserRoleMode } from "@shared/enums";
 import { ModelNotValidError } from "@shared/types/errors";
 import { generateRandomString, generateUuid, hashPassword } from "@common/auth";
 import { regExpEscape } from "@common/functions";
@@ -20,7 +20,7 @@ import { nonenumerable } from "@common/decorators";
 
 export class UserRight implements IUserRight {
   territory = "";
-  mode: UserEnums.RoleMode = UserEnums.RoleMode.Read;
+  mode: UserRoleMode = UserRoleMode.Read;
 
   constructor(data: IUserRight) {
     this.territory = data.territory;
@@ -37,9 +37,13 @@ export class UserOptions implements IUserOptions {
   defaultLanguage: string = "";
   searchLanguages: string[] = [];
 
-  constructor(data: Partial<IUserOptions>) {
+  constructor(data: UnknownObject) {
+    if (!data) {
+      return;
+    }
+
     fillFlatObject(this, data);
-    fillArray(this.searchLanguages, String, data?.searchLanguages || []);
+    fillArray(this.searchLanguages, String, data.searchLanguages);
   }
 
   isValid(): boolean {
@@ -56,7 +60,11 @@ export class BookmarkFolder implements IBookmarkFolder {
   name: string = "";
   entityIds: string[] = [];
 
-  constructor(data: Partial<IBookmarkFolder>) {
+  constructor(data: UnknownObject) {
+    if (!data) {
+      return;
+    }
+
     fillFlatObject(this, data);
     fillArray(this.entityIds, String, data.entityIds);
   }
@@ -79,10 +87,14 @@ export class BookmarkFolder implements IBookmarkFolder {
 }
 
 export class StoredTerritory implements IStoredTerritory {
-  territoryId: string;
+  territoryId: string = "";
 
-  constructor(data: Partial<IStoredTerritory>) {
-    this.territoryId = data.territoryId as string;
+  constructor(data: UnknownObject) {
+    if (!data) {
+      return;
+    }
+
+    fillFlatObject(this, data);
   }
 
   isValid(): boolean {
@@ -90,7 +102,7 @@ export class StoredTerritory implements IStoredTerritory {
   }
 }
 
-export default class User implements IUser, IDbModel {
+export default class User implements IDbModel, IUser {
   id: string = "";
   email: string = "";
 
@@ -98,7 +110,7 @@ export default class User implements IUser, IDbModel {
   password: string = "";
 
   name: string = "";
-  role: UserEnums.Role = UserEnums.Role.Viewer;
+  role: UserRole = UserRole.Viewer;
   active: boolean = false;
   options: UserOptions = new UserOptions({});
   bookmarks: BookmarkFolder[] = [];
@@ -109,9 +121,13 @@ export default class User implements IUser, IDbModel {
 
   static table = "users";
 
-  constructor(data: Partial<IUser>) {
+  constructor(data: Record<string, any>) {
+    if (!data) {
+      return;
+    }
+
     fillFlatObject(this, data);
-    this.options = new UserOptions(data.options as IUserOptions);
+    this.options = new UserOptions(data.options);
     fillArray<IBookmarkFolder>(this.bookmarks, BookmarkFolder, data.bookmarks);
     fillArray(this.storedTerritories, StoredTerritory, data.storedTerritories);
     fillArray<IUserRight>(this.rights, UserRight, data.rights);

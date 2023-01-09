@@ -2,410 +2,261 @@ import "ts-jest";
 import Statement, {
   StatementActant,
   StatementAction,
-  StatementClassification,
-  StatementData,
-  StatementIdentification,
 } from "@models/statement/statement";
 import { ResponseEntityDetail } from "./response";
-import { EntityEnums } from "@shared/enums";
+import { EntityClass, UsedInPosition } from "@shared/enums";
 import Prop, { PropSpec } from "@models/prop/prop";
 import Entity from "./entity";
 import { prepareStatement } from "@models/statement/statement.test";
-import { IResponseUsedInStatementClassification, IResponseUsedInStatementIdentification } from "@shared/types/response-detail";
-import { IStatement } from "@shared/types";
-import { prepareEntity } from "./entity.test";
 
-describe("models/entity/response", function () {
-  describe("test ResponseEntityDetail.walkEntityProps", function () {
-    const firstEntity = new Entity({ id: "1" });
-    const secondEntity = new Entity({ id: "2" });
-    const origin = "origin";
+describe("test ResponseEntityDetail.walkEntityProps", function () {
+  const baseEntity = new Entity({ id: "1" });
+  const childEntity = new Entity({ id: "2" });
+  const linkedEntity = new Entity({
+    id: "3",
+    class: EntityClass.Statement,
+  });
+  const prop = new Prop({});
+  prop.type = new PropSpec({});
+  prop.type.entityId = baseEntity.id;
+  prop.value = new PropSpec({});
+  prop.value.entityId = baseEntity.id;
 
-    describe("linked entry via prop.type & prop.children.value", () => {
-      const response = new ResponseEntityDetail(firstEntity);
-      const [, linkedEntity] = prepareEntity();
-      linkedEntity.props[0].type.entityId = firstEntity.id
-      linkedEntity.props[0].value.entityId = secondEntity.id
-      linkedEntity.props[0].children[0].type.entityId = secondEntity.id
-      linkedEntity.props[0].children[0].value.entityId = firstEntity.id
+  const children = new Prop({});
+  children.type = new PropSpec({});
+  children.type.entityId = childEntity.id;
+  children.value = new PropSpec({});
+  children.value.entityId = childEntity.id;
 
-      response.walkEntityProps(origin, linkedEntity.props);
+  prop.children.push(children);
+  linkedEntity.props.push(prop);
 
-      it("should add to usedInMetaProps from prop.type", () => {
-        const foundInType = response.usedInMetaProps.find(
-          (u) => u.originId === origin && u.typeId === firstEntity.id && u.valueId === secondEntity.id
-        );
-        expect(!!foundInType).toBeTruthy();
-      });
+  describe("linked entry via prop.type & prop.value and another in child with the same setup", () => {
+    const response = new ResponseEntityDetail(baseEntity);
+    response.walkEntityProps(linkedEntity, linkedEntity.props);
 
-      it("should have both props && props.children items in usedInMetaProps", () => {
-        expect(response.usedInMetaProps.length).toEqual(2)
-      });
-
-      it("should add to linkedEntitiesIds map", () => {
-        expect(Object.keys(response.linkedEntitiesIds)).toEqual([firstEntity.id, secondEntity.id, origin]);
-      });
+    it("should add to usedInMetaProps from prop.type", () => {
+      const foundInType = response.usedInMetaProps.find(
+        (u) => u.originId === linkedEntity.id
+      );
+      expect(!!foundInType).toBeTruthy();
     });
 
-    describe("linked entry via prop.children.type & prop.children.value", () => {
-      const response = new ResponseEntityDetail(firstEntity);
-      const [, linkedEntity] = prepareEntity();
-      linkedEntity.props[0].children[0].type.entityId = firstEntity.id
-      linkedEntity.props[0].children[0].value.entityId = firstEntity.id
+    it("should add to usedInMetaProps from prop.value", () => {
+      const foundInValue = response.usedInMetaProps.find(
+        (u) => u.originId === linkedEntity.id
+      );
+      expect(!!foundInValue).toBeTruthy();
+    });
 
-      response.walkEntityProps(origin, linkedEntity.props);
+    it("should add to entities map", () => {
+      expect(!!response.entities[linkedEntity.id]).toBeTruthy();
+    });
 
-      it("should add to usedInMetaProps from prop.type", () => {
-        const foundInType = response.usedInMetaProps.find(
-          (u) => u.originId === origin && u.typeId === firstEntity.id && u.valueId === firstEntity.id
-        );
-        expect(!!foundInType).toBeTruthy();
-      });
-
-      it("only one item should be in usedInMetaProps", () => {
-        expect(response.usedInMetaProps.length).toEqual(1)
-      });
-
-      it("should add to linkedEntitiesIds map", () => {
-        expect(Object.keys(response.linkedEntitiesIds)).toEqual([firstEntity.id, origin]);
-      });
+    it("should add to postponedEntities map", () => {
+      const keys = Object.keys(response.postponedEntities);
+      expect(keys).toEqual([prop.type.entityId]);
     });
   });
 
-  describe("test ResponseEntityDetail.walkStatementsDataEntities", function () {
-    const entity = new Entity({ id: "1" });
+  describe("linked entry via prop.children[].type & prop.children[].value", () => {
+    const response = new ResponseEntityDetail(childEntity);
+    response.walkEntityProps(linkedEntity, linkedEntity.props);
 
-    describe("linked via actions.action", () => {
-      const response = new ResponseEntityDetail(entity);
-      const st = new Statement({ id: "2" });
-      st.data.actions.push(new StatementAction({ actionId: entity.id }));
-
-      response.walkStatementsDataEntities([st]);
-
-      it("should add entry to usedInStatements under Action position", () => {
-        const foundEntry = response.usedInStatements.find(
-          (u) =>
-            u.statement.id === st.id &&
-            u.position === EntityEnums.UsedInPosition.Action
-        );
-        expect(!!foundEntry).toBeTruthy();
-      });
-
-      it("should add entry to linkedEntitiesIds map", () => {
-        expect(Object.keys(response.linkedEntitiesIds).find(i => i === st.id)).toBeTruthy();
-      });
+    it("should add from prop.children[].type", () => {
+      const foundInType = response.usedInMetaProps.find(
+        (u) => u.originId === linkedEntity.id
+      );
+      expect(!!foundInType).toBeTruthy();
     });
 
-    describe("linked via actants.actant", () => {
-      const response = new ResponseEntityDetail(entity);
-      const st = new Statement({ id: "2" });
-      st.data.actants.push(new StatementActant({ entityId: entity.id }));
-
-      response.walkStatementsDataEntities([st]);
-
-      it("should add entry to usedInStatements under Actant position", () => {
-        const foundEntry = response.usedInStatements.find(
-          (u) =>
-            u.statement.id === st.id &&
-            u.position === EntityEnums.UsedInPosition.Actant
-        );
-        expect(!!foundEntry).toBeTruthy();
-      });
-
-      it("should add entry to linkedEntitiesIds map", () => {
-        expect(Object.keys(response.linkedEntitiesIds).find(i => i === st.id)).toBeTruthy();
-      });
+    it("should add from prop.children[].value", () => {
+      const foundInValue = response.usedInMetaProps.find(
+        (u) => u.originId === linkedEntity.id
+      );
+      expect(!!foundInValue).toBeTruthy();
     });
 
-    describe("linked via tag", () => {
-      const response = new ResponseEntityDetail(entity);
-      const st = new Statement({ id: "2" });
-      st.data.tags.push(entity.id);
+    it("should add to entities map", () => {
+      expect(!!response.entities[linkedEntity.id]).toBeTruthy();
+    });
+  });
+});
 
-      response.walkStatementsDataEntities([st]);
+describe("test ResponseEntityDetail.walkStatementsDataEntities", function () {
+  const entity = new Entity({ id: "1" });
 
-      it("should add entry to usedInStatements under Tag position", () => {
-        const foundEntry = response.usedInStatements.find(
-          (u) =>
-            u.statement.id === st.id && u.position === EntityEnums.UsedInPosition.Tag
-        );
-        expect(!!foundEntry).toBeTruthy();
-      });
+  describe("linked via actions.action", () => {
+    const response = new ResponseEntityDetail(entity);
+    const statement1 = new Statement({ id: "2" });
+    statement1.data.actions.push(new StatementAction({ action: entity.id }));
 
-      it("should add entry to linkedEntitiesIds map", () => {
-        expect(Object.keys(response.linkedEntitiesIds).find(i => i === st.id)).toBeTruthy();
-      });
+    response.walkStatementsDataEntities([statement1]);
+
+    it("should add entry to usedInStatement under Action position", () => {
+      const foundEntry = response.usedInStatement.find(
+        (u) =>
+          u.statement.id === statement1.id &&
+          u.position === UsedInPosition.Action
+      );
+      expect(!!foundEntry).toBeTruthy();
+    });
+
+    it("should add entry to entities map", () => {
+      expect(!!response.entities[statement1.id]).toBeTruthy();
     });
   });
 
-  describe("test ResponseEntityDetail.walkStatementsDataProps", function () {
-    const entity = new Entity({ id: "1" });
+  describe("linked via actants.actant", () => {
+    const response = new ResponseEntityDetail(entity);
+    const statement1 = new Statement({ id: "2" });
+    statement1.data.actants.push(new StatementActant({ actant: entity.id }));
 
-    describe("linked via actions.props.value", () => {
-      const [, st] = prepareStatement();
-      const response = new ResponseEntityDetail(entity);
-      st.data.actions[0].props[0].value.entityId = entity.id;
+    response.walkStatementsDataEntities([statement1]);
 
-      response.walkStatementsDataProps([st]);
-
-      it("should add entry to usedInStatementProps under Value position", () => {
-        const foundEntry = response.usedInStatementProps.find(
-          (u) => u.statementId === st.id
-        );
-        expect(!!foundEntry).toBeTruthy();
-      });
-
-      it("should add entry to linkedEntitiesIds map", () => {
-        expect(Object.keys(response.linkedEntitiesIds).find(i => i === st.id)).toBeTruthy();
-      });
+    it("should add entry to usedInStatement under Actant position", () => {
+      const foundEntry = response.usedInStatement.find(
+        (u) =>
+          u.statement.id === statement1.id &&
+          u.position === UsedInPosition.Actant
+      );
+      expect(!!foundEntry).toBeTruthy();
     });
 
-    describe("linked via actions.props.type", () => {
-      const [, st] = prepareStatement();
-      const response = new ResponseEntityDetail(entity);
-      st.data.actions[0].props[0].type.entityId = entity.id;
-
-      response.walkStatementsDataProps([st]);
-
-      it("should add entry to usedInStatementProps under Type position", () => {
-        const foundEntry = response.usedInStatementProps.find(
-          (u) => u.statementId === st.id
-        );
-        expect(!!foundEntry).toBeTruthy();
-      });
-
-      it("should add entry to linkedEntitiesIds map", () => {
-        expect(Object.keys(response.linkedEntitiesIds).find(i => i === st.id)).toBeTruthy();
-      });
-    });
-
-    describe("linked via actions.props.children.type", () => {
-      const [, st] = prepareStatement();
-      const response = new ResponseEntityDetail(entity);
-      st.data.actions[0].props[0].children[0].type.entityId = entity.id;
-
-      response.walkStatementsDataProps([st]);
-
-      it("should add entry to usedInStatementProps under Type position", () => {
-        const foundEntry = response.usedInStatementProps.find(
-          (u) => u.statementId === st.id
-        );
-        expect(!!foundEntry).toBeTruthy();
-      });
-
-      it("should add entry to linkedEntitiesIds map", () => {
-        expect(Object.keys(response.linkedEntitiesIds)).toEqual([entity.id, st.id, st.data.actions[0].actionId, st.data.actions[0].props[0].children[0].value.entityId])
-      });
-    });
-
-    describe("linked via actions.props.children.children.type", () => {
-      const [, st] = prepareStatement();
-      const response = new ResponseEntityDetail(entity);
-      st.data.actions[0].props[0].children[0].children[0].type.entityId =
-        entity.id;
-
-      response.walkStatementsDataProps([st]);
-
-      it("should add entry to usedInStatementProps under Type position", () => {
-        const foundEntry = response.usedInStatementProps.find(
-          (u) => u.statementId === st.id
-        );
-        expect(!!foundEntry).toBeTruthy();
-      });
-
-      it("should add entry to linkedEntitiesIds map", () => {
-        expect(Object.keys(response.linkedEntitiesIds)).toEqual([entity.id, st.id, st.data.actions[0].actionId, st.data.actions[0].props[0].children[0].children[0].value.entityId])
-      });
-    });
-
-    describe("linked via actions.props.children.children.type and another linked via actions.props.value", () => {
-      const [, st1] = prepareStatement();
-      const [, st2] = prepareStatement();
-
-      const response = new ResponseEntityDetail(entity);
-      st1.data.actions[0].props[0].children[0].children[0].type.entityId = entity.id;
-      st2.data.actions[0].props[0].value.entityId = entity.id;
-
-      response.walkStatementsDataProps([st1, st2]);
-
-      it("should add first entry to usedInStatementProps under Type position", () => {
-        const foundEntry = response.usedInStatementProps.find(
-          (u) => u.statementId === st1.id
-        );
-        expect(!!foundEntry).toBeTruthy();
-      });
-
-      it("should add second entry to usedInStatementProps under Value position", () => {
-        const foundEntry = response.usedInStatementProps.find(
-          (u) => u.statementId === st2.id
-        );
-        expect(!!foundEntry).toBeTruthy();
-      });
-
-      it("should add both entries to linkedEntitiesIds map", () => {
-        expect(Object.keys(response.linkedEntitiesIds).find(k => k === st1.id)).toBeTruthy();
-        expect(Object.keys(response.linkedEntitiesIds).find(k => k === st2.id)).toBeTruthy();
-      });
+    it("should add entry to entities map", () => {
+      expect(!!response.entities[statement1.id]).toBeTruthy();
     });
   });
 
-  describe("test ResponseEntityDetail.populateInStatementsRelations", function () {
-    describe("Empty data", function () {
-      const responseEmpty = new ResponseEntityDetail(new Entity({}));
+  describe("linked via tag", () => {
+    const response = new ResponseEntityDetail(entity);
+    const statement1 = new Statement({ id: "2" });
+    statement1.data.tags.push(entity.id);
 
-      beforeAll(async () => {
-        await responseEmpty.populateInStatementsRelations([]);
-      })
+    response.walkStatementsDataEntities([statement1]);
 
-      it("should yield empty relations", function () {
-        expect(responseEmpty.usedInStatementIdentifications.length).toBe(0);
-        expect(responseEmpty.usedInStatementClassifications.length).toBe(0);
-        expect(Object.keys(responseEmpty.linkedEntitiesIds).length).toBe(0);
-      });
+    it("should add entry to usedInStatement under Tag position", () => {
+      const foundEntry = response.usedInStatement.find(
+        (u) =>
+          u.statement.id === statement1.id && u.position === UsedInPosition.Tag
+      );
+      expect(!!foundEntry).toBeTruthy();
     });
 
-    describe("with usedInStatements", function () {
-      const id = Math.random().toString()
-      const correctIdentification = new StatementIdentification({
-        certainty: EntityEnums.Certainty.Dubious,
-        entityId: id,
-      })
-      const correctClassification = new StatementClassification({
-        certainty: EntityEnums.Certainty.Possible,
-        entityId: id,
-      })
-      const statementId = `${id}-statement`;
+    it("should add entry to entities map", () => {
+      expect(!!response.entities[statement1.id]).toBeTruthy();
+    });
+  });
+});
 
-      const responseEmpty = new ResponseEntityDetail(new Entity({ id }));
-      responseEmpty.usedInStatements = [
-        // wont be used
-        {
-          position: EntityEnums.UsedInPosition.Tag,
-          statement: new Statement({}),
-        },
-        // wont be used - no classification / identification in the actant (optional)
-        {
-          position: EntityEnums.UsedInPosition.Actant,
-          statement: new Statement({
-            data: new StatementData({
-              actants: [new StatementActant({
-                entityId: id,
-              })]
-            })
-          })
-        },
-        {
-          position: EntityEnums.UsedInPosition.Actant,
-          statement: new Statement({
-            id: statementId,
-            data: new StatementData({
-              actants: [new StatementActant({
-                entityId: id,
-                classifications: [correctClassification],
-                identifications: [correctIdentification],
-              })]
-            })
-          })
-        }
-      ]
+describe("test ResponseEntityDetail.walkStatementsDataProps", function () {
+  const entity = new Entity({ id: "1" });
 
-      beforeAll(async () => {
-        await responseEmpty.populateInStatementsRelations([]);
-      })
+  describe("linked via actions.props.value", () => {
+    const [, statement1] = prepareStatement();
+    const response = new ResponseEntityDetail(entity);
+    statement1.data.actions[0].props[0].value.entityId = entity.id;
 
-      it("should have 2 idems in linkedEntitiesIds map", function () {
-        expect(Object.keys(responseEmpty.linkedEntitiesIds)).toEqual([statementId]);
-      });
+    response.walkStatementsDataProps([statement1]);
 
-      it("should have expected classification & identification", function () {
-        const wantedIdentification: IResponseUsedInStatementIdentification = {
-          actantEntityId: id,
-          data: correctIdentification,
-          relationEntityId: id,
-          statementId: statementId,
-        }
-        expect(responseEmpty.usedInStatementIdentifications.length).toBe(1);
-        expect(responseEmpty.usedInStatementIdentifications[0]).toEqual(wantedIdentification);
-
-        const wantedClassification: IResponseUsedInStatementClassification = {
-          actantEntityId: id,
-          data: correctClassification,
-          relationEntityId: id,
-          statementId: statementId,
-        }
-
-        expect(responseEmpty.usedInStatementClassifications.length).toBe(1);
-        expect(responseEmpty.usedInStatementClassifications[0]).toEqual(wantedClassification);
-      });
+    it("should add entry to usedInStatementProps under Value position", () => {
+      const foundEntry = response.usedInStatementProps.find(
+        (u) => u.statementId === statement1.id
+      );
+      expect(!!foundEntry).toBeTruthy();
     });
 
-    describe("with statements", function () {
-      const id = Math.random().toString()
-      const correctIdentification = new StatementIdentification({
-        certainty: EntityEnums.Certainty.Dubious,
-        entityId: id,
-      })
-      const correctClassification = new StatementClassification({
-        certainty: EntityEnums.Certainty.Possible,
-        entityId: id,
-      })
-      const statementId = `${id}-statement`;
-
-      const responseEmpty = new ResponseEntityDetail(new Entity({ id }));
-
-      const statements: IStatement[] = [
-        // not matched identification
-        new Statement({
-          data: new StatementData({
-            actants: [
-              new StatementActant({
-                identifications: [{ ...correctIdentification, entityId: "invalid" }]
-              })
-            ]
-          })
-        }),
-        // valid identifications & classifications
-        new Statement({
-          id: statementId,
-          data: new StatementData({
-            actants: [
-              new StatementActant({
-                entityId: "1", // different from entity id
-                identifications: [correctIdentification],
-                classifications: [correctClassification],
-              })
-            ]
-          })
-        })
-      ];
-
-      beforeAll(async () => {
-        await responseEmpty.populateInStatementsRelations(statements);
-      })
-
-      it("should have filled linkedEntitiesIds map", function () {
-        expect(Object.keys(responseEmpty.linkedEntitiesIds)).toEqual([statementId]);
-      });
-
-      it("should have expected classification & identification", function () {
-        const wantedIdentification: IResponseUsedInStatementIdentification = {
-          actantEntityId: "1",
-          data: correctIdentification,
-          relationEntityId: id,
-          statementId: statementId,
-        }
-        expect(responseEmpty.usedInStatementIdentifications.length).toBe(1);
-        expect(responseEmpty.usedInStatementIdentifications[0]).toEqual(wantedIdentification);
-
-        const wantedClassification: IResponseUsedInStatementClassification = {
-          actantEntityId: "1",
-          data: correctClassification,
-          relationEntityId: id,
-          statementId: statementId,
-        }
-        expect(responseEmpty.usedInStatementClassifications.length).toBe(1);
-        expect(responseEmpty.usedInStatementClassifications[0]).toEqual(wantedClassification);
-      });
+    it("should add entry to entities map", () => {
+      expect(!!response.entities[statement1.id]).toBeTruthy();
     });
-  })
-})
+  });
+
+  describe("linked via actions.props.type", () => {
+    const [, statement1] = prepareStatement();
+    const response = new ResponseEntityDetail(entity);
+    statement1.data.actions[0].props[0].type.entityId = entity.id;
+
+    response.walkStatementsDataProps([statement1]);
+
+    it("should add entry to usedInStatementProps under Type position", () => {
+      const foundEntry = response.usedInStatementProps.find(
+        (u) => u.statementId === statement1.id
+      );
+      expect(!!foundEntry).toBeTruthy();
+    });
+
+    it("should add entry to entities map", () => {
+      expect(!!response.entities[statement1.id]).toBeTruthy();
+    });
+  });
+
+  describe("linked via actions.props.type in 1st lvl", () => {
+    const [, statement1] = prepareStatement();
+    const response = new ResponseEntityDetail(entity);
+    statement1.data.actions[0].props[0].children[0].type.entityId = entity.id;
+
+    response.walkStatementsDataProps([statement1]);
+
+    it("should add entry to usedInStatementProps under Type position", () => {
+      const foundEntry = response.usedInStatementProps.find(
+        (u) => u.statementId === statement1.id
+      );
+      expect(!!foundEntry).toBeTruthy();
+    });
+
+    it("should add entry to entities map", () => {
+      expect(!!response.entities[statement1.id]).toBeTruthy();
+    });
+  });
+
+  describe("linked via actions.props.type in 3rd lvl", () => {
+    const [, statement1] = prepareStatement();
+    const response = new ResponseEntityDetail(entity);
+    statement1.data.actions[0].props[0].children[0].children[0].children[0].type.entityId =
+      entity.id;
+
+    response.walkStatementsDataProps([statement1]);
+
+    it("should add entry to usedInStatementProps under Type position", () => {
+      const foundEntry = response.usedInStatementProps.find(
+        (u) => u.statementId === statement1.id
+      );
+      expect(!!foundEntry).toBeTruthy();
+    });
+
+    it("should add entry to entities map", () => {
+      expect(!!response.entities[statement1.id]).toBeTruthy();
+    });
+  });
+
+  describe("linked via actions.props.type in 3rd lvl and second linked via actions.props.value", () => {
+    const [, statement1] = prepareStatement();
+    const [, statement2] = prepareStatement();
+
+    const response = new ResponseEntityDetail(entity);
+    statement1.data.actions[0].props[0].children[0].children[0].children[0].type.entityId =
+      entity.id;
+    statement2.data.actions[0].props[0].value.entityId = entity.id;
+
+    response.walkStatementsDataProps([statement1, statement2]);
+
+    it("should add first entry to usedInStatementProps under Type position", () => {
+      const foundEntry = response.usedInStatementProps.find(
+        (u) => u.statementId === statement1.id
+      );
+      expect(!!foundEntry).toBeTruthy();
+    });
+
+    it("should add second entry to usedInStatementProps under Value position", () => {
+      const foundEntry = response.usedInStatementProps.find(
+        (u) => u.statementId === statement2.id
+      );
+      expect(!!foundEntry).toBeTruthy();
+    });
+
+    it("should add both entries to entities map", () => {
+      expect(!!response.entities[statement1.id]).toBeTruthy();
+      expect(!!response.entities[statement2.id]).toBeTruthy();
+    });
+  });
+});

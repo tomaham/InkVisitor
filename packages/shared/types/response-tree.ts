@@ -3,10 +3,10 @@
  */
 
 import { ITerritory } from ".";
-import { UserEnums } from "../enums";
+import { UserRoleMode } from "../enums";
 
 // to discuss
-export interface IResponseTree extends IResponseTreeTerritoryComponent { }
+export interface IResponseTree extends IResponseTreeTerritoryComponent {}
 
 export interface IResponseTreeTerritoryComponent {
   territory: ITerritory;
@@ -15,5 +15,5 @@ export interface IResponseTreeTerritoryComponent {
   lvl: number; // levels of nesting
   children: IResponseTreeTerritoryComponent[];
   empty?: boolean;
-  right: UserEnums.RoleMode;
+  right: UserRoleMode;
 }

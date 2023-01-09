@@ -1,4 +1,5 @@
 import api from "api";
+import { Page } from "components/advanced";
 import React, { useState } from "react";
 import { useQuery } from "react-query";
 import { Redirect } from "react-router-dom";
@@ -21,7 +22,11 @@ const ActivatePage: React.FC<ActivationPage> = ({}) => {
     return <Redirect to={`/password_reset?hash=${hash}&activated=1`} />;
   }
 
-  return <StyledText>{"Activating..."}</StyledText>;
+  return (
+    <Page disableRightHeader>
+      <StyledText>{"Activating..."}</StyledText>
+    </Page>
+  );
 };
 
 export default ActivatePage;

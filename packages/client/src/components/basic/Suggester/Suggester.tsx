@@ -1,5 +1,5 @@
 import { entitiesDictKeys } from "@shared/dictionaries";
-import { EntityEnums } from "@shared/enums";
+import { EntityClass, EntityStatus } from "@shared/enums";
 import { IEntity, IOption } from "@shared/types";
 import { Button, Dropdown, Input, Loader, TypeBar } from "components";
 import useKeypress from "hooks/useKeyPress";
@@ -54,8 +54,8 @@ interface Suggester {
   onType: (newType: string) => void;
   onChangeCategory: (selectedOption: ValueType<OptionTypeBase, any>) => void;
   onCreate: (item: SuggesterItemToCreate) => void;
-  onPick: (entity: IEntity, instantiateTemplate?: boolean) => void;
-  onDrop: (item: EntityDragItem, instantiateTemplate?: boolean) => void;
+  onPick: (entity: IEntity, duplicate?: boolean) => void;
+  onDrop: (item: EntityDragItem, duplicate?: boolean) => void;
   onHover: (item: EntityDragItem) => void;
   onCancel: () => void;
   cleanOnSelect?: boolean;
@@ -139,20 +139,19 @@ export const Suggester: React.FC<Suggester> = ({
     if (selected === -1 && typed.length > 0) {
       if (
         category.value === DropdownAny ||
-        category.value === EntityEnums.Class.Statement ||
-        category.value === EntityEnums.Class.Territory
+        category.value === EntityClass.Statement ||
+        category.value === EntityClass.Territory
       ) {
         setShowCreateModal(true);
       } else {
         onCreate({
           label: typed,
-          entityClass:
-            entitiesDictKeys[category.value as EntityEnums.Class].value,
+          entityClass: entitiesDictKeys[category.value as EntityClass].value,
         });
       }
     } else if (selected > -1) {
       const entity = suggestions[selected].entity;
-      if (entity.status !== EntityEnums.Status.Discouraged) {
+      if (entity.status !== EntityStatus.Discouraged) {
         if (!entity.isTemplate) {
           onPick(entity);
         } else if (entity.isTemplate && !isInsideTemplate) {
@@ -173,15 +172,14 @@ export const Suggester: React.FC<Suggester> = ({
     if (typed.length > 0) {
       if (
         category.value === DropdownAny ||
-        category.value === EntityEnums.Class.Statement ||
-        category.value === EntityEnums.Class.Territory
+        category.value === EntityClass.Statement ||
+        category.value === EntityClass.Territory
       ) {
         setShowCreateModal(true);
       } else {
         onCreate({
           label: typed,
-          entityClass:
-            entitiesDictKeys[category.value as EntityEnums.Class].value,
+          entityClass: entitiesDictKeys[category.value as EntityClass].value,
         });
       }
     } else {
@@ -228,7 +226,7 @@ export const Suggester: React.FC<Suggester> = ({
             entityDropdown
             onFocus={() => {
               setSelected(-1);
-              setIsFocused(true);
+              // setIsFocused(true);
             }}
             onBlur={() => setIsFocused(false)}
             disableTyping
@@ -245,7 +243,6 @@ export const Suggester: React.FC<Suggester> = ({
             width={inputWidth}
             onFocus={() => setIsFocused(true)}
             onBlur={() => {
-              // Comment this for debug
               setIsFocused(false);
               setSelected(-1);
             }}
@@ -263,7 +260,7 @@ export const Suggester: React.FC<Suggester> = ({
             <StyledSuggesterButton>
               <Button
                 icon={<FaPlus style={{ fontSize: "16px", padding: "2px" }} />}
-                tooltipLabel="create new actant"
+                tooltip="create new actant"
                 color="primary"
                 inverted={selected !== -1}
                 onClick={() => {
@@ -280,12 +277,11 @@ export const Suggester: React.FC<Suggester> = ({
 
         {((isFocused || isHovered) && suggestions.length) || isFetching ? (
           <StyledSuggesterList
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
+            onMouseOver={() => setIsHovered(true)}
+            onMouseOut={() => setIsHovered(false)}
           >
             <StyledRelativePosition>
               {renderEntitySuggestions()}
-
               <Loader size={30} show={isFetching} />
             </StyledRelativePosition>
             <SuggesterKeyPress
@@ -324,7 +320,7 @@ export const Suggester: React.FC<Suggester> = ({
               setShowTemplateModal(false);
             }
           }}
-          onInstantiate={() => {
+          onDuplicate={() => {
             tempDropItem && onDrop(tempDropItem, true);
             setTempDropItem(false);
             setShowTemplateModal(false);

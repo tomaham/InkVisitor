@@ -1,14 +1,19 @@
+import { Page } from "components/advanced";
 import React from "react";
-import { StyledBoxWrapper, StyledContent, StyledError, StyledText } from "./NotFoundStyles";
+import {
+  StyledContentWrapper,
+  StyledError,
+  StyledText,
+} from "./NotFoundStyles";
 
 const NotFoundPage: React.FC<any> = ({}) => {
   return (
-    <StyledContent>
-      <StyledBoxWrapper>
+    <Page disableRightHeader centeredContent>
+      <StyledContentWrapper>
         <StyledError>404</StyledError>
         <StyledText>Page not found</StyledText>
-      </StyledBoxWrapper>
-    </StyledContent>
+      </StyledContentWrapper>
+    </Page>
   );
 };
 

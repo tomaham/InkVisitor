@@ -115,7 +115,7 @@ describe("Tree get", function () {
       id: `empty-ter--${randSuffix}`,
       data: {
         parent: {
-          territoryId: territories[0].id,
+          id: territories[0].id,
           order: 1,
         },
       },

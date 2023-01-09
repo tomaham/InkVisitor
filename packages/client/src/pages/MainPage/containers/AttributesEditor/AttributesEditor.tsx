@@ -8,7 +8,7 @@ import {
   partitivityDict,
   virtualityDict,
 } from "@shared/dictionaries";
-import { EntityEnums } from "@shared/enums";
+import { EntityClass } from "@shared/enums";
 import { IEntity } from "@shared/types";
 import {
   Button,
@@ -42,10 +42,10 @@ interface AttributesEditor {
   entity?: IEntity;
   data: AttributeData;
   handleUpdate: (
-    data: AttributeData | { actantId: string } | { actionId: string }
+    data: AttributeData | { actant: string } | { action: string }
   ) => void;
   updateActantId?: (newId: string) => void;
-  classEntitiesActant?: EntityEnums.Class[];
+  classEntitiesActant?: EntityClass[];
   loading: boolean;
   disabledAttributes?: PropAttributeName[];
   disabledAllAttributes?: boolean;
@@ -94,7 +94,7 @@ const AttributesEditor: React.FC<AttributesEditor> = ({
   };
 
   const getTooltipAttributes = () => (
-    <div>
+    <>
       <TooltipAttributeRow
         key="elvl"
         attributeName="elvl"
@@ -155,25 +155,23 @@ const AttributesEditor: React.FC<AttributesEditor> = ({
         value={data.certainty}
         items={certaintyDict}
       />
-    </div>
+    </>
   );
-
   return (
     <>
       <div>
-        <Button
-          key="settings"
-          disabled={disabledOpenModal}
-          icon={<MdSettings />}
-          inverted
-          color={!disabledOpenModal && userCanEdit ? "plain" : "grey"}
-          onClick={() => {
-            //if (!disabledOpenModal && userCanEdit) {
-            setModalOpen(true);
-            //}
-          }}
-          tooltipContent={getTooltipAttributes()}
-        />
+        <Tooltip attributes={<div>{getTooltipAttributes()}</div>}>
+          <div>
+            <Button
+              key="settings"
+              disabled={disabledOpenModal}
+              icon={<MdSettings />}
+              inverted={true}
+              color="plain"
+              onClick={() => setModalOpen(true)}
+            />
+          </div>
+        </Tooltip>
       </div>
 
       <Modal
@@ -216,10 +214,10 @@ const AttributesEditor: React.FC<AttributesEditor> = ({
                     userCanEdit && (
                       <Button
                         key="d"
-                        tooltipLabel="unlink actant"
+                        tooltip="unlink actant"
                         icon={<FaUnlink />}
                         color="plain"
-                        inverted
+                        inverted={true}
                         onClick={() => {
                           updateActantId("");
                         }}
@@ -251,7 +249,7 @@ const AttributesEditor: React.FC<AttributesEditor> = ({
             <Button
               key="cancel"
               label="Cancel"
-              inverted
+              inverted={true}
               color="primary"
               onClick={() => {
                 handleCancelClick();

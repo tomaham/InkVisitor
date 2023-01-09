@@ -15,7 +15,6 @@ import selectedTerritoryPathSlice from "./features/territoryTree/selectedTerrito
 import treeInitializeSlice from "./features/territoryTree/treeInitializeSlice";
 import usernameSlice from "./features/usernameSlice";
 import contentHeightSlice from "./features/layout/contentHeightSlice";
-import statementListOpenedSlice from "./features/layout/statementListOpenedSlice";
 
 const store: Store = configureStore({
   reducer: {
@@ -41,7 +40,6 @@ const store: Store = configureStore({
       firstPanelExpanded: firstPanelExpandedSlice,
       fourthPanelExpanded: fourthPanelExpandedSlice,
       fourthPanelBoxesOpened: fourthPanelBoxesOpenedSlice,
-      statementListOpened: statementListOpenedSlice,
     }),
   },
 });

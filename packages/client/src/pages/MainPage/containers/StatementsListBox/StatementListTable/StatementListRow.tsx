@@ -1,4 +1,4 @@
-import { IEntity, IStatement } from "@shared/types";
+import { IEntity } from "@shared/types";
 import { useSearchParams } from "hooks";
 import React, { useEffect, useMemo, useRef } from "react";
 import {
@@ -24,8 +24,8 @@ interface StatementListRow {
   row: any;
   index: number;
   moveRow: (dragIndex: number, hoverIndex: number) => void;
-  moveEndRow: (statementToMove: IStatement, index: number) => Promise<void>;
-  handleClick: (rowId: string) => void;
+  moveEndRow: Function;
+  handleClick: Function;
   visibleColumns: ColumnInstance<{}>[];
   entities: { [key: string]: IEntity };
 }
@@ -75,7 +75,7 @@ export const StatementListRow: React.FC<StatementListRow> = ({
   }, [audit]);
 
   const dropRef = useRef<HTMLTableRowElement>(null);
-  const dragRef = useRef<HTMLTableCellElement>(null);
+  const dragRef = useRef<HTMLTableDataCellElement>(null);
 
   const [, drop] = useDrop({
     accept: ItemTypes.STATEMENT_ROW,

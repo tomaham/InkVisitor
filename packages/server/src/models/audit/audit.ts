@@ -2,7 +2,7 @@ import { IDbModel, UnknownObject, fillFlatObject } from "@models/common";
 import { r as rethink, Connection, WriteResult } from "rethinkdb-ts";
 import { IAudit } from "@shared/types";
 import { InternalServerError } from "@shared/types/errors";
-import { IRequest } from "src/custom_typings/request";
+import User from "@models/user/user";
 
 export default class Audit implements IAudit, IDbModel {
   static table = "audits";
@@ -74,21 +74,23 @@ export default class Audit implements IAudit, IDbModel {
 
   /**
    * Combines Audit constructor and save method to immediately create & persist in the db
-   * @param req IRequest
+   * @param db rethinkdb Connection
+   * @param user User model - creator for the entry
    * @param entityId
    * @param updateData blob containing snapshot of entity data
    * @returns Promise<WriteResult>
    */
   static async createNew(
-    req: IRequest,
+    db: Connection | undefined,
+    user: User,
     entityId: string,
     updateData: object
   ): Promise<WriteResult> {
     const entry = new Audit({
       entityId,
-      user: req.getUserOrFail().id,
+      user: user.id,
       changes: updateData,
     });
-    return entry.save(req.db.connection);
+    return entry.save(db);
   }
 }

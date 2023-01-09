@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
+import React, { Profiler, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { ReactQueryDevtools } from "react-query/devtools";
-import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
+import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { useAppDispatch } from "redux/hooks";
 import { ThemeProvider } from "styled-components";
 
@@ -10,15 +10,10 @@ import api from "api";
 import { SearchParamsProvider } from "hooks/useParamsContext";
 import { useWindowSize } from "hooks/useWindowSize";
 import ActivatePage from "pages/Activate";
-import LoginPage from "pages/Login";
 import PasswordResetPage from "pages/PasswordReset";
 import UsersPage from "pages/Users";
 
-import { Page } from "components/advanced";
-import { useDebounce } from "hooks";
 import NotFoundPage from "pages/NotFound";
-import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
 import { setContentHeight } from "redux/features/layout/contentHeightSlice";
 import { setLayoutWidth } from "redux/features/layout/layoutWidthSlice";
 import { setPanelWidths } from "redux/features/layout/panelWidthsSlice";
@@ -26,6 +21,8 @@ import { setSeparatorXPosition } from "redux/features/layout/separatorXPositionS
 import {
   heightFooter,
   heightHeader,
+  layoutWidthBreakpoint,
+  minLayoutWidth,
   percentPanelWidths,
   separatorXPercentPosition,
 } from "Theme/constants";
@@ -33,7 +30,8 @@ import GlobalStyle from "Theme/global";
 import AclPage from "./pages/Acl";
 import MainPage from "./pages/MainPage";
 import theme from "./Theme/theme";
-import { AboutPage } from "pages/About";
+import { DndProvider } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,49 +60,24 @@ const clockPerformance = (
   });
 };
 
-export const PublicPath = (props: any) => {
-  const Component = props.children;
-
-  return !api.isLoggedIn() ? (
-    <Route path={props.path} render={props.render} exact={props.exact}>
-      <Component props />
-    </Route>
-  ) : (
-    <Redirect to="/" />
-  );
-};
-
-export const ProtectedPath = (props: any) => {
-  const Component = props.children;
-
-  return api.isLoggedIn() ? (
-    <Route path={props.path} render={props.render} exact={props.exact}>
-      <Component props />
-    </Route>
-  ) : (
-    <Redirect to="/login" />
-  );
-};
-
 export const App: React.FC = () => {
   const dispatch = useAppDispatch();
 
-  const [debouncedWidth, debouncedHeight] = useDebounce(useWindowSize(), 50);
+  const isLoggedIn = api.isLoggedIn();
+
+  const [width, height] = useWindowSize();
 
   useEffect(() => {
-    if (debouncedHeight > 0) {
-      const heightContent = debouncedHeight - heightHeader - heightFooter;
+    if (height > 0) {
+      const heightContent = height - heightHeader - heightFooter;
       dispatch(setContentHeight(heightContent));
     }
-  }, [debouncedHeight]);
+  }, [height]);
 
   useEffect(() => {
-    if (debouncedWidth > 0) {
-      // const layoutWidth =
-      //   debouncedWidth < layoutWidthBreakpoint
-      //     ? minLayoutWidth
-      //     : debouncedWidth;
-      const layoutWidth = debouncedWidth;
+    if (width > 0) {
+      const layoutWidth =
+        width < layoutWidthBreakpoint ? minLayoutWidth : width;
       dispatch(setLayoutWidth(layoutWidth));
       const onePercent = layoutWidth / 100;
 
@@ -125,14 +98,14 @@ export const App: React.FC = () => {
         Math.floor(onePercent * percentPanelWidths[0] * 10) / 10;
       const secondPanel = Math.floor(
         (onePercent * (separatorPercentPosition - percentPanelWidths[0]) * 10) /
-        10
+          10
       );
       const thirdPanel = Math.floor(
         layoutWidth -
-        (onePercent *
-          (separatorPercentPosition + percentPanelWidths[3]) *
-          10) /
-        10
+          (onePercent *
+            (separatorPercentPosition - percentPanelWidths[3]) *
+            10) /
+            10
       );
       const fourthPanel =
         Math.floor(onePercent * percentPanelWidths[3] * 10) / 10;
@@ -141,7 +114,7 @@ export const App: React.FC = () => {
       dispatch(setPanelWidths(panels));
       dispatch(setSeparatorXPosition(panels[0] + panels[1]));
     }
-  }, [debouncedWidth]);
+  }, [width]);
 
   return (
     <>
@@ -156,21 +129,34 @@ export const App: React.FC = () => {
           <DndProvider backend={HTML5Backend}>
             <BrowserRouter basename={process.env.ROOT_URL}>
               <SearchParamsProvider>
-                <Page>
-                  <Switch>
-                    <PublicPath path="/login" children={LoginPage} />
-                    <PublicPath path="/activate" children={ActivatePage} />
-                    <PublicPath
-                      path="/password_reset"
-                      children={PasswordResetPage}
+                <Switch>
+                  <Route
+                    path="/"
+                    exact
+                    render={(props) => <MainPage {...props} />}
+                  />
+                  {isLoggedIn && (
+                    <Route
+                      path="/acl"
+                      render={(props) => <AclPage {...props} />}
                     />
-                    <ProtectedPath path="/" exact children={MainPage} />
-                    <ProtectedPath path="/acl" children={AclPage} />
-                    <ProtectedPath path="/about" children={AboutPage} />
-                    <ProtectedPath path="/users" children={UsersPage} />
-                    <Route path="*" component={NotFoundPage} />
-                  </Switch>
-                </Page>
+                  )}
+                  {isLoggedIn && (
+                    <Route
+                      path="/users"
+                      render={(props) => <UsersPage {...props} />}
+                    />
+                  )}
+                  <Route
+                    path="/activate"
+                    render={(props) => <ActivatePage {...props} />}
+                  />
+                  <Route
+                    path="/password_reset"
+                    render={(props) => <PasswordResetPage {...props} />}
+                  />
+                  <Route path="*" component={NotFoundPage} />
+                </Switch>
               </SearchParamsProvider>
             </BrowserRouter>
           </DndProvider>

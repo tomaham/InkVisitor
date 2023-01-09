@@ -1,10 +1,16 @@
 import { UnknownObject, IModel } from "@models/common";
-import { EntityEnums } from "@shared/enums";
+import { EntityClass, EntityStatus } from "@shared/enums";
 import Entity from "@models/entity/entity";
-import { IConcept } from "@shared/types";
+import { IConcept, IEntity } from "@shared/types";
 
 class ConceptData implements IModel {
+  status: EntityStatus = EntityStatus.Pending;
   constructor(data: UnknownObject) {
+    if (!data) {
+      return;
+    }
+
+    // TODO: If admin ? model.status = EntityStatus.Approved : model.status = EntityStatus.Pending
   }
 
   isValid(): boolean {
@@ -13,20 +19,27 @@ class ConceptData implements IModel {
 }
 
 class Concept extends Entity implements IConcept {
-  class: EntityEnums.Class.Concept = EntityEnums.Class.Concept; // just default
+  class: EntityClass.Concept = EntityClass.Concept; // just default
   data: ConceptData;
 
-  constructor(data: Partial<IConcept>) {
+  constructor(data: UnknownObject) {
     super(data);
-    this.data = new ConceptData(data.data);
+
+    if (!data) {
+      data = {};
+    }
+
+    this.data = new ConceptData({} as UnknownObject);
   }
 
   isValid(): boolean {
-    if (this.class !== EntityEnums.Class.Concept) {
+    const alloweedClasses = [EntityClass.Concept];
+
+    if (alloweedClasses.indexOf(this.class) === -1) {
       return false;
     }
 
-    return super.isValid() && this.data.isValid();
+    return this.data.isValid();
   }
 }
 

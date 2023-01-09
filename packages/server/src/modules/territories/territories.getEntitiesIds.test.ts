@@ -8,7 +8,6 @@ import { Db } from "@service/RethinkDB";
 import { deleteEntities } from "@service/shorthands";
 import Territory from "@models/territory/territory";
 import Statement from "@models/statement/statement";
-import { IRequest } from "src/custom_typings/request";
 
 describe("Territories getEntityIds", () => {
   let db: Db;
@@ -28,7 +27,7 @@ describe("Territories getEntityIds", () => {
 
   describe("one territory, two linked statement via territory.id and tags at once", () => {
     it("should return empty array", async (done) => {
-      const territory = new Territory({});
+      const territory = new Territory(undefined);
       await territory.save(db.connection);
 
       // statements linked by tag/reference and territory - 3 linked actants
@@ -52,7 +51,7 @@ describe("Territories getEntityIds", () => {
         .get(`${apiPath}/territories/${territory.id}/entities`)
         .set("authorization", "Bearer " + supertestConfig.token)
         .expect(200)
-        .expect((res: IRequest) => {
+        .expect((res: Request) => {
           expect(res.body).not.toBeNull();
           expect(res.body?.constructor.name).toEqual("Array");
           expect(res.body).toHaveLength(3);

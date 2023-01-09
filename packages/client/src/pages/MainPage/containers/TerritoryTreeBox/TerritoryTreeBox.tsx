@@ -1,4 +1,4 @@
-import { UserEnums } from "@shared/enums";
+import { UserRoleMode } from "@shared/enums";
 import api from "api";
 import { Button, Loader } from "components";
 import { useSearchParams } from "hooks";
@@ -85,7 +85,7 @@ export const TerritoryTreeBox: React.FC = () => {
 
   return (
     <>
-      {userRole === UserEnums.RoleMode.Admin && (
+      {userRole === UserRoleMode.Admin && (
         <Button
           label="new territory"
           icon={<FaPlus />}

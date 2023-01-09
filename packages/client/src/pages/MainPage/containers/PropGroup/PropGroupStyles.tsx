@@ -10,7 +10,7 @@ export const StyledGrid = styled.div<StyledGrid>`
 
   align-items: center;
   padding-left: ${({ theme }) => theme.space[0]};
-  grid-template-columns: 20px 1fr 1fr 10rem;
+  grid-template-columns: 1fr 1fr 10rem;
   width: fit-content;
   grid-template-rows: auto;
   grid-auto-flow: row;
@@ -18,10 +18,6 @@ export const StyledGrid = styled.div<StyledGrid>`
   width: 100%;
 
   opacity: ${({ tempDisabled }) => (tempDisabled ? 0.2 : 1)};
-`;
-
-export const StyledNoEntity = styled.div`
-  margin-left: ${({ theme }) => theme.space[4]};
 `;
 
 interface StyledListHeaderColumn {
@@ -62,6 +58,17 @@ export const StyledPropLineColumn = styled.div<StyledPropLineColumn>`
   overflow: ${({ isTag }) => (isTag ? "hidden" : "visible")};
 `;
 
+interface StyledPropButtonGroup {
+  border?: boolean;
+  round?: boolean;
+}
+export const StyledPropButtonGroup = styled.div<StyledPropButtonGroup>`
+  vertical-align: middle;
+  display: inline-flex;
+  border-radius: ${({ round }) => (round ? "8px" : "0")};
+  border: ${({ border }) => (border ? "1px" : 0)} solid
+    ${({ theme }) => theme.color["gray"][600]};
+`;
 export const StyledFaGripVertical = styled(FaGripVertical)`
   margin-right: ${({ theme }) => theme.space[2]};
   cursor: move;

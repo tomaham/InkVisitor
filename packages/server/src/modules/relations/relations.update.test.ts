@@ -15,7 +15,7 @@ import { supertestConfig } from "..";
 import { Db } from "@service/RethinkDB";
 import { successfulGenericResponse } from "@modules/common.test";
 import Relation from "@models/relation/relation";
-import { RelationEnums } from "@shared/enums";
+import { RelationType } from "@shared/enums";
 
 describe("Relations update", function () {
   describe("empty data", () => {
@@ -78,10 +78,9 @@ describe("Relations update", function () {
       const db = new Db();
       await db.initDb();
 
-      const changeTypeTo: RelationEnums.Type = RelationEnums.Type.Antonym;
+      const changeTypeTo: RelationType = RelationType.Antonym;
       const relationEntry = new Relation({
-        type: RelationEnums.Type.Superclass,
-        entityIds: ["1"]
+        type: RelationType.Superclass,
       });
 
       await relationEntry.save(db.connection);

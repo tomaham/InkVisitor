@@ -1,23 +1,23 @@
-import { EntityEnums } from "../enums";
+import { Position } from "../enums";
 
 export const actantPositionDict = {
   s: {
-    value: EntityEnums.Position.Subject,
+    value: Position.Subject,
     label: "subject",
     info: "",
   },
   a1: {
-    value: EntityEnums.Position.Actant1,
+    value: Position.Actant1,
     label: "actant1",
     info: "",
   },
   a2: {
-    value: EntityEnums.Position.Actant2,
+    value: Position.Actant2,
     label: "actant2",
     info: "",
   },
   pa: {
-    value: EntityEnums.Position.PseudoActant,
+    value: Position.PseudoActant,
     label: "pseudo-actant",
     info: "",
   },

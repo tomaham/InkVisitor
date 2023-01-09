@@ -10,8 +10,7 @@ interface ThirdLevelPropGroup {
     prop3: IProp,
     pi3: number,
     prop2: IProp,
-    moveProp: (dragIndex: number, hoverIndex: number) => void,
-    hasOrder: boolean
+    moveProp: (dragIndex: number, hoverIndex: number) => void
   ) => JSX.Element;
   thirdLevelProps: IProp[];
   category: DraggedPropRowCategory;
@@ -62,7 +61,7 @@ export const ThirdLevelPropGroup: React.FC<ThirdLevelPropGroup> = ({
     <>
       {!hideChildren &&
         props.map((prop3: IProp, pi3: number) =>
-          renderThirdLevelPropRow(prop3, pi3, prop2, moveProp, props.length > 1)
+          renderThirdLevelPropRow(prop3, pi3, prop2, moveProp)
         )}
     </>
   );

@@ -1,10 +1,10 @@
 import { fillFlatObject, UnknownObject, IModel } from "@models/common";
-import { EntityEnums } from "@shared/enums";
+import { EntityClass, EntityStatus } from "@shared/enums";
 import Entity from "@models/entity/entity";
 import { IAction } from "@shared/types";
-import { ActionEntity, ActionValency, IActionData } from "@shared/types/action";
+import { ActionEntity, ActionValency } from "@shared/types/action";
 
-class ActionData implements IActionData, IModel {
+class ActionData implements IModel {
   valencies: ActionValency = {
     a1: "",
     a2: "",
@@ -15,9 +15,9 @@ class ActionData implements IActionData, IModel {
     a2: [],
     s: [],
   };
-  status: EntityEnums.Status = EntityEnums.Status.Pending;
+  status: EntityStatus = EntityStatus.Pending;
 
-  constructor(data: Partial<IActionData>) {
+  constructor(data: UnknownObject) {
     if (!data) {
       return;
     }
@@ -34,20 +34,25 @@ class ActionData implements IActionData, IModel {
 }
 
 class Action extends Entity implements IAction {
-  class: EntityEnums.Class.Action = EntityEnums.Class.Action; // just default
+  class: EntityClass.Action = EntityClass.Action; // just default
   data: ActionData;
 
-  constructor(data: Partial<IAction>) {
+  constructor(data: UnknownObject) {
     super(data);
-    this.data = new ActionData(data.data || {});
+
+    if (!data) {
+      data = {};
+    }
+
+    this.data = new ActionData(data.data as UnknownObject);
   }
 
   isValid(): boolean {
-    if (this.class !== EntityEnums.Class.Action) {
+    if (this.class !== EntityClass.Action) {
       return false;
     }
 
-    return super.isValid() && this.data.isValid();
+    return this.data.isValid();
   }
 }
 

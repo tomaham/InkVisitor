@@ -1,4 +1,4 @@
-import { EntityEnums, UserEnums } from "@shared/enums";
+import { Order, UserRole } from "@shared/enums";
 import { ITerritory } from "@shared/types";
 import api from "api";
 import {
@@ -58,8 +58,8 @@ export const ContextMenuNewTerritoryModal: React.FC<
       const newTerritory: ITerritory = CTerritoryActant(
         territoryName,
         territoryActantId,
-        EntityEnums.Order.Last,
-        localStorage.getItem("userrole") as UserEnums.Role
+        Order.Last,
+        localStorage.getItem("userrole") as UserRole
       );
       createTerritoryMutation.mutate(newTerritory);
     } else {

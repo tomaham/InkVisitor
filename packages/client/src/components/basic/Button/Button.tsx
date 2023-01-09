@@ -1,16 +1,13 @@
-import { EntityEnums } from "@shared/enums";
+import { Operator } from "@shared/enums";
 import { Tooltip } from "components";
-import React, { MouseEventHandler, ReactElement, useState } from "react";
+import React, { MouseEventHandler } from "react";
 import { Colors } from "types";
 import { StyledButton, StyledButtonLabel } from "./ButtonStyles";
 
 interface ButtonProps {
-  tooltipLabel?: string;
-  tooltipContent?: ReactElement[] | ReactElement;
+  tooltip?: string;
   label?: string;
-  icon?: JSX.Element | EntityEnums.Operator;
-  noIconMargin?: boolean;
-  noBackground?: boolean;
+  icon?: JSX.Element | Operator;
   inverted?: boolean;
   noBorder?: boolean;
   textRegular?: boolean;
@@ -23,14 +20,11 @@ interface ButtonProps {
 }
 
 export const Button: React.FC<ButtonProps> = ({
-  tooltipLabel,
-  tooltipContent,
+  tooltip,
   label = "",
   icon,
-  noIconMargin = false,
   inverted = false,
   noBorder = false,
-  noBackground = false,
   radiusLeft = false,
   radiusRight = false,
   textRegular = false,
@@ -41,47 +35,29 @@ export const Button: React.FC<ButtonProps> = ({
   },
   fullWidth = false,
 }) => {
-  const [referenceElement, setReferenceElement] =
-    useState<HTMLButtonElement | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
-
   const renderButton = () => {
     return (
       <StyledButton
-        ref={setReferenceElement}
         onClick={onClick}
         hasIcon={icon && true}
         color={color}
         inverted={inverted}
         textRegular={textRegular}
         noBorder={noBorder}
-        noBackground={noBackground}
         radiusLeft={radiusLeft}
         radiusRight={radiusRight}
         fullWidth={fullWidth}
         disabled={disabled}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
       >
         {icon}
         {label && (
-          <StyledButtonLabel hasIcon={!!icon} noIconMargin={noIconMargin}>
-            {label}
-          </StyledButtonLabel>
+          <StyledButtonLabel hasIcon={!!icon}>{label}</StyledButtonLabel>
         )}
       </StyledButton>
     );
   };
-  return tooltipLabel || tooltipContent ? (
-    <>
-      <Tooltip
-        label={tooltipLabel}
-        content={tooltipContent}
-        visible={showTooltip}
-        referenceElement={referenceElement}
-      />
-      {renderButton()}
-    </>
+  return tooltip ? (
+    <Tooltip label={tooltip}>{renderButton()}</Tooltip>
   ) : (
     renderButton()
   );

@@ -1,67 +1,33 @@
-import {
-  IEntity,
-  IResponseAudit,
-  IResponseGeneric,
-  IResponseStatement,
-  IStatement,
-} from "@shared/types";
-import { AxiosResponse } from "axios";
+import { IEntity, IResponseStatement, IStatement } from "@shared/types";
 import update from "immutability-helper";
 import React, { useCallback, useEffect, useState } from "react";
-import { UseMutationResult } from "react-query";
 import { Column, Row, useExpanded, useTable } from "react-table";
 import { StatementListRow } from "./StatementListRow";
 import { StyledTable, StyledTh, StyledTHead } from "./StatementListTableStyles";
 
-type StatementWithAudit = IResponseStatement & {
-  audit: IResponseAudit | undefined;
-};
 interface StatementListTable {
-  statements: IResponseStatement[];
-  audits: IResponseAudit[];
+  data: IResponseStatement[];
   columns: Column<{}>[];
-  handleRowClick?: (rowId: string) => void;
-  actantsUpdateMutation: UseMutationResult<
-    AxiosResponse<IResponseGeneric>,
-    unknown,
-    {
-      statementId: string;
-      data: {};
-    },
-    unknown
-  >;
+  handleRowClick?: Function;
+  moveEndRow: Function;
   entities: { [key: string]: IEntity };
 }
 export const StatementListTable: React.FC<StatementListTable> = ({
-  statements,
-  audits,
+  data,
   columns,
   handleRowClick = () => {},
-  actantsUpdateMutation,
+  moveEndRow,
   entities,
 }) => {
-  const [statementsWithAudit, setStatementsWithAudit] = useState<
-    StatementWithAudit[]
-  >([]);
+  const [statements, setStatements] = useState<IStatement[]>([]);
 
   useEffect(() => {
-    setStatementsWithAudit(getStatementsWithAudit());
-  }, [statements]);
+    setStatements(data);
+  }, [data]);
 
   const getRowId = useCallback((row) => {
     return row.id;
   }, []);
-
-  const getStatementsWithAudit: () => StatementWithAudit[] = () => {
-    if (statements && audits) {
-      return statements.map((st) => ({
-        ...st,
-        audit: audits.find((a) => a.entityId === st.id),
-      }));
-    } else {
-      return [];
-    }
-  };
 
   const {
     getTableProps,
@@ -73,7 +39,7 @@ export const StatementListTable: React.FC<StatementListTable> = ({
   } = useTable(
     {
       columns,
-      data: statementsWithAudit,
+      data: statements,
       getRowId,
       initialState: {
         hiddenColumns: ["id"],
@@ -84,9 +50,9 @@ export const StatementListTable: React.FC<StatementListTable> = ({
 
   const moveRow = useCallback(
     (dragIndex: number, hoverIndex: number) => {
-      const dragRecord = statementsWithAudit[dragIndex];
-      setStatementsWithAudit(
-        update(statementsWithAudit, {
+      const dragRecord = statements[dragIndex];
+      setStatements(
+        update(statements, {
           $splice: [
             [dragIndex, 1],
             [hoverIndex, 0, dragRecord],
@@ -94,42 +60,8 @@ export const StatementListTable: React.FC<StatementListTable> = ({
         })
       );
     },
-    [statementsWithAudit]
+    [statements]
   );
-
-  const moveEndRow = async (statementToMove: IStatement, index: number) => {
-    if (statementToMove.data.territory && statements[index].data.territory) {
-      const { order: thisOrder, territoryId } = statementToMove.data.territory;
-
-      if (thisOrder !== statements[index].data.territory?.order) {
-        let allOrders: number[] = statements.map((s) =>
-          s.data.territory ? s.data.territory.order : 0
-        );
-        allOrders.sort((a, b) => (a && b ? (a > b ? 1 : -1) : 0));
-
-        allOrders = allOrders.filter((o) => o !== thisOrder);
-        allOrders.splice(index, 0, thisOrder);
-
-        if (index === 0) {
-          allOrders[index] = allOrders[1] - 1;
-        } else if (index === allOrders.length - 1) {
-          allOrders[index] = allOrders[index - 1] + 1;
-        } else {
-          allOrders[index] = (allOrders[index - 1] + allOrders[index + 1]) / 2;
-        }
-
-        actantsUpdateMutation.mutate({
-          statementId: statementToMove.id,
-          data: {
-            territory: {
-              territoryId: territoryId,
-              order: allOrders[index],
-            },
-          },
-        });
-      }
-    }
-  };
 
   return (
     <StyledTable {...getTableProps()}>
@@ -159,9 +91,9 @@ export const StatementListTable: React.FC<StatementListTable> = ({
               row={row}
               moveRow={moveRow}
               moveEndRow={moveEndRow}
+              {...row.getRowProps()}
               visibleColumns={visibleColumns}
               entities={entities}
-              {...row.getRowProps()}
             />
           );
         })}

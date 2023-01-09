@@ -1,11 +1,9 @@
-import { Placement } from "@popperjs/core";
-import { EntityEnums } from "@shared/enums";
+import { EntityStatus } from "@shared/enums";
 import { IEntity } from "@shared/types";
 import { Tag } from "components";
-import { EntityTooltip } from "components/advanced";
-import React, { ReactNode, useEffect, useState } from "react";
-import { EntityDragItem } from "types";
-import { getEntityLabel } from "utils";
+import React, { ReactNode } from "react";
+import { PopupPosition } from "reactjs-popup/dist/types";
+import { DragItem } from "types";
 
 interface EntityTag {
   entity: IEntity;
@@ -15,14 +13,15 @@ interface EntityTag {
   showOnly?: "entity" | "label";
   fullWidth?: boolean;
   button?: ReactNode;
+  propId?: string;
   index?: number;
   moveFn?: (dragIndex: number, hoverIndex: number) => void;
   isSelected?: boolean;
   disableTooltip?: boolean;
   disableDoubleClick?: boolean;
   disableDrag?: boolean;
-  tooltipPosition?: Placement;
-  updateOrderFn?: (item: EntityDragItem) => void;
+  tooltipPosition?: PopupPosition | PopupPosition[];
+  updateOrderFn?: (item: DragItem) => void;
   lvl?: number;
   statementsCount?: number;
   isFavorited?: boolean;
@@ -35,7 +34,7 @@ export const EntityTag: React.FC<EntityTag> = ({
   showOnly,
   fullWidth,
   mode,
-  button = false,
+  button,
   index,
   moveFn,
   isSelected,
@@ -49,66 +48,37 @@ export const EntityTag: React.FC<EntityTag> = ({
   isFavorited,
 }) => {
   const classId = entity.class;
-  const [buttonHovered, setButtonHovered] = useState(false);
-
-  const [referenceElement, setReferenceElement] =
-    useState<HTMLDivElement | null>(null);
-  const [tagHovered, setTagHovered] = useState(false);
 
   return (
-    <>
-      <div
-        style={{ display: "inline-flex", overflow: "hidden" }}
-        ref={setReferenceElement}
-        onMouseEnter={() => setTagHovered(true)}
-        onMouseLeave={() => setTagHovered(false)}
-      >
-        {tagHovered && !disableTooltip && (
-          <EntityTooltip
-            entityId={entity.id}
-            entityClass={entity.class}
-            label={getEntityLabel(entity)}
-            detail={entity.detail}
-            text={tooltipText}
-            itemsCount={statementsCount}
-            position={tooltipPosition}
-            disabled={button ? buttonHovered : false}
-            tagHovered={tagHovered}
-            referenceElement={referenceElement}
-          />
-        )}
-        <Tag
-          propId={entity.id}
-          label={getEntityLabel(entity)}
-          labelItalic={entity.label === ""}
-          status={entity.status}
-          ltype={entity?.data?.logicalType ?? "1"}
-          isTemplate={entity.isTemplate}
-          isDiscouraged={entity.status === EntityEnums.Status.Discouraged}
-          entity={entity}
-          showOnly={showOnly}
-          button={button}
-          moveFn={moveFn}
-          entityClass={classId}
-          mode={mode}
-          borderStyle="solid"
-          invertedLabel={isSelected}
-          index={index}
-          disableDoubleClick={disableDoubleClick}
-          disableDrag={disableDrag}
-          updateOrderFn={updateOrderFn}
-          parentId={parentId}
-          lvl={lvl}
-          fullWidth={fullWidth}
-          isFavorited={isFavorited}
-          onButtonOver={() => setButtonHovered(true)}
-          onButtonOut={() => setButtonHovered(false)}
-          onBtnClick={() => {
-            setButtonHovered(false);
-            setTagHovered(false);
-          }}
-        />
-      </div>
-    </>
+    <Tag
+      propId={entity.id}
+      label={entity.label || entity.data.text || "no label"}
+      labelItalic={entity.label === ""}
+      status={entity.status}
+      ltype={entity?.data?.logicalType ?? "1"}
+      tooltipDetail={entity.detail}
+      isTemplate={entity.isTemplate}
+      isDiscouraged={entity.status === EntityStatus.Discouraged}
+      entity={entity}
+      tooltipText={tooltipText}
+      showOnly={showOnly}
+      button={button}
+      moveFn={moveFn}
+      entityClass={classId}
+      mode={mode}
+      borderStyle="solid"
+      invertedLabel={isSelected}
+      index={index}
+      disableTooltip={disableTooltip}
+      disableDoubleClick={disableDoubleClick}
+      disableDrag={disableDrag}
+      tooltipPosition={tooltipPosition}
+      updateOrderFn={updateOrderFn}
+      parentId={parentId}
+      lvl={lvl}
+      fullWidth={fullWidth}
+      isFavorited={isFavorited}
+      statementsCount={statementsCount}
+    />
   );
 };

@@ -1,12 +1,12 @@
 import { actantPositionDict } from "@shared/dictionaries";
-import { EntityEnums } from "@shared/enums";
+import { EntityClass, Position } from "@shared/enums";
 import {
   IEntity,
   IProp,
   IResponseStatement,
   IStatementActant,
 } from "@shared/types";
-import { AttributeIcon, Button, ButtonGroup, ButtonGroups } from "components";
+import { AttributeIcon, Button, ButtonGroup } from "components";
 import {
   AttributeButtonGroup,
   EntitySuggester,
@@ -21,8 +21,8 @@ import {
   useDrop,
 } from "react-dnd";
 import { FaGripVertical, FaPlus, FaTrashAlt, FaUnlink } from "react-icons/fa";
-import { RiCompassDiscoverLine } from "react-icons/ri";
 import { UseMutationResult } from "react-query";
+import { ColumnInstance } from "react-table";
 import { setDraggedActantRow } from "redux/features/rowDnd/draggedActantRowSlice";
 import { useAppDispatch, useAppSelector } from "redux/hooks";
 import { excludedSuggesterEntities } from "Theme/constants";
@@ -30,25 +30,19 @@ import {
   DraggedActantRowItem,
   DraggedPropRowCategory,
   DragItem,
-  FilteredActantObject,
   ItemTypes,
 } from "types";
 import { dndHoverFn } from "utils";
 import AttributesEditor from "../../AttributesEditor/AttributesEditor";
 import { PropGroup } from "../../PropGroup/PropGroup";
-import { StatementEditorActantClassification } from "./StatementEditorActantClassification/StatementEditorActantClassification";
-import { StatementEditorActantIdentification } from "./StatementEditorActantIdentification/StatementEditorActantIdentification";
 import {
-  StyledCI,
-  StyledCIHeading,
-  StyledGrid,
-  StyledGridColumn,
-  StyledRow,
   StyledTagWrapper,
+  StyledTd,
+  StyledTr,
 } from "./StatementEditorActantTableStyles";
 
 interface StatementEditorActantTableRow {
-  filteredActant: FilteredActantObject;
+  row: any;
   index: number;
   moveRow: (dragIndex: number, hoverIndex: number) => void;
   userCanEdit?: boolean;
@@ -57,25 +51,25 @@ interface StatementEditorActantTableRow {
   updateProp: (propId: string, changes: any) => void;
   removeProp: (propId: string) => void;
   movePropToIndex: (propId: string, oldIndex: number, newIndex: number) => void;
+  handleClick: Function;
+  visibleColumns: ColumnInstance<{}>[];
   statement: IResponseStatement;
-  classEntitiesActant: EntityEnums.Class[];
+  classEntitiesActant: EntityClass[];
   updateStatementDataMutation: UseMutationResult<any, unknown, object, unknown>;
   territoryParentId?: string;
-  addClassification: (originId: string) => void;
-  addIdentification: (originId: string) => void;
-  territoryActants?: string[];
-  hasOrder?: boolean;
 }
 
 export const StatementEditorActantTableRow: React.FC<
   StatementEditorActantTableRow
 > = ({
-  filteredActant,
+  row,
   index,
   moveRow,
   statement,
   userCanEdit = false,
   updateOrderFn,
+  handleClick = () => {},
+  visibleColumns,
   classEntitiesActant,
   updateStatementDataMutation,
   addProp,
@@ -83,16 +77,12 @@ export const StatementEditorActantTableRow: React.FC<
   removeProp,
   movePropToIndex,
   territoryParentId,
-  addClassification,
-  addIdentification,
-  territoryActants,
-  hasOrder,
 }) => {
   const isInsideTemplate = statement.isTemplate || false;
   const { statementId, territoryId } = useSearchParams();
 
   const dropRef = useRef<HTMLTableRowElement>(null);
-  const dragRef = useRef<HTMLTableCellElement>(null);
+  const dragRef = useRef<HTMLTableDataCellElement>(null);
 
   const [, drop] = useDrop({
     accept: ItemTypes.ACTANT_ROW,
@@ -102,11 +92,7 @@ export const StatementEditorActantTableRow: React.FC<
   });
 
   const [{ isDragging }, drag, preview] = useDrag({
-    item: {
-      type: ItemTypes.ACTANT_ROW,
-      index,
-      id: filteredActant.id.toString(),
-    },
+    item: { type: ItemTypes.ACTANT_ROW, index, id: row.values.id },
     collect: (monitor: DragSourceMonitor) => ({
       isDragging: monitor.isDragging(),
     }),
@@ -145,22 +131,22 @@ export const StatementEditorActantTableRow: React.FC<
       actant,
       sActant,
     }: {
-      actant?: IEntity;
-      sActant: IStatementActant;
-    } = filteredActant.data;
+      actant: IEntity;
+      sActant: IStatementActant | any;
+    } = row.values.data;
     return actant ? (
       <StyledTagWrapper>
         <EntityTag
           entity={actant}
-          fullWidth
+          // fullWidth
           button={
             userCanEdit && (
               <Button
                 key="d"
-                tooltipLabel="unlink actant"
+                tooltip="unlink actant"
                 icon={<FaUnlink />}
                 color="plain"
-                inverted
+                inverted={true}
                 onClick={() => {
                   updateActant(sActant.id, {
                     entityId: "",
@@ -184,99 +170,88 @@ export const StatementEditorActantTableRow: React.FC<
           excludedEntities={excludedSuggesterEntities}
           isInsideTemplate={isInsideTemplate}
           territoryParentId={territoryParentId}
-          territoryActants={territoryActants}
         />
       )
     );
   };
 
   const renderPositionCell = () => {
-    const { sActant } = filteredActant.data;
+    const { sActant } = row.values.data;
     return (
       <AttributeButtonGroup
         disabled={!userCanEdit}
         options={[
           {
-            longValue: actantPositionDict[EntityEnums.Position.Subject].label,
-            shortValue: actantPositionDict[EntityEnums.Position.Subject].value,
+            longValue: actantPositionDict[Position.Subject].label,
+            shortValue: actantPositionDict[Position.Subject].value,
             onClick: () =>
               updateActant(sActant.id, {
-                position:
-                  actantPositionDict[EntityEnums.Position.Subject].value,
+                position: actantPositionDict[Position.Subject].value,
               }),
             selected:
-              sActant.position ==
-              actantPositionDict[EntityEnums.Position.Subject].value,
+              sActant.position == actantPositionDict[Position.Subject].value,
           },
           {
-            longValue: actantPositionDict[EntityEnums.Position.Actant1].label,
-            shortValue: actantPositionDict[EntityEnums.Position.Actant1].value,
+            longValue: actantPositionDict[Position.Actant1].label,
+            shortValue: actantPositionDict[Position.Actant1].value,
             onClick: () =>
               updateActant(sActant.id, {
-                position:
-                  actantPositionDict[EntityEnums.Position.Actant1].value,
+                position: actantPositionDict[Position.Actant1].value,
               }),
             selected:
-              sActant.position ==
-              actantPositionDict[EntityEnums.Position.Actant1].value,
+              sActant.position == actantPositionDict[Position.Actant1].value,
           },
           {
-            longValue: actantPositionDict[EntityEnums.Position.Actant2].label,
-            shortValue: actantPositionDict[EntityEnums.Position.Actant2].value,
+            longValue: actantPositionDict[Position.Actant2].label,
+            shortValue: actantPositionDict[Position.Actant2].value,
             onClick: () =>
               updateActant(sActant.id, {
-                position:
-                  actantPositionDict[EntityEnums.Position.Actant2].value,
+                position: actantPositionDict[Position.Actant2].value,
               }),
             selected:
-              sActant.position ==
-              actantPositionDict[EntityEnums.Position.Actant2].value,
+              sActant.position == actantPositionDict[Position.Actant2].value,
           },
           {
-            longValue:
-              actantPositionDict[EntityEnums.Position.PseudoActant].label,
-            shortValue:
-              actantPositionDict[EntityEnums.Position.PseudoActant].value,
+            longValue: actantPositionDict[Position.PseudoActant].label,
+            shortValue: actantPositionDict[Position.PseudoActant].value,
             onClick: () =>
               updateActant(sActant.id, {
-                position:
-                  actantPositionDict[EntityEnums.Position.PseudoActant].value,
+                position: actantPositionDict[Position.PseudoActant].value,
               }),
             selected:
               sActant.position ==
-              actantPositionDict[EntityEnums.Position.PseudoActant].value,
+              actantPositionDict[Position.PseudoActant].value,
           },
         ]}
       />
     );
   };
 
-  const [actantAttributesModalOpen, setActantAttributesModalOpen] =
-    useState<boolean>(false);
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
 
   const renderAttributesCell = () => {
     const {
       actant,
       sActant,
     }: {
-      actant?: IEntity;
-      sActant: IStatementActant;
-    } = filteredActant.data;
+      actant: IEntity;
+      sActant: IStatementActant | any;
+    } = row.values.data;
 
-    const { entityId: propOriginId, id: propRowId } = sActant;
-
+    const propOriginId = row.values.data.sActant.enityId;
     return (
-      <ButtonGroup noMarginRight height={19}>
+      <ButtonGroup noMarginRight>
         {sActant && (
           <AttributesEditor
-            modalOpen={actantAttributesModalOpen}
-            setModalOpen={setActantAttributesModalOpen}
+            modalOpen={modalOpen}
+            setModalOpen={setModalOpen}
             modalTitle={`Actant involvement`}
             entity={actant}
             disabledAllAttributes={!userCanEdit}
             userCanEdit={userCanEdit}
             data={{
               elvl: sActant.elvl,
+              certainty: sActant.certainty,
               logic: sActant.logic,
               virtuality: sActant.virtuality,
               partitivity: sActant.partitivity,
@@ -288,7 +263,7 @@ export const StatementEditorActantTableRow: React.FC<
               updateActant(sActant.id, newData);
             }}
             updateActantId={(newId: string) => {
-              updateActant(sActant.id, { entityId: newId });
+              updateActant(sActant.id, { actant: newId });
             }}
             classEntitiesActant={classEntitiesActant}
             loading={updateStatementDataMutation.isLoading}
@@ -301,10 +276,10 @@ export const StatementEditorActantTableRow: React.FC<
             key="d"
             icon={<FaTrashAlt />}
             color="plain"
-            inverted
-            tooltipLabel="remove actant row"
+            inverted={true}
+            tooltip="remove actant row"
             onClick={() => {
-              removeActant(filteredActant.data.sActant.id);
+              removeActant(row.values.data.sActant.id);
             }}
           />
         )}
@@ -312,64 +287,33 @@ export const StatementEditorActantTableRow: React.FC<
           <Button
             key="a"
             icon={<FaPlus />}
-            noIconMargin
-            label="p"
-            color="primary"
-            inverted
-            tooltipLabel="add new prop"
+            color="plain"
+            inverted={true}
+            tooltip="add new prop"
             onClick={() => {
-              addProp(propRowId);
-            }}
-          />
-        )}
-        {userCanEdit && (
-          <Button
-            key="c"
-            icon={<FaPlus />}
-            noIconMargin
-            label="c"
-            color="primary"
-            inverted
-            tooltipLabel="add classification"
-            onClick={() => {
-              addClassification(propRowId);
-            }}
-          />
-        )}
-        {userCanEdit && (
-          <Button
-            key="i"
-            icon={<FaPlus />}
-            noIconMargin
-            label="i"
-            color="primary"
-            inverted
-            tooltipLabel="add identification"
-            onClick={() => {
-              addIdentification(propRowId);
+              addProp(propOriginId);
             }}
           />
         )}
         {sActant.logic == "2" && (
           <Button
             key="neg"
-            tooltipLabel="Negative logic"
+            tooltip="Negative logic"
             color="success"
-            inverted
+            inverted={true}
             noBorder
             icon={<AttributeIcon attributeName={"negation"} />}
-            onClick={() => setActantAttributesModalOpen(true)}
           />
         )}
         {sActant.bundleOperator && (
           <Button
             key="oper"
-            tooltipLabel="Logical operator type"
+            tooltip="Logical operator type"
             color="success"
-            inverted
+            inverted={true}
             noBorder
             icon={sActant.bundleOperator}
-            onClick={() => setActantAttributesModalOpen(true)}
+            onClick={() => setModalOpen(true)}
           />
         )}
       </ButtonGroup>
@@ -419,86 +363,36 @@ export const StatementEditorActantTableRow: React.FC<
     [statement]
   );
 
-  const { classifications, identifications } = filteredActant.data.sActant;
-
   return (
-    <StyledRow
-      key={index}
-      marginBottom={classifications.length > 0 || identifications.length > 0}
-    >
-      <StyledGrid ref={dropRef} style={{ opacity }} hasOrder={hasOrder}>
-        {userCanEdit && hasOrder ? (
-          <StyledGridColumn ref={dragRef} style={{ cursor: "move" }}>
+    <React.Fragment key={index}>
+      <StyledTr
+        ref={dropRef}
+        opacity={opacity}
+        isOdd={Boolean(index % 2)}
+        isSelected={row.values.id === statementId}
+        onClick={() => {
+          handleClick(row.values.id);
+        }}
+      >
+        {userCanEdit && (
+          <td ref={dragRef} style={{ cursor: "move" }}>
             <FaGripVertical />
-          </StyledGridColumn>
-        ) : (
-          <StyledGridColumn />
+          </td>
         )}
-        <StyledGridColumn>{renderActantCell()}</StyledGridColumn>
-        <StyledGridColumn>{renderPositionCell()}</StyledGridColumn>
-        <StyledGridColumn>{renderAttributesCell()}</StyledGridColumn>
-      </StyledGrid>
+        <StyledTd>{renderActantCell()}</StyledTd>
+        <StyledTd>{renderPositionCell()}</StyledTd>
+        <StyledTd>{renderAttributesCell()}</StyledTd>
+      </StyledTr>
 
       {!(
         draggedActantRow.category &&
         draggedActantRow.category === DraggedPropRowCategory.ACTANT
       ) &&
         renderPropGroup(
-          filteredActant.data.sActant.entityId,
-          filteredActant.data.sActant.props,
+          row.values.data.sActant.entityId,
+          row.values.data.sActant.props,
           DraggedPropRowCategory.ACTANT
         )}
-
-      {!(
-        draggedActantRow.category &&
-        draggedActantRow.category === DraggedPropRowCategory.ACTANT
-      ) && (
-        <>
-          {classifications.length > 0 && (
-            <StyledCI>
-              <StyledCIHeading>Classifications:</StyledCIHeading>
-              {classifications.length > 0 &&
-                classifications.map((classification, key) => (
-                  <StatementEditorActantClassification
-                    key={key}
-                    classifications={classifications}
-                    classification={classification}
-                    sActant={filteredActant.data.sActant}
-                    statement={statement}
-                    territoryParentId={territoryParentId}
-                    isInsideTemplate={isInsideTemplate}
-                    updateActant={updateActant}
-                    updateStatementDataMutation={updateStatementDataMutation}
-                    userCanEdit={userCanEdit}
-                    territoryActants={territoryActants}
-                  />
-                ))}
-            </StyledCI>
-          )}
-          {identifications.length > 0 && (
-            <StyledCI>
-              <StyledCIHeading>Identifications:</StyledCIHeading>
-              {identifications.length > 0 &&
-                identifications.map((identification, key) => (
-                  <StatementEditorActantIdentification
-                    key={key}
-                    identification={identification}
-                    identifications={identifications}
-                    sActant={filteredActant.data.sActant}
-                    statement={statement}
-                    territoryParentId={territoryParentId}
-                    isInsideTemplate={isInsideTemplate}
-                    updateActant={updateActant}
-                    updateStatementDataMutation={updateStatementDataMutation}
-                    userCanEdit={userCanEdit}
-                    classEntitiesActant={classEntitiesActant}
-                    territoryActants={territoryActants}
-                  />
-                ))}
-            </StyledCI>
-          )}
-        </>
-      )}
-    </StyledRow>
+    </React.Fragment>
   );
 };

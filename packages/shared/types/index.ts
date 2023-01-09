@@ -1,34 +1,31 @@
+import { IAction } from "./action";
 import { IAudit } from "./audit";
-import { ILabel } from "./label";
-import { IOption } from "./option";
-import { IReference } from "./reference";
-import { IValue, IValueData } from "./value";
-
-import { IAction, IActionData } from "./action";
 import { IConcept } from "./concept";
 import { IEntity } from "./entity";
-import { IEvent, IEventData } from "./event";
-import { IGroup, IGroupData } from "./group";
-import { ILocation, ILocationData } from "./location";
-import { IObject, IObjectData } from "./object";
-import { IPerson, IPersonData } from "./person";
-import { IBeing, IBeingData } from "./being";
-import {
-  IStatement,
-  IStatementActant,
-  IStatementAction,
-  IStatementData,
-  IStatementDataTerritory,
-} from "./statement";
-import { ITerritory, ITerritoryData, IParentTerritory } from "./territory";
-
-import { Relation } from "./relation";
-import { IProp, IPropSpec } from "./prop";
+import { IEvent } from "./event";
+import { IGroup } from "./group";
+import { ILabel } from "./label";
+import { ILocation } from "./location";
+import { IObject } from "./object";
+import { IOption } from "./option";
+import { IPerson } from "./person";
+import { IProp } from "./prop";
 import { RequestPermissionUpdate } from "./request-permission";
 import { RequestSearch } from "./request-search";
-import { IResource, IResourceData } from "./resource";
-import { EntityTooltip } from "./entity-tooltip";
-
+import { IResource } from "./resource";
+import {
+  IRelation,
+  IRelationActionEventEquivalent,
+  IRelationAntonym,
+  IRelationClassification,
+  IRelationIdentification,
+  IRelationPropertyReciprocal,
+  IRelationRelated,
+  IRelationSubjectActantReciprocal,
+  IRelationSuperClass,
+  IRelationSynonym,
+  IRelationTroponym,
+} from "./relation";
 import {
   IResponseDetail,
   IResponseUsedInMetaProp,
@@ -46,7 +43,14 @@ import {
   IResponseTreeTerritoryComponent,
 } from "./response-tree";
 import { IResponseStoredTerritory, IResponseUser } from "./response-user";
-
+import {
+  IStatement,
+  IStatementActant,
+  IStatementAction,
+  IStatementData,
+} from "./statement";
+import { ITerritory } from "./territory";
+import { IReference } from "./reference";
 import {
   IBookmarkFolder,
   IStoredTerritory,
@@ -54,6 +58,7 @@ import {
   IUserOptions,
   IUserRight,
 } from "./user";
+import { IValue } from "./value";
 import { IResponseEntity } from "./response-entity";
 import { IResponseStats } from "./response-stats";
 
@@ -61,36 +66,33 @@ export type {
   IAudit,
   IEntity,
   IAction,
-  IActionData,
   ITerritory,
-  ITerritoryData,
-  IParentTerritory,
   IStatement,
-  IStatementData,
-  IStatementAction,
-  IStatementActant,
-  IStatementDataTerritory,
   IResource,
-  IResourceData,
   IPerson,
-  IPersonData,
-  IBeing,
-  IBeingData,
   IGroup,
-  IGroupData,
   IObject,
-  IObjectData,
   IConcept,
   ILocation,
-  ILocationData,
   IValue,
-  IValueData,
   IEvent,
-  IEventData,
   ILabel,
   IOption,
   IProp,
-  IPropSpec,
+  IRelation,
+  IRelationActionEventEquivalent,
+  IRelationAntonym,
+  IRelationClassification,
+  IRelationIdentification,
+  IRelationPropertyReciprocal,
+  IRelationRelated,
+  IRelationSubjectActantReciprocal,
+  IRelationSuperClass,
+  IRelationSynonym,
+  IRelationTroponym,
+  IStatementData,
+  IStatementAction,
+  IStatementActant,
   IReference,
   IUser,
   IUserOptions,
@@ -113,6 +115,5 @@ export type {
   IResponseGeneric,
   IResponsePermission,
   IResponseStats,
-  EntityTooltip,
 };
-export { RequestSearch, RequestPermissionUpdate, Relation };
+export { RequestSearch, RequestPermissionUpdate };

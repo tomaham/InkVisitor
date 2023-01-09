@@ -16,7 +16,6 @@ import {
 interface BoxProps {
   label?: string;
   color?: typeof Colors[number];
-  borderColor?: typeof Colors[number];
   height?: number;
   noPadding?: boolean;
   isExpanded?: boolean;
@@ -27,8 +26,7 @@ interface BoxProps {
 export const Box: React.FC<BoxProps> = ({
   label = "",
   color = "",
-  borderColor = "",
-  height = 0,
+  height,
   noPadding = false,
   isExpanded = true,
   button,
@@ -43,27 +41,16 @@ export const Box: React.FC<BoxProps> = ({
     contentBackgroundColor: isExpanded
       ? theme.color["gray"]["200"]
       : theme.color["gray"]["300"],
-    boxHeight: `${height / 10}rem`,
-    onRest: () => {
-      isExpanded ? setShowContentLabel(false) : setHideContent(true);
-    },
-    onStart: () => {
-      isExpanded ? setHideContent(false) : setShowContentLabel(true);
-    },
+    onRest: () =>
+      isExpanded ? setShowContentLabel(false) : setHideContent(true),
+    onStart: () =>
+      isExpanded ? setHideContent(false) : setShowContentLabel(true),
     config: springConfig.panelExpand,
   });
 
   return (
-    <StyledBox
-      style={{ height: animatedExpand.boxHeight as any }}
-      height={height}
-    >
-      <StyledHead
-        $borderColor={borderColor}
-        $isExpanded={isExpanded}
-        color={color}
-        $noPadding={noPadding}
-      >
+    <StyledBox height={height}>
+      <StyledHead $isExpanded={isExpanded} color={color} $noPadding={noPadding}>
         {!hideContent && (
           <animated.div style={animatedExpand}>{label}</animated.div>
         )}
@@ -79,7 +66,6 @@ export const Box: React.FC<BoxProps> = ({
       </StyledHead>
       <StyledContent
         color={color}
-        $borderColor={borderColor}
         $noPadding={noPadding}
         $isExpanded={isExpanded}
         style={{

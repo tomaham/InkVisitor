@@ -1,12 +1,16 @@
 import Entity from "@models/entity/entity";
 import { fillFlatObject, IModel, UnknownObject } from "@models/common";
-import { EntityEnums } from "@shared/enums";
-import { ILocation, ILocationData } from "@shared/types";
+import { EntityClass, EntityLogicalType } from "@shared/enums";
+import { ILocation } from "@shared/types";
 
-class LocationData implements ILocationData, IModel {
-  logicalType: EntityEnums.LogicalType = EntityEnums.LogicalType.Definite;
+class LocationData implements IModel {
+  logicalType: EntityLogicalType = EntityLogicalType.Definite;
 
-  constructor(data: Partial<ILocationData>) {
+  constructor(data: UnknownObject) {
+    if (!data) {
+      return;
+    }
+
     fillFlatObject(this, data);
   }
 
@@ -16,20 +20,25 @@ class LocationData implements ILocationData, IModel {
 }
 
 class Location extends Entity implements ILocation {
-  class: EntityEnums.Class.Location = EntityEnums.Class.Location; // just default
+  class: EntityClass.Location = EntityClass.Location; // just default
   data: LocationData;
 
-  constructor(data: Partial<ILocation>) {
+  constructor(data: UnknownObject) {
     super(data);
-    this.data = new LocationData(data.data || {});
+
+    if (!data) {
+      data = {};
+    }
+
+    this.data = new LocationData(data.data as UnknownObject);
   }
 
   isValid(): boolean {
-    if (this.class !== EntityEnums.Class.Location) {
+    if (this.class !== EntityClass.Location) {
       return false;
     }
 
-    return super.isValid() && this.data.isValid();
+    return this.data.isValid();
   }
 }
 

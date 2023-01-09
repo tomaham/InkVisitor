@@ -1,14 +1,12 @@
 import styled from "styled-components";
 
 export const StyledContent = styled.div`
-  min-height: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: start;
   padding-left: 1rem;
   background-color: ${({ theme }) => theme.color["white"]};
-  padding-bottom: 1rem;
-  overflow: auto;
 `;
 
 export const StyledHeader = styled.div`

@@ -1,5 +1,5 @@
 import { entitiesDict } from "@shared/dictionaries";
-import { EntityEnums, UserEnums } from "@shared/enums";
+import { EntityClass, UserRole } from "@shared/enums";
 import { IEntity } from "@shared/types";
 import api from "api";
 import {
@@ -70,7 +70,7 @@ export const TemplateListCreateModal: React.FC<TemplateListCreateModal> = ({
         if (selectedDetailId) {
           queryClient.invalidateQueries("entity-templates");
         }
-        if (variables.class === EntityEnums.Class.Statement) {
+        if (variables.class === EntityClass.Statement) {
           setStatementId(variables.id);
         } else {
           appendDetailId(variables.id);
@@ -83,7 +83,7 @@ export const TemplateListCreateModal: React.FC<TemplateListCreateModal> = ({
 
   const handleCreateNewStatementTemplate = (): IEntity => {
     const newTemplate = CStatement(
-      localStorage.getItem("userrole") as UserEnums.Role,
+      localStorage.getItem("userrole") as UserRole,
       undefined,
       createModalEntityLabel,
       createModalEntityDetail
@@ -92,9 +92,9 @@ export const TemplateListCreateModal: React.FC<TemplateListCreateModal> = ({
   };
   const handleCreateNewEntityTemplate = (): IEntity => {
     const newTemplate = CEntity(
-      createModalEntityClass.value as EntityEnums.Class,
+      createModalEntityClass.value as EntityClass,
       createModalEntityLabel,
-      localStorage.getItem("userrole") as UserEnums.Role,
+      localStorage.getItem("userrole") as UserRole,
       createModalEntityDetail
     );
     return newTemplate;
@@ -102,7 +102,7 @@ export const TemplateListCreateModal: React.FC<TemplateListCreateModal> = ({
 
   const handleCreateTemplate = () => {
     const entity =
-      createModalEntityClass.value === EntityEnums.Class.Statement
+      createModalEntityClass.value === EntityClass.Statement
         ? handleCreateNewStatementTemplate()
         : handleCreateNewEntityTemplate();
     const templateEntity = CTemplateEntity(
@@ -139,7 +139,7 @@ export const TemplateListCreateModal: React.FC<TemplateListCreateModal> = ({
               onChange={(option: ValueType<OptionTypeBase, any>) => {
                 setCreateModalEntityClass(option as DropdownItem);
               }}
-              width={100}
+              width={80}
               entityDropdown
               disableTyping
               autoFocus

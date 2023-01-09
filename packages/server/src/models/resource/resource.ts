@@ -1,14 +1,18 @@
 import { fillFlatObject, UnknownObject, IModel } from "@models/common";
-import { EntityEnums } from "@shared/enums";
-import { IResource, IResourceData } from "@shared/types/resource";
+import { EntityClass } from "@shared/enums";
+import { IResource } from "@shared/types/resource";
 import Entity from "@models/entity/entity";
 
-class ResourceData implements IResourceData, IModel {
+class ResourceData implements IModel {
   url: string = "";
   partValueLabel: string = "";
   partValueBaseURL: string = "";
 
-  constructor(data: Partial<IResourceData>) {
+  constructor(data: UnknownObject) {
+    if (!data) {
+      return;
+    }
+
     fillFlatObject(this, data);
   }
 
@@ -18,20 +22,25 @@ class ResourceData implements IResourceData, IModel {
 }
 
 class Resource extends Entity implements IResource {
-  class: EntityEnums.Class.Resource = EntityEnums.Class.Resource;
+  class: EntityClass.Resource = EntityClass.Resource;
   data: ResourceData;
 
-  constructor(data: Partial<IResource>) {
+  constructor(data: UnknownObject) {
     super(data);
-    this.data = new ResourceData(data.data || {});
+
+    if (!data) {
+      data = {};
+    }
+
+    this.data = new ResourceData(data.data as UnknownObject);
   }
 
   isValid(): boolean {
-    if (this.class !== EntityEnums.Class.Resource) {
+    if (this.class !== EntityClass.Resource) {
       return false;
     }
 
-    return super.isValid() && this.data.isValid();
+    return this.data.isValid();
   }
 }
 

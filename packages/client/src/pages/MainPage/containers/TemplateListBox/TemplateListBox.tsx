@@ -1,5 +1,5 @@
 import { entitiesDict } from "@shared/dictionaries";
-import { EntityEnums } from "@shared/enums";
+import { EntityClass } from "@shared/enums";
 import { IEntity } from "@shared/types";
 import { IRequestSearch } from "@shared/types/request-search";
 import api from "api";
@@ -51,7 +51,7 @@ export const TemplateListBox: React.FC<TemplateListBox> = ({}) => {
         onlyTemplates: true,
       };
       if (filterByClass.value !== "all") {
-        filters.class = filterByClass.value as EntityEnums.Class;
+        filters.class = filterByClass.value as EntityClass;
       }
       if (filterByLabel.length) {
         filters.label = filterByLabel + "*";
@@ -157,14 +157,15 @@ export const TemplateListBox: React.FC<TemplateListBox> = ({}) => {
                 <React.Fragment key={templateEntity.id + ti}>
                   <EntityTag
                     entity={templateEntity}
+                    propId={templateEntity.id}
                     fullWidth
-                    tooltipPosition="left"
+                    tooltipPosition="left center"
                     button={
                       <Button
-                        tooltipLabel="remove template"
+                        tooltip="remove template"
                         icon={<FaTrash />}
                         color="plain"
-                        inverted
+                        inverted={true}
                         onClick={() => {
                           handleAskRemoveTemplate(templateEntity.id);
                         }}

@@ -1,5 +1,5 @@
 import { actantPositionDict } from "@shared/dictionaries";
-import { EntityEnums } from "@shared/enums";
+import { Position } from "@shared/enums";
 import {
   IEntity,
   IProp,
@@ -52,7 +52,7 @@ export const StatementListRowExpanded: React.FC<StatementListRowExpanded> = ({
           <StyledReferenceColumn marginRight>
             <EntityTag
               entity={resourceEntity}
-              tooltipPosition="bottom"
+              tooltipPosition="bottom center"
               fullWidth
             />
           </StyledReferenceColumn>
@@ -65,7 +65,7 @@ export const StatementListRowExpanded: React.FC<StatementListRowExpanded> = ({
           <StyledReferenceColumn>
             <EntityTag
               entity={valueEntity}
-              tooltipPosition="bottom"
+              tooltipPosition="bottom center"
               fullWidth
             />
           </StyledReferenceColumn>
@@ -84,7 +84,7 @@ export const StatementListRowExpanded: React.FC<StatementListRowExpanded> = ({
           <StyledActantWrap key={key}>
             <EntityTag
               entity={entities[actantId]}
-              tooltipPosition="bottom"
+              tooltipPosition="bottom center"
               fullWidth
             />
           </StyledActantWrap>
@@ -234,7 +234,7 @@ export const StatementListRowExpanded: React.FC<StatementListRowExpanded> = ({
                     actant.data.subject,
                     actant.data.sSubject,
                     key,
-                    actantPositionDict[EntityEnums.Position.Subject].label
+                    actantPositionDict[Position.Subject].label
                   )}
                 </StyledPropRow>
               ))}

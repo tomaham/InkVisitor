@@ -36,7 +36,6 @@ interface StyledEditorSection {
   firstSection?: boolean;
   lastSection?: boolean;
   metaSection?: boolean;
-  marginRight?: boolean;
 }
 export const StyledEditorSection = styled.div<StyledEditorSection>`
   position: relative;
@@ -54,7 +53,6 @@ export const StyledEditorSection = styled.div<StyledEditorSection>`
   border-bottom-style: solid;
   margin: ${({ theme, firstSection = false }) =>
     firstSection ? "0 0 0 0.7rem" : "0.2rem 0 0 2rem"};
-  margin-right: ${({ marginRight }) => (marginRight ? "0.5rem" : "")};
   :hover {
     background-color: ${({ theme }) => theme.color["gray"][100]};
   }
@@ -103,6 +101,24 @@ export const StyledPropsActantList = styled(StyledGrid)<StyledPropsActantList>`
   width: 100%;
 `;
 
+interface StyledPropLineColumn {
+  padded?: boolean;
+  lastSecondLevel?: boolean;
+  isTag?: boolean;
+}
+export const StyledPropLineColumn = styled(
+  StyledGridCell
+)<StyledPropLineColumn>`
+  display: inline-flex;
+  margin-bottom: ${({ theme, lastSecondLevel }) =>
+    lastSecondLevel ? theme.space[4] : theme.space[0]};
+  align-items: center;
+  padding-left: ${({ theme, padded }) =>
+    padded ? theme.space[6] : theme.space[0]};
+  padding-right: 5px;
+  overflow: ${({ isTag }) => (isTag ? "hidden" : "visible")};
+`;
+
 // tags
 interface StyledTagsList {}
 export const StyledTagsList = styled.div<StyledTagsList>`
@@ -137,7 +153,7 @@ export const StyledBreadcrumbWrap = styled.div`
 `;
 
 export const StyledEditorStatementInfo = styled.div`
-  display: block;
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   overflow: hidden;
@@ -183,7 +199,7 @@ export const StyledEditorContentRowValueID = styled.div`
 export const StyledEditorTemplateSection = styled.div`
   display: table;
   width: 100%;
-  margin-bottom: ${({ theme }) => theme.space[1]};
+  padding-right: ${({ theme }) => theme.space[6]};
   ${StyledEditorContentRow} {
     display: table-row;
     width: 100%;

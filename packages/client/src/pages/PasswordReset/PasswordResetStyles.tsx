@@ -3,14 +3,7 @@ import styled from "styled-components";
 
 export const StyledButtonWrap = styled.div``;
 
-export const StyledContent = styled.div`
-  height: 100%;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-export const StyledBoxWrap = styled.div`
+export const StyledContentWrap = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -32,10 +25,4 @@ export const StyledInputRow = styled.div`
 export const StyledFaLock = styled(FaLock)`
   margin-right: ${({ theme }) => theme.space[2]};
   color: ${({ theme }) => theme.color["primary"]};
-`;
-export const StyledDescription = styled.div`
-  color: ${({ theme }) => theme.color["primary"]};
-  font-weight: ${({ theme }) => theme.fontWeight["normal"]};
-  font-size: ${({ theme }) => theme.fontSize["sm"]};
-  margin-bottom: 0.5rem;
 `;

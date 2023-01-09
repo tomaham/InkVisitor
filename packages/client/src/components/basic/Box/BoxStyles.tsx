@@ -4,7 +4,7 @@ import styled from "styled-components";
 interface StyledBox {
   height?: number;
 }
-export const StyledBox = styled(animated.div) <StyledBox>`
+export const StyledBox = styled(animated.div)<StyledBox>`
   position: relative;
   display: flex;
   flex-direction: column;
@@ -13,11 +13,10 @@ export const StyledBox = styled(animated.div) <StyledBox>`
 
 interface StyledHead {
   color: string;
-  $borderColor: string;
   $noPadding: boolean;
   $isExpanded: boolean;
 }
-export const StyledHead = styled(animated.div) <StyledHead>`
+export const StyledHead = styled(animated.div)<StyledHead>`
   height: 3.2rem;
   background-color: ${({ theme, color }) => (color ? color : "")};
   color: ${({ theme }) => theme.color["gray"]["600"]};
@@ -28,16 +27,12 @@ export const StyledHead = styled(animated.div) <StyledHead>`
   font-weight: ${({ theme }) => theme.fontWeight["bold"]};
   font-style: normal;
   text-transform: uppercase;
-  border-left-color: ${({ theme, $borderColor }) =>
-    $borderColor ? theme.color[$borderColor] : theme.color["gray"][200]};
+  border-left-color: ${({ theme }) => theme.color["gray"][200]};
   border-left-style: solid;
-  border-right-color: ${({ theme, $borderColor }) =>
-    $borderColor ? theme.color[$borderColor] : theme.color["gray"][200]};
-  border-right-style: solid;
   border-width: ${({ theme, $noPadding, $isExpanded }) =>
     $noPadding || !$isExpanded ? theme.borderWidth[1] : theme.borderWidth[4]};
 `;
-interface StyledButtonWrap { }
+interface StyledButtonWrap {}
 export const StyledButtonWrap = styled.div<StyledButtonWrap>`
   position: absolute;
   top: ${({ theme }) => theme.space[2]};
@@ -46,10 +41,9 @@ export const StyledButtonWrap = styled.div<StyledButtonWrap>`
 interface StyledContent {
   $noPadding: boolean;
   color: string;
-  $borderColor?: string;
   $isExpanded: boolean;
 }
-export const StyledContent = styled(animated.div) <StyledContent>`
+export const StyledContent = styled(animated.div)<StyledContent>`
   background-color: ${({ theme }) => theme.color["grey"]};
   display: flex;
   flex-direction: column;
@@ -58,13 +52,9 @@ export const StyledContent = styled(animated.div) <StyledContent>`
   height: 100%;
   font-size: ${({ theme }) => theme.fontSize["base"]};
 
-  border-color: ${({ theme, $isExpanded, $borderColor }) =>
-    $isExpanded
-      ? $borderColor
-        ? theme.color[$borderColor]
-        : theme.color["gray"]["200"]
-      : theme.color["grey"]};
-  border-style: ${({ $isExpanded }) => ($isExpanded ? "solid" : "")};
+  border-color: ${({ theme, $isExpanded }) =>
+    $isExpanded ? theme.color["gray"]["200"] : theme.color["grey"]};
+  border-style: ${({ $isExpanded }) => ($isExpanded ? "solid" : "dotted")};
   border-width: ${({ theme, $noPadding, $isExpanded }) =>
     $noPadding || !$isExpanded ? theme.borderWidth[1] : theme.borderWidth[4]};
   border-top: none;
@@ -74,7 +64,7 @@ interface StyledContentAnimationWrap {
 }
 export const StyledContentAnimationWrap = styled(
   animated.div
-) <StyledContentAnimationWrap>`
+)<StyledContentAnimationWrap>`
   display: ${({ $hideContent }) => ($hideContent ? "none" : "inherit")};
   flex-direction: column;
   height: 100%;
@@ -82,7 +72,7 @@ export const StyledContentAnimationWrap = styled(
 interface StyledVerticalText {
   $showContentLabel: boolean;
 }
-export const StyledVerticalText = styled(animated.p) <StyledVerticalText>`
+export const StyledVerticalText = styled(animated.p)<StyledVerticalText>`
   position: absolute;
   top: ${({ theme }) => theme.space[14]};
   left: 0.4rem;

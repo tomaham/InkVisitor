@@ -1,25 +1,20 @@
 import { IResponsePermission } from "@shared/types";
 import { r as rethink, Connection, WriteResult, RDatum } from "rethinkdb-ts";
 import { IDbModel } from "@models/common";
-import { HttpMethods } from "@shared/enums";
 
 export default class AclPermission implements IDbModel, IResponsePermission {
-  static table = "acl_permissions";
-
   id: string;
   controller: string;
   route: string;
-  method: HttpMethods;
   roles: string[];
-  public: boolean;
+
+  static table = "acl_permissions";
 
   constructor(data: Record<string, any>) {
     this.id = data.id;
     this.controller = data.controller;
-    this.route = data.route;
-    this.method = data.method;
+    this.route = data.route || data.method;
     this.roles = data.roles;
-    this.public = !!data.public;
   }
 
   async save(dbInstance: Connection | undefined): Promise<WriteResult> {
@@ -68,20 +63,26 @@ export default class AclPermission implements IDbModel, IResponsePermission {
 
   static async findByRoute(
     dbInstance: Connection | undefined,
-    controller: string,
-    method: HttpMethods,
+    ctrlName: string,
     route: string
-  ): Promise<AclPermission[]> {
+  ): Promise<AclPermission | null> {
     const data = await rethink
       .table(AclPermission.table)
       .filter({
-        controller,
-        method,
-        route,
+        controller: ctrlName,
+      })
+      .filter(function (row: RDatum) {
+        return rethink.or(
+          row.hasFields("method").and(row("method").eq(route)), // DEPRECATED
+          row.hasFields("route").and(row("route").eq(route))
+        );
       })
       .run(dbInstance);
 
-    return data.map(d => new AclPermission(d));
+    if (!data.length) {
+      return null;
+    }
+    return new AclPermission(data[0]);
   }
 
   static async findById(

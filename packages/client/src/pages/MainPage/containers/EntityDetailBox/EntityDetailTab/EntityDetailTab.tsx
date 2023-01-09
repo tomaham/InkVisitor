@@ -1,13 +1,13 @@
-import { EntityEnums } from "@shared/enums";
+import { EntityClass } from "@shared/enums";
 import { IResponseEntity } from "@shared/types";
 import { Tooltip, TypeBar } from "components";
-import React, { MouseEventHandler, useState } from "react";
-import { getEntityLabel } from "utils";
+import React, { MouseEventHandler } from "react";
 import {
   StyledCgClose,
   StyledClose,
   StyledLabel,
   StyledTab,
+  StyledTypeWrapper,
 } from "./EntityDetailTabStyles";
 
 interface EntityDetailTab {
@@ -22,23 +22,12 @@ export const EntityDetailTab: React.FC<EntityDetailTab> = ({
   onClose,
   isSelected = false,
 }) => {
-  const [referenceElement, setReferenceElement] =
-    useState<HTMLDivElement | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
-
+  const tabLabel = entity?.label || entity?.data.text || "no label";
   return (
-    <>
-      <StyledTab
-        isSelected={isSelected}
-        ref={setReferenceElement}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-      >
+    <StyledTab isSelected={isSelected}>
+      <Tooltip label={tabLabel}>
         <StyledLabel
-          isSelected={isSelected}
-          isItalic={
-            entity?.class === EntityEnums.Class.Statement && !entity?.label
-          }
+          isItalic={entity?.class === EntityClass.Statement && !entity?.label}
           onClick={onClick}
         >
           {entity?.class && (
@@ -46,22 +35,14 @@ export const EntityDetailTab: React.FC<EntityDetailTab> = ({
               entityLetter={entity?.class}
               isTemplate={entity.isTemplate}
               noMargin
-              dimColor={!isSelected}
             />
           )}
-          {!entity ? "..." : getEntityLabel(entity)}
+          {!entity ? "..." : tabLabel}
         </StyledLabel>
-
-        <StyledClose onClick={onClose}>
-          <StyledCgClose size={13} strokeWidth={0.5} />
-        </StyledClose>
-      </StyledTab>
-
-      <Tooltip
-        visible={showTooltip}
-        referenceElement={referenceElement}
-        label={getEntityLabel(entity)}
-      />
-    </>
+      </Tooltip>
+      <StyledClose onClick={onClose}>
+        <StyledCgClose size={13} strokeWidth={0.5} />
+      </StyledClose>
+    </StyledTab>
   );
 };

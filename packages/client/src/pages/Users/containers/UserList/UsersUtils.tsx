@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { useMutation, useQueryClient } from "react-query";
+import { useQueryClient } from "react-query";
 import { FaPlus } from "react-icons/fa";
 
 import api from "api";
@@ -16,32 +16,30 @@ export const UsersUtils: React.FC<UsersUtils> = React.memo(({}) => {
 
   const queryClient = useQueryClient();
 
-  const createNewUserMutataion = useMutation(
-    async () =>
-      await api.usersCreate({
-        name: newUserName,
-        email: newUserEmail,
-      }),
-    {
-      onSuccess(data, variables) {
-        toast.success(`User ${newUserName} created!`);
-        setNewUserName("");
-        setNewUserEmail("");
-        queryClient.invalidateQueries("users");
-      },
-      onError() {
-        toast.warning(`problem creating user!`);
-      },
+  const createNewUser = async () => {
+    const res: any = await api.usersCreate({
+      name: newUserName,
+      email: newUserEmail,
+    });
+    if (res?.status === 200) {
+      toast.success(`User ${newUserName} created!`);
+    } else {
+      toast.warning(`problem creating user!`);
     }
-  );
+    setNewUserName("");
+    setNewUserEmail("");
+    queryClient.invalidateQueries("users");
+  };
 
-  const validNewUserEmail = () => {
+  const validNewUserEmail = useMemo(() => {
     const re =
       /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(newUserEmail).toLowerCase());
-  };
+  }, [newUserEmail]);
 
-  const validNewUserName = newUserName.length > 3;
+  const validNewUserName = useMemo(() => {
+    return newUserName.length > 3;
+  }, [newUserName]);
 
   return (
     <StyledUtils>
@@ -66,13 +64,13 @@ export const UsersUtils: React.FC<UsersUtils> = React.memo(({}) => {
         />
         <Button
           key="add"
-          label="new user"
-          tooltipLabel="create user"
-          disabled={!(validNewUserEmail() && validNewUserName)}
+          disabled={!(validNewUserEmail && validNewUserName)}
           icon={<FaPlus size={14} />}
+          tooltip="create user"
           color="primary"
+          label="new user"
           onClick={() => {
-            createNewUserMutataion.mutate();
+            createNewUser();
           }}
         />
       </StyledUserEditorForm>
@@ -88,7 +86,7 @@ export const UsersUtils: React.FC<UsersUtils> = React.memo(({}) => {
             }}
           />
           <Button
-            tooltipLabel="Test email will be sent to your email"
+            tooltip="Test email will be sent to your email"
             color="primary"
             label="test email"
             onClick={() =>

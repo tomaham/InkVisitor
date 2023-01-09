@@ -1,38 +1,38 @@
-import { EntityEnums } from "../enums";
+import { Certainty } from "../enums";
 
 export const certaintyDict = [
   {
-    value: EntityEnums.Certainty.Empty,
+    value: Certainty.Empty,
     label: "-",
     info: "",
   },
   {
-    value: EntityEnums.Certainty.Certain,
+    value: Certainty.Certain,
     label: "certain",
     info: "",
   },
   {
-    value: EntityEnums.Certainty.AlmostCertain,
+    value: Certainty.AlmostCertain,
     label: "almost certain",
     info: "",
   },
   {
-    value: EntityEnums.Certainty.Probable,
+    value: Certainty.Probable,
     label: "probable",
     info: "",
   },
   {
-    value: EntityEnums.Certainty.Possible,
+    value: Certainty.Possible,
     label: "possible",
     info: "",
   },
   {
-    value: EntityEnums.Certainty.Dubious,
+    value: Certainty.Dubious,
     label: "dubious",
     info: "",
   },
   {
-    value: EntityEnums.Certainty.False,
+    value: Certainty.False,
     label: "false",
     info: "",
   },

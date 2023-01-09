@@ -1,6 +1,6 @@
-<p align="center" width="100%" style="background: white; padding-top:5px;">
-    <img width="50%" src="./logo/logo-full.png" style="background: transparent;">
-</p>
+# InkVisitor
+
+## Deployment
 
 [![deploy staging](https://github.com/DISSINET/InkVisitor/actions/workflows/dev.yml/badge.svg?branch=dev)](https://github.com/DISSINET/InkVisitor/actions/workflows/dev.yml)
 
@@ -36,7 +36,6 @@ The other Entity types covered in the data model are:
 - **Concept**
 - **Person**
 - **Group**
-- **Being** (typically, animal)
 - **(Physical) Object**
 - **Location**
 - **Event**
@@ -67,11 +66,11 @@ Further, the admin may grant particular users (editors and viewers) access right
 
 Only admin and editor with edit rights in the parent **Territory** (T) may edit, add or remove a child T. Editors and viewers do not see T they have no rights to in the T Tree. Only "edit" rights for the T grant the rights to add a new Statement under that particular T, or any other child of that T. That means that the admin has first to create a T and grant edit rights to editors.
 
-To administrate the users rights, admin roles may access the **administration window**, where they can append new territories to editors and viewers. They can also create new users, change roles, see passwords or delete users. Admin role is not possible to be assigned or deleted through this environment.
+To administrate the users rights, admin roles may acces the **administration window**, where they can append new territories to editors and viewers. They can also create new users, change roles, see passwords or delete users. Admin role is not possible to be assigned or deleted through this environment.
 
 ## Packages
 
-#### Client
+#### Database
 
 For more information see [client package](./packages/client)
 
@@ -98,7 +97,7 @@ For standalone deployment of each package, please refer to respective `README.md
 3. Prepare `.env` files for servers listed under `env_file` sections. Check server's [README.md](./packages/server/README.md) and [example.env](./packages/server/env/example.env) files.
 4. Prepare `.env` files for clients identified by `ENV` variable under `build -> args` section. Check server's [README.md](./packages/server/README.md) files and [example.env](./packages/server/env/example.env) files.
 4. Run the database - either as a service or containerized using `docker-compose up -d database`
-5. Build app image (will be done also in next step if not available) `docker-compose build inkvisitor` (or `inkvisitor-<env>`)
+5. Build app image (will be done also in next step if not available) `docker-compose build-inkvisitor` (or `inkvisitor-<env>`)
 6. Run the containerized app `docker-compose up inkvisitor` (or `inkvisitor-<env>`)
 
 ### Firewall
@@ -110,9 +109,95 @@ Make sure the ports required by each application are not blocked. Required ports
 
 Setup for additional system specific features (reverse proxies etc) are beyond the scope of this readme.
 
-## Wiki
+## Authentication Example
 
-For more in-depth description for models etc, please visit our [wiki page](https://github.com/DISSINET/InkVisitor/wiki)
+```shell
+curl --request GET \
+  --url http://localhost:3000/api/v1/actants \
+  --header 'authorization: Bearer {TOKEN}'
+```
+
+## Data structure
+
+### Collections
+
+### Endpoints
+
+#### /users
+
+- **POST** /getMore {IFilterUsers} => IResponseUser[]
+- **GET** /:id => IResponseUser
+- **PUT** /:id {changes}
+- **DELETE** /:id
+- **POST** /:id {UserI}
+
+#### /actants
+
+- **POST** /getMore {IFilterActants} => IResponseActant[]
+- **GET** /:id => IResponseActant
+- **PUT** /:id {changes} =>
+- **DELETE** /:id =>
+- **POST** /:id {ActantI} =>
+
+#### /actions
+
+- **POST** /getMore {IFilterActions} => IResponseAction[]
+- **GET** /:id => IResponseAction
+- **PUT** /:id {changes} =>
+- **DELETE** /:id =>
+- **POST** /:id {IAction} =>
+
+#### /tree (Tree container)
+
+- **GET** /
+  {}
+  => IResponseTree
+  _returns the structure of all territories_
+
+- **POST** /moveTerritory
+  {moveId: string; parentId: string; beforeId: string; afterId: string}
+  =>
+  _move territory to a new / same parent between beforeId and afterId_
+
+#### /territory (List container)
+
+- **GET** /:id
+  {}
+  => IResponseTerritory
+  _returns all statements and actants for selected territory_
+
+- **POST** /moveStatement
+  {moveId: string; beforeId: string; afterId: string}
+  =>
+  _move statement within the territory - between beforeId and afterId_
+
+#### /statement (Editor container)
+
+- **GET** /:id
+  {}
+  => IResponseStatement
+  _get everything of the statement_
+
+#### /administration (Administration container)
+
+- **GET** /:id
+  {}
+  => IResponseAdministration
+  _administration purposes_
+
+#### /bookmarks (Bookmarks container)
+
+- **GET** /:id
+  {}
+  => IResponseBookmarks
+  _get all bookmarks of a user_
+
+#### /detail (Detail container)
+
+- **GET** /:id
+  {}
+  => IResponseDetail
+  _get everything of the actant_
 
 ## ACL - access control list
 

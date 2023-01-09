@@ -1,6 +1,5 @@
 import React from "react";
 import { useAppSelector } from "redux/hooks";
-import { heightHeader } from "Theme/constants";
 import { Colors } from "types";
 import { StyledHeader, TextLeft, TextRight } from "./HeaderStyles";
 
@@ -18,7 +17,7 @@ export const Header: React.FC<HeaderProps> = ({
   paddingY,
   left = <div />,
   right = <div />,
-  height = heightHeader,
+  height,
   color = "primary",
 }) => {
   const layoutWidth: number = useAppSelector(

@@ -8,7 +8,7 @@ import request from "supertest";
 import { apiPath } from "@common/constants";
 import app from "../../Server";
 import { supertestConfig } from "..";
-import Statement, { StatementData, StatementTerritory } from "@models/statement/statement";
+import Statement from "@models/statement/statement";
 import {
   deleteEntities,
   findEntityById,
@@ -53,9 +53,11 @@ describe("Entities create", function () {
       const statementRandomId = Math.random().toString();
       const entityData = new Statement({
         id: statementRandomId,
-        data: new StatementData({
-          territory: new StatementTerritory({ territoryId: "not relevant" }),
-        }),
+        data: {
+          territory: {
+            id: "not relevant",
+          },
+        },
       });
 
       await request(app)

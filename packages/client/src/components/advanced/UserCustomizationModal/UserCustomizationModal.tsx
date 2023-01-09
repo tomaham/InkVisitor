@@ -1,5 +1,5 @@
 import { languageDict, userRoleDict } from "@shared/dictionaries";
-import { EntityEnums, UserEnums } from "@shared/enums";
+import { EntityClass, Language, UserRole, UserRoleMode } from "@shared/enums";
 import { IResponseUser } from "@shared/types";
 import api from "api";
 import {
@@ -16,11 +16,7 @@ import {
   ModalInputWrap,
   Tag,
 } from "components";
-import {
-  AttributeButtonGroup,
-  EntitySuggester,
-  EntityTag,
-} from "components/advanced";
+import { AttributeButtonGroup, EntitySuggester } from "components/advanced";
 import React, { useMemo, useState } from "react";
 import { FaUnlink } from "react-icons/fa";
 import { useMutation, useQuery, useQueryClient } from "react-query";
@@ -40,13 +36,13 @@ interface DataObject {
   email: string;
   defaultLanguage: {
     label: string;
-    value: EntityEnums.Language;
+    value: Language;
   } | null;
   searchLanguages:
     | (
         | {
             label: string;
-            value: EntityEnums.Language;
+            value: Language;
           }
         | undefined
       )[]
@@ -130,8 +126,7 @@ export const UserCustomizationModal: React.FC<UserCustomizationModal> = ({
         name: data.name,
         email: data.email,
         options: {
-          defaultLanguage:
-            data.defaultLanguage?.value || EntityEnums.Language.Empty,
+          defaultLanguage: data.defaultLanguage?.value || Language.Empty,
           searchLanguages: data.searchLanguages?.map((sL) => sL?.value),
           defaultTerritory: data.defaultTerritory,
         },
@@ -140,11 +135,11 @@ export const UserCustomizationModal: React.FC<UserCustomizationModal> = ({
   };
 
   const readRights = useMemo(
-    () => rights.filter((r) => r.mode === UserEnums.RoleMode.Read),
+    () => rights.filter((r) => r.mode === UserRoleMode.Read),
     [rights]
   );
   const writeRights = useMemo(
-    () => rights.filter((r) => r.mode === UserEnums.RoleMode.Write),
+    () => rights.filter((r) => r.mode === UserRoleMode.Write),
     [rights]
   );
 
@@ -198,23 +193,25 @@ export const UserCustomizationModal: React.FC<UserCustomizationModal> = ({
                   handleChange("searchLanguages", selectedOption)
                 }
                 options={languageDict.filter(
-                  (lang) => lang.value !== EntityEnums.Language.Empty
+                  (lang) => lang.value !== Language.Empty
                 )}
               />
             </ModalInputWrap>
             <ModalInputLabel>{"default territory"}</ModalInputLabel>
             <ModalInputWrap width={165}>
               {territory ? (
-                <EntityTag
-                  entity={territory}
-                  tooltipPosition="left"
+                <Tag
+                  propId={territory.id}
+                  label={territory.label}
+                  entityClass={territory.class}
+                  tooltipPosition={"left center"}
                   button={
                     <Button
                       key="d"
                       icon={<FaUnlink />}
                       color="danger"
-                      inverted
-                      tooltipLabel="unlink actant"
+                      inverted={true}
+                      tooltip="unlink actant"
                       onClick={() => {
                         handleChange("defaultTerritory", "");
                       }}
@@ -224,7 +221,7 @@ export const UserCustomizationModal: React.FC<UserCustomizationModal> = ({
               ) : (
                 <div>
                   <EntitySuggester
-                    categoryTypes={[EntityEnums.Class.Territory]}
+                    categoryTypes={[EntityClass.Territory]}
                     onSelected={(selected: string) =>
                       handleChange("defaultTerritory", selected)
                     }
@@ -271,7 +268,7 @@ export const UserCustomizationModal: React.FC<UserCustomizationModal> = ({
             <StyledUserRightHeading>{"read"}</StyledUserRightHeading>
             <StyledUserRightItem>
               <StyledRightsWrap>
-                {role !== UserEnums.Role.Admin
+                {role !== UserRole.Admin
                   ? readRights.map((right, key) => (
                       <UserRightItem key={key} territoryId={right.territory} />
                     ))
@@ -281,7 +278,7 @@ export const UserCustomizationModal: React.FC<UserCustomizationModal> = ({
             <StyledUserRightHeading>{"write"}</StyledUserRightHeading>
             <StyledUserRightItem>
               <StyledRightsWrap>
-                {role !== UserEnums.Role.Admin
+                {role !== UserRole.Admin
                   ? writeRights.map((right, key) => (
                       <UserRightItem key={key} territoryId={right.territory} />
                     ))

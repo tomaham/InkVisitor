@@ -1,19 +1,23 @@
-import { UserEnums } from "@shared/enums";
-import { IEntity, IResponseStatement, IStatement } from "@shared/types";
+import { Request } from "express";
+import { UserRoleMode } from "@shared/enums";
+import { IEntity, IResponseStatement } from "@shared/types";
 import { Connection } from "rethinkdb-ts";
-import { IRequest } from "src/custom_typings/request";
 import Statement from "./statement";
 
 export class ResponseStatement extends Statement implements IResponseStatement {
   entities: { [key: string]: IEntity };
-  right: UserEnums.RoleMode = UserEnums.RoleMode.Read;
+  right: UserRoleMode = UserRoleMode.Read;
 
-  constructor(entity: IStatement) {
-    super(entity);
+  constructor(entity: IEntity) {
+    super({});
+    for (const key of Object.keys(entity)) {
+      (this as any)[key] = (entity as any)[key];
+    }
+    
     this.entities = {};
   }
 
-  async prepare(req: IRequest) {
+  async prepare(req: Request) {
     this.right = this.getUserRoleMode(req.getUserOrFail());
     const entities = await this.getEntities(req.db.connection as Connection);
     this.entities = Object.assign({}, ...entities.map((x) => ({ [x.id]: x })));

@@ -1,13 +1,13 @@
-import { EntityEnums } from "../enums";
+import { TerritoryType } from "../enums";
 
 export const territoryTypeDict = [
   {
-    value: EntityEnums.TerritoryType.Type1,
+    value: TerritoryType.Type1,
     label: "type 1",
     info: "",
   },
   {
-    value: EntityEnums.TerritoryType.Type2,
+    value: TerritoryType.Type2,
     label: "type 2",
     info: "",
   },

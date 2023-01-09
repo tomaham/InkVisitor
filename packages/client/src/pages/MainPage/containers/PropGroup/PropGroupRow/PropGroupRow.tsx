@@ -1,7 +1,6 @@
 import { IEntity, IProp } from "@shared/types";
-import { AttributeIcon, Button, ButtonGroup } from "components";
+import { AttributeIcon, Button } from "components";
 import { EntitySuggester, EntityTag } from "components/advanced";
-import { StyledPropButtonGroup } from "components/advanced/AttributeButtonGroup/AttributeButtonGroupStyles";
 import React, { useEffect, useRef, useState } from "react";
 import {
   DragSourceMonitor,
@@ -28,7 +27,7 @@ import { AttributesGroupEditor } from "../../AttributesEditor/AttributesGroupEdi
 import {
   StyledFaGripVertical,
   StyledGrid,
-  StyledNoEntity,
+  StyledPropButtonGroup,
   StyledPropLineColumn,
 } from "../PropGroupStyles";
 
@@ -36,7 +35,6 @@ interface PropGroupRow {
   prop: IProp;
   entities: { [key: string]: IEntity };
   level: 1 | 2 | 3;
-  hasOrder: boolean;
 
   updateProp: (propId: string, changes: any) => void;
   removeProp: (propId: string) => void;
@@ -63,7 +61,6 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
   prop,
   entities,
   level,
-  hasOrder,
   updateProp,
   removeProp,
   addProp,
@@ -102,9 +99,7 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
   }, [draggedPropRow]);
 
   const dispatch = useAppDispatch();
-  // const ref = useRef<HTMLDivElement>(null);
-  const dropRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   const [{ handlerId }, drop] = useDrop({
     accept: itemType ? itemType : ItemTypes.PROP_ROW,
@@ -117,11 +112,11 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
       if (tempDisabled) {
         return;
       }
-      dndHoverFn(item, index, monitor, dropRef, moveProp);
+      dndHoverFn(item, index, monitor, ref, moveProp);
     },
   });
 
-  const [{ isDragging }, drag, preview] = useDrag({
+  const [{ isDragging }, drag] = useDrag({
     item: { type: itemType ? itemType : ItemTypes.PROP_ROW, id, index },
     collect: (monitor: DragSourceMonitor) => ({
       isDragging: monitor.isDragging(),
@@ -136,8 +131,7 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
     },
   });
 
-  preview(drop(dropRef));
-  drag(dragRef);
+  drag(drop(ref));
 
   useEffect(() => {
     if (isDragging) {
@@ -157,71 +151,47 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
         key={level + "|" + index + "|" + id}
         tempDisabled={tempDisabled && category === draggedPropRow.category}
       >
-        <StyledPropLineColumn level={level} isTag={false}>
-          {userCanEdit && hasOrder ? (
-            <div ref={dragRef} style={{ width: "2rem" }}>
-              <StyledFaGripVertical />
-            </div>
-          ) : (
-            <div style={{ width: "2rem" }} />
-          )}
-        </StyledPropLineColumn>
         <StyledPropLineColumn
           level={level}
           isTag={propTypeEntity ? true : false}
         >
+          <div>
+            <StyledFaGripVertical />
+          </div>
           {propTypeEntity ? (
-            <>
-              <EntityTag
-                entity={propTypeEntity}
-                fullWidth
-                tooltipPosition="right"
-                button={
-                  userCanEdit && (
-                    <Button
-                      key="d"
-                      icon={<FaUnlink />}
-                      color="plain"
-                      inverted
-                      tooltipLabel="unlink entity"
-                      onClick={() => {
-                        updateProp(prop.id, {
-                          type: {
-                            ...prop.type,
-                            ...{ entityId: "" },
-                          },
-                        });
-                      }}
-                    />
-                  )
-                }
-              />
-              <StyledPropButtonGroup>
-                {prop.type.logic == "2" && (
-                  <Button
-                    key="neg"
-                    tooltipLabel="Negative logic"
-                    color="success"
-                    inverted
-                    noBorder
-                    onClick={() => setModalOpen(true)}
-                    icon={<AttributeIcon attributeName={"negation"} />}
-                  />
-                )}
-              </StyledPropButtonGroup>
-            </>
-          ) : userCanEdit ? (
+            <EntityTag
+              entity={propTypeEntity}
+              fullWidth
+              tooltipPosition="right center"
+              button={
+                <Button
+                  key="d"
+                  icon={<FaUnlink />}
+                  color="plain"
+                  inverted
+                  tooltip="unlink actant"
+                  onClick={() => {
+                    updateProp(prop.id, {
+                      type: {
+                        ...prop.type,
+                        ...{ id: "" },
+                      },
+                    });
+                  }}
+                />
+              }
+            />
+          ) : (
             <EntitySuggester
               territoryActants={territoryActants}
               onSelected={(newSelectedId: string) => {
                 updateProp(prop.id, {
                   type: {
                     ...prop.type,
-                    ...{ entityId: newSelectedId },
+                    ...{ id: newSelectedId },
                   },
                 });
               }}
-              placeholder="type"
               openDetailOnCreate={openDetailOnCreate}
               categoryTypes={classesPropType}
               inputWidth={90}
@@ -229,64 +199,58 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
               isInsideTemplate={isInsideTemplate}
               territoryParentId={territoryParentId}
             />
-          ) : (
-            <StyledNoEntity>-</StyledNoEntity>
           )}
+          <StyledPropButtonGroup>
+            {prop.type.logic == "2" ? (
+              <Button
+                key="neg"
+                tooltip="Negative logic"
+                color="success"
+                inverted
+                noBorder
+                onClick={() => setModalOpen(true)}
+                icon={<AttributeIcon attributeName={"negation"} />}
+              />
+            ) : (
+              <div />
+            )}
+          </StyledPropButtonGroup>
         </StyledPropLineColumn>
         <StyledPropLineColumn isTag={propValueEntity ? true : false}>
           {propValueEntity ? (
-            <>
-              <EntityTag
-                entity={propValueEntity}
-                fullWidth
-                tooltipPosition="right"
-                button={
-                  userCanEdit && (
-                    <Button
-                      key="d"
-                      icon={<FaUnlink />}
-                      tooltipLabel="unlink entity"
-                      color="plain"
-                      inverted
-                      onClick={() => {
-                        updateProp(prop.id, {
-                          value: {
-                            ...prop.value,
-                            ...{ entityId: "" },
-                          },
-                        });
-                      }}
-                    />
-                  )
-                }
-              />
-
-              <StyledPropButtonGroup>
-                {prop.value.logic == "2" && (
-                  <Button
-                    key="neg"
-                    tooltipLabel="Negative logic"
-                    color="success"
-                    inverted
-                    noBorder
-                    onClick={() => setModalOpen(true)}
-                    icon={<AttributeIcon attributeName={"negation"} />}
-                  />
-                )}
-              </StyledPropButtonGroup>
-            </>
-          ) : userCanEdit ? (
+            <EntityTag
+              entity={propValueEntity}
+              fullWidth
+              tooltipPosition="right center"
+              button={
+                <Button
+                  key="d"
+                  icon={<FaUnlink />}
+                  tooltip="unlink actant"
+                  color="plain"
+                  inverted
+                  onClick={() => {
+                    updateProp(prop.id, {
+                      value: {
+                        ...prop.value,
+                        ...{ id: "" },
+                      },
+                    });
+                  }}
+                />
+              }
+            />
+          ) : (
             <EntitySuggester
-              territoryActants={territoryActants}
+              territoryActants={[]}
               onSelected={(newSelectedId: string) => {
                 updateProp(prop.id, {
                   value: {
                     ...prop.type,
-                    ...{ entityId: newSelectedId },
+                    ...{ id: newSelectedId },
                   },
                 });
               }}
-              placeholder="value"
               openDetailOnCreate={openDetailOnCreate}
               categoryTypes={classesPropValue}
               inputWidth={90}
@@ -294,13 +258,26 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
               isInsideTemplate={isInsideTemplate}
               territoryParentId={territoryParentId}
             />
-          ) : (
-            <StyledNoEntity>-</StyledNoEntity>
           )}
+          <StyledPropButtonGroup>
+            {prop.value.logic == "2" ? (
+              <Button
+                key="neg"
+                tooltip="Negative logic"
+                color="success"
+                inverted
+                noBorder
+                onClick={() => setModalOpen(true)}
+                icon={<AttributeIcon attributeName={"negation"} />}
+              />
+            ) : (
+              <div />
+            )}
+          </StyledPropButtonGroup>
         </StyledPropLineColumn>
 
         <StyledPropLineColumn>
-          <ButtonGroup height={19} noMarginRight>
+          <StyledPropButtonGroup>
             <AttributesGroupEditor
               modalTitle={`Property attributes`}
               modalOpen={modalOpen}
@@ -351,36 +328,32 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
               territoryParentId={territoryParentId}
             />
 
-            {userCanEdit && (
-              <Button
-                key="delete"
-                icon={<FaTrashAlt />}
-                tooltipLabel="remove prop row"
-                color="plain"
-                inverted
-                onClick={() => {
-                  removeProp(prop.id);
-                }}
-              />
-            )}
-            {(level === 1 || level === 2) && userCanEdit && (
+            {(level === 1 || level === 2) && (
               <Button
                 key="add"
                 icon={<FaPlus />}
-                label="p"
-                noIconMargin
-                color="primary"
+                tooltip="add child prop"
+                color="plain"
                 inverted
-                tooltipLabel="add child prop"
                 onClick={() => {
                   addProp(prop.id);
                 }}
               />
             )}
+            <Button
+              key="delete"
+              icon={<FaTrashAlt />}
+              tooltip="remove prop row"
+              color="plain"
+              inverted
+              onClick={() => {
+                removeProp(prop.id);
+              }}
+            />
             {prop.logic == "2" ? (
               <Button
                 key="neg"
-                tooltipLabel="Negative logic"
+                tooltip="Negative logic"
                 color="success"
                 inverted
                 noBorder
@@ -393,7 +366,7 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
             {prop.bundleOperator ? (
               <Button
                 key="oper"
-                tooltipLabel="Logical operator type"
+                tooltip="Logical operator type"
                 color="success"
                 inverted
                 noBorder
@@ -403,7 +376,7 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
             ) : (
               <div />
             )}
-          </ButtonGroup>
+          </StyledPropButtonGroup>
         </StyledPropLineColumn>
       </StyledGrid>
     );
@@ -413,11 +386,7 @@ export const PropGroupRow: React.FC<PropGroupRow> = ({
 
   return (
     <>
-      <div
-        ref={dropRef}
-        data-handler-id={handlerId}
-        style={{ opacity: opacity }}
-      >
+      <div ref={ref} data-handler-id={handlerId} style={{ opacity: opacity }}>
         {renderPropRow()}
       </div>
     </>

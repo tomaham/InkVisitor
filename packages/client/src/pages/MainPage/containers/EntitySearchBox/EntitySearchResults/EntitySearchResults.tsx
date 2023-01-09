@@ -1,44 +1,34 @@
 import { IResponseEntity } from "@shared/types";
 import { EntityTag } from "components/advanced";
 import React, { useMemo } from "react";
-import { config, useSpring } from "react-spring";
 import { areEqual, FixedSizeList as List } from "react-window";
-import { scrollOverscanCount, springConfig } from "Theme/constants";
+import { scrollOverscanCount } from "Theme/constants";
 import { StyledResultItem } from "../EntitySearchBoxStyles";
-import {
-  StyledResultsAnimatedWrap,
-  StyledRow,
-} from "./EntitySearchResultsStyles";
+import { StyledRow } from "./EntitySearchResultsStyles";
 
 interface EntitySearchResults {
   results?: IResponseEntity[];
-  height: number;
+  height?: number;
 }
 export const EntitySearchResults: React.FC<EntitySearchResults> = ({
   results,
-  height,
+  height = 180,
 }) => {
   const data = useMemo(() => (results ? results : []), [results]);
-  const animatedHeight = useSpring({
-    height: `${height / 10}rem`,
-    config: { tension: 195, friction: 20, mass: 1, clamp: true },
-  });
 
   return (
     <>
       {results?.length && (
-        <StyledResultsAnimatedWrap style={animatedHeight}>
-          <List
-            height={height}
-            itemCount={results.length}
-            itemData={data}
-            itemSize={25}
-            width="100%"
-            overscanCount={scrollOverscanCount}
-          >
-            {MemoizedRow}
-          </List>
-        </StyledResultsAnimatedWrap>
+        <List
+          height={height}
+          itemCount={results.length}
+          itemData={data}
+          itemSize={25}
+          width="100%"
+          overscanCount={scrollOverscanCount}
+        >
+          {MemoizedRow}
+        </List>
       )}
     </>
   );
@@ -55,7 +45,7 @@ const Row: React.FC<Row> = ({ data, index, style }) => {
   return (
     <StyledRow style={style}>
       <StyledResultItem>
-        <EntityTag entity={entity} tooltipPosition="left" fullWidth />
+        <EntityTag entity={entity} tooltipPosition="left center" fullWidth />
       </StyledResultItem>
     </StyledRow>
   );

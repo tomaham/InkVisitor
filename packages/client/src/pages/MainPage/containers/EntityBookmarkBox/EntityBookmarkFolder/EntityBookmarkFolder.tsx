@@ -1,16 +1,16 @@
-import { EntityEnums } from "@shared/enums";
+import { EntityClass } from "@shared/enums";
 import { IBookmarkFolder, IResponseBookmarkFolder } from "@shared/types";
 import api from "api";
-import { Button, ButtonGroup, Tooltip } from "components";
+import { ButtonGroup, Button, Tooltip } from "components";
 import { EntitySuggester } from "components/advanced";
 import React, { useState } from "react";
-import { DragObjectWithType, DropTargetMonitor, useDrop } from "react-dnd";
+import { useDrop, DragObjectWithType, DropTargetMonitor } from "react-dnd";
 import {
-  FaEdit,
-  FaFolder,
+  FaRegFolderOpen,
   FaFolderOpen,
   FaRegFolder,
-  FaRegFolderOpen,
+  FaFolder,
+  FaEdit,
   FaTrash,
 } from "react-icons/fa";
 import { useMutation, useQueryClient } from "react-query";
@@ -29,18 +29,17 @@ import {
 } from "./EntityBookmarkFolderStyles";
 
 const bookmarkEntities = [
-  EntityEnums.Class.Action,
-  EntityEnums.Class.Person,
-  EntityEnums.Class.Being,
-  EntityEnums.Class.Group,
-  EntityEnums.Class.Object,
-  EntityEnums.Class.Concept,
-  EntityEnums.Class.Location,
-  EntityEnums.Class.Value,
-  EntityEnums.Class.Event,
-  EntityEnums.Class.Statement,
-  EntityEnums.Class.Territory,
-  EntityEnums.Class.Resource,
+  EntityClass.Action,
+  EntityClass.Person,
+  EntityClass.Group,
+  EntityClass.Object,
+  EntityClass.Concept,
+  EntityClass.Location,
+  EntityClass.Value,
+  EntityClass.Event,
+  EntityClass.Statement,
+  EntityClass.Territory,
+  EntityClass.Resource,
 ];
 
 interface EntityBookmarkFolder {
@@ -99,7 +98,7 @@ export const EntityBookmarkFolder: React.FC<EntityBookmarkFolder> = ({
     }
   };
 
-  const removeBookmark = (folderId: string, bookmarkId: string) => {
+  const removeBookmark = async (folderId: string, bookmarkId: string) => {
     const newBookmarks: IBookmarkFolder[] | false = getBookmarksCopy();
     if (newBookmarks) {
       const folder = newBookmarks.find((b) => b.id === folderId);
@@ -147,76 +146,67 @@ export const EntityBookmarkFolder: React.FC<EntityBookmarkFolder> = ({
     }),
   });
 
-  const [referenceElement, setReferenceElement] =
-    useState<HTMLDivElement | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
-
   return (
     <StyledFolderWrapper
       key={bookmarkFolder.id}
       ref={dropRef}
       style={{ opacity: isOver ? 0.7 : 1 }}
     >
-      <StyledFolderHeader
-        onClick={() => {
-          handleClickFolder(bookmarkFolder.id);
-        }}
-        ref={setReferenceElement}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-      >
-        <StyledFolderWrapperOpenArea>
-          <StyledIconWrap>
-            {(() => {
-              if (open) {
-                if (empty) {
-                  return <FaRegFolderOpen />;
+      <Tooltip label={bookmarkFolder.name} position="left center">
+        <StyledFolderHeader
+          onClick={() => {
+            handleClickFolder(bookmarkFolder.id);
+          }}
+        >
+          <StyledFolderWrapperOpenArea>
+            <StyledIconWrap>
+              {(() => {
+                if (open) {
+                  if (empty) {
+                    return <FaRegFolderOpen />;
+                  } else {
+                    return <FaFolderOpen />;
+                  }
                 } else {
-                  return <FaFolderOpen />;
+                  if (empty) {
+                    return <FaRegFolder />;
+                  } else {
+                    return <FaFolder />;
+                  }
                 }
-              } else {
-                if (empty) {
-                  return <FaRegFolder />;
-                } else {
-                  return <FaFolder />;
-                }
-              }
-            })()}
-          </StyledIconWrap>
-          <StyledFolderHeaderText>{bookmarkFolder.name}</StyledFolderHeaderText>
-        </StyledFolderWrapperOpenArea>
+              })()}
+            </StyledIconWrap>
+            <StyledFolderHeaderText>
+              {bookmarkFolder.name}
+            </StyledFolderHeaderText>
+          </StyledFolderWrapperOpenArea>
 
-        <StyledFolderHeaderButtons>
-          <ButtonGroup>
-            <Button
-              key="edit"
-              icon={<FaEdit size={12} />}
-              color="plain"
-              inverted
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                startEditingFolder(bookmarkFolder);
-              }}
-            />
-            <Button
-              key="remove"
-              icon={<FaTrash size={12} />}
-              color="danger"
-              inverted
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                askRemoveFolder(bookmarkFolder.id);
-              }}
-            />
-          </ButtonGroup>
-        </StyledFolderHeaderButtons>
-      </StyledFolderHeader>
-      <Tooltip
-        visible={showTooltip}
-        referenceElement={referenceElement}
-        label={bookmarkFolder.name}
-        position="left"
-      />
+          <StyledFolderHeaderButtons>
+            <ButtonGroup>
+              <Button
+                key="edit"
+                icon={<FaEdit size={12} />}
+                color="plain"
+                inverted
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  startEditingFolder(bookmarkFolder);
+                }}
+              />
+              <Button
+                key="remove"
+                icon={<FaTrash size={12} />}
+                color="danger"
+                inverted
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  askRemoveFolder(bookmarkFolder.id);
+                }}
+              />
+            </ButtonGroup>
+          </StyledFolderHeaderButtons>
+        </StyledFolderHeader>
+      </Tooltip>
 
       {open && (
         <StyledFolderContent>
@@ -229,7 +219,7 @@ export const EntityBookmarkFolder: React.FC<EntityBookmarkFolder> = ({
           </StyledFolderContentTags>
           <StyledFolderSuggester>
             <EntitySuggester
-              disableTemplateInstantiation
+              disableDuplicate
               openDetailOnCreate
               onSelected={(bookmarkId: string) => {
                 addBookmark(bookmarkFolder.id, bookmarkId);

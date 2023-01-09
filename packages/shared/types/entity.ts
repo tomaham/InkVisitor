@@ -1,16 +1,16 @@
 import { IProp } from ".";
-import { EntityEnums } from "../enums";
+import { EntityClass, EntityStatus, Language } from "../enums";
 import { IReference } from "./reference";
 
 export interface IEntity {
   id: string;
   legacyId?: string;
-  class: EntityEnums.Class;
-  status: EntityEnums.Status;
+  class: EntityClass;
+  status: EntityStatus;
   data: any;
   label: string;
   detail: string;
-  language: EntityEnums.Language;
+  language: Language;
   notes: string[];
   props: IProp[];
   references: IReference[];

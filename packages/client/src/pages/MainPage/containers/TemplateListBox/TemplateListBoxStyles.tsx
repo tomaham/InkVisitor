@@ -3,7 +3,6 @@ import styled from "styled-components";
 export const StyledBoxContent = styled.div`
   display: flex;
   flex-direction: column;
-  overflow: auto;
   height: 100%;
   background-color: ${({ theme }) => theme.color["white"]};
 `;
@@ -12,6 +11,9 @@ export const StyledTemplateSection = styled.div`
   position: relative;
   padding: ${({ theme }) => theme.space[6]};
   background-color: ${({ theme }) => theme.color["white"]};
+  :hover {
+    background-color: ${({ theme }) => theme.color["gray"][100]};
+  }
 `;
 export const StyledTemplateSectionHeader = styled.div`
   font-weight: ${({ theme }) => theme.fontWeight.regular};
