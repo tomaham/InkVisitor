@@ -14,7 +14,8 @@ import {
   RequestPermissionUpdate,
   IStatement,
   ITerritory,
-  IRelation,
+  Relation,
+  EntityTooltip,
 } from "@shared/types";
 import * as errors from "@shared/types/errors";
 import { IRequestSearch } from "@shared/types/request-search";
@@ -108,7 +109,7 @@ class Api {
 
   showErrorToast(err: any) {
     const hydratedError = errors.getErrorByCode(
-      this.responseToError(err.response.data)
+      this.responseToError(err.response?.data)
     );
 
     toast.error(
@@ -458,6 +459,23 @@ class Api {
   }
 
   /**
+   * Tooltips
+   */
+
+  async tooltipGet(
+    entityId: string
+  ): Promise<AxiosResponse<EntityTooltip.IResponse>> {
+    try {
+      const response = await this.connection.get(
+        `/entities/${entityId}/tooltip`
+      );
+      return response;
+    } catch (err: any | AxiosError) {
+      throw { ...err.response.data };
+    }
+  }
+
+  /**
    * Audit
    */
   async auditGet(entityId: string): Promise<AxiosResponse<IResponseAudit>> {
@@ -562,7 +580,7 @@ class Api {
   ): Promise<AxiosResponse<IResponseGeneric>> {
     try {
       const response = await this.connection.put(
-        `/relations/update/${relationId}`,
+        `/relations/${relationId}`,
         changes
       );
       return response;
@@ -572,13 +590,10 @@ class Api {
   }
 
   async relationCreate(
-    newRelation: IRelation
+    newRelation: Relation.IRelation
   ): Promise<AxiosResponse<IResponseGeneric>> {
     try {
-      const response = await this.connection.post(
-        `/relations/create`,
-        newRelation
-      );
+      const response = await this.connection.post(`/relations`, newRelation);
       return response;
     } catch (err: any | AxiosError) {
       throw { ...err.response.data };
@@ -589,9 +604,7 @@ class Api {
     relationId: string
   ): Promise<AxiosResponse<IResponseGeneric>> {
     try {
-      const response = await this.connection.delete(
-        `/relations/delete/${relationId}`
-      );
+      const response = await this.connection.delete(`/relations/${relationId}`);
       return response;
     } catch (err: any | AxiosError) {
       throw { ...err.response.data };

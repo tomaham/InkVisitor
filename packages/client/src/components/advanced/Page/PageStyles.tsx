@@ -1,37 +1,27 @@
 import styled from "styled-components";
-import {
-  heightFooter,
-  heightHeader,
-  layoutWidthBreakpoint,
-} from "Theme/constants";
+import { heightHeader, heightFooter } from "Theme/constants";
 
 interface StyledPage {
   layoutWidth: number;
 }
 export const StyledPage = styled.div<StyledPage>`
-  width: ${({ layoutWidth }) => layoutWidth};
-  /* TODO: check min width init settings */
-  min-width: ${layoutWidthBreakpoint};
+  width: ${({ layoutWidth }) => (layoutWidth > 0 ? layoutWidth : "100%")};
   height: 100vh;
   display: flex;
   flex-direction: column;
 `;
 
-interface StyledContent {
-  height?: number;
-  horizontalCenter: boolean;
-  verticalCenter: boolean;
+interface StyledPageContent {
+  height: number;
 }
-export const StyledContent = styled.div<StyledContent>`
+export const StyledPageContent = styled.div<StyledPageContent>`
   width: 100%;
-  height: ${({ height }) => (height ? height : "")};
+  height: ${({ height }) =>
+    height > 0
+      ? height
+      : `calc(100% - ${(heightHeader + heightFooter) / 10}rem)`};
   overflow: hidden;
   display: flex;
-  justify-content: ${({ horizontalCenter }) =>
-    horizontalCenter ? "center" : ""};
-
-  align-items: ${({ verticalCenter }) => (verticalCenter ? "center" : "")};
-
   position: relative;
   background-color: ${({ theme }) => theme.color["gray"]["200"]};
 `;

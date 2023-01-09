@@ -1,11 +1,13 @@
 import { IEntity } from "./entity";
-import { EntityClass } from "../enums";
+import { EntityEnums } from "../enums";
 
 export interface ITerritory extends IEntity {
-  class: EntityClass.Territory;
-  data: {
-    parent: IParentTerritory | false;
-  };
+  class: EntityEnums.Class.Territory;
+  data: ITerritoryData;
+}
+
+export interface ITerritoryData {
+  parent: IParentTerritory | false;
 }
 
 export interface IParentTerritory {

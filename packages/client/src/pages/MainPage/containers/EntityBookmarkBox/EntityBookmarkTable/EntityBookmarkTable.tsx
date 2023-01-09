@@ -11,7 +11,7 @@ import { StyledTable, StyledTagWrap } from "./EntityBookmarkTableStyles";
 interface EntityBookmarkTable {
   folder: IResponseBookmarkFolder;
   updateFolderEntitys: any;
-  removeBookmark: Function;
+  removeBookmark: (folderId: string, bookmarkId: string) => void;
 }
 export const EntityBookmarkTable: React.FC<EntityBookmarkTable> = ({
   folder,
@@ -40,7 +40,7 @@ export const EntityBookmarkTable: React.FC<EntityBookmarkTable> = ({
             <StyledTagWrap>
               <EntityTag
                 entity={entity as IEntity}
-                tooltipPosition="left center"
+                tooltipPosition="left"
                 fullWidth
                 button={
                   <Button
@@ -48,7 +48,7 @@ export const EntityBookmarkTable: React.FC<EntityBookmarkTable> = ({
                     icon={<FaUnlink />}
                     color="plain"
                     inverted
-                    tooltip="unlink Entity"
+                    tooltipLabel="unlink entity"
                     onClick={() => {
                       removeBookmark(folder.id, entity.id);
                     }}
@@ -117,6 +117,7 @@ export const EntityBookmarkTable: React.FC<EntityBookmarkTable> = ({
               moveRow={moveRow}
               updateOrderFn={updateFolderItemOrder}
               visibleColumns={visibleColumns}
+              hasOrder={rows.length > 1}
               {...row.getRowProps()}
             />
           );

@@ -1,17 +1,17 @@
 import { DropdownItem, entitiesDict } from "@shared/dictionaries/entity";
-import { EntityClass } from "@shared/enums";
+import { EntityEnums } from "@shared/enums";
 import { IEntity, IOption } from "@shared/types";
 import { IRequestSearch } from "@shared/types/request-search";
 import api from "api";
 import { Button, Dropdown, Input, Loader, TypeBar } from "components";
 import { EntitySuggester, EntityTag } from "components/advanced";
 import { useDebounce } from "hooks";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FaUnlink } from "react-icons/fa";
 import { useQuery } from "react-query";
 import { OptionTypeBase, ValueType } from "react-select";
-import { useAppSelector } from "redux/hooks";
 import { wildCardChar } from "Theme/constants";
+import useResizeObserver from "use-resize-observer";
 import {
   StyledBoxContent,
   StyledResultsWrapper,
@@ -44,10 +44,9 @@ export const EntitySearchBox: React.FC = () => {
   const [searchData, setSearchData] = useState<IRequestSearch>(initValues);
   const debouncedValues = useDebounce<IRequestSearch>(searchData, debounceTime);
 
-  const resultsRef = useRef<HTMLDivElement>(null);
-  const fourthPanelBoxesOpened: { [key: string]: boolean } = useAppSelector(
-    (state) => state.layout.fourthPanelBoxesOpened
-  );
+  const { ref: resultRef, height = 0 } = useResizeObserver<HTMLDivElement>();
+
+  const debouncedResultsHeight = useDebounce(height, 20);
 
   // check whether the search should be executed
   const validSearch = useMemo(() => {
@@ -162,16 +161,6 @@ export const EntitySearchBox: React.FC = () => {
     return options;
   }, [templates]);
 
-  const [resultsHeight, setResultsHeight] = useState(0);
-
-  useEffect(() => {
-    if (resultsRef.current) {
-      const rect = resultsRef.current.getBoundingClientRect();
-      const height = rect["height"];
-      setResultsHeight(height);
-    }
-  }, [resultsRef, fourthPanelBoxesOpened, validSearch]);
-
   return (
     <StyledBoxContent>
       <StyledRow>
@@ -227,17 +216,18 @@ export const EntitySearchBox: React.FC = () => {
         <EntitySuggester
           disableTemplatesAccept
           categoryTypes={[
-            EntityClass.Statement,
-            EntityClass.Action,
-            EntityClass.Territory,
-            EntityClass.Resource,
-            EntityClass.Person,
-            EntityClass.Group,
-            EntityClass.Object,
-            EntityClass.Concept,
-            EntityClass.Location,
-            EntityClass.Value,
-            EntityClass.Event,
+            EntityEnums.Class.Statement,
+            EntityEnums.Class.Action,
+            EntityEnums.Class.Territory,
+            EntityEnums.Class.Resource,
+            EntityEnums.Class.Person,
+            EntityEnums.Class.Being,
+            EntityEnums.Class.Group,
+            EntityEnums.Class.Object,
+            EntityEnums.Class.Concept,
+            EntityEnums.Class.Location,
+            EntityEnums.Class.Value,
+            EntityEnums.Class.Event,
           ]}
           onSelected={(newSelectedId: string) => {
             handleChange({ cooccurrenceId: newSelectedId });
@@ -261,8 +251,8 @@ export const EntitySearchBox: React.FC = () => {
                   key="d"
                   icon={<FaUnlink />}
                   color="danger"
-                  inverted={true}
-                  tooltip="unlink entity"
+                  inverted
+                  tooltipLabel="unlink entity"
                   onClick={() => {
                     handleChange({ cooccurrenceId: "" });
                   }}
@@ -273,12 +263,12 @@ export const EntitySearchBox: React.FC = () => {
         </StyledRow>
       )}
 
-      <StyledResultsWrapper ref={resultsRef}>
+      <StyledResultsWrapper ref={resultRef}>
         {/* RESULTS */}
         {sortedEntities.length > 0 && (
           <EntitySearchResults
             results={sortedEntities}
-            height={resultsHeight}
+            height={debouncedResultsHeight}
           />
         )}
         <Loader show={isFetching} />

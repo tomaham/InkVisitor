@@ -1,42 +1,34 @@
 import api from "api";
-import { Header, MemoizedFooter, Toast } from "components";
+import { Header, Loader, MemoizedFooter, Toast } from "components";
 import {
   LeftHeader,
-  MemoizedLoginModal,
   RightHeader,
   UserCustomizationModal,
 } from "components/advanced";
+import { useSearchParams } from "hooks";
 import React, { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "react-query";
+import { useLocation, useHistory } from "react-router";
 import { toast } from "react-toastify";
 import { setUsername } from "redux/features/usernameSlice";
 import { useAppDispatch, useAppSelector } from "redux/hooks";
-import { heightFooter, heightHeader } from "Theme/constants";
-import { StyledContent, StyledPage } from "./PageStyles";
+import { heightFooter } from "Theme/constants";
+import { StyledPageContent, StyledPage } from "./PageStyles";
 
 interface Page {
   children?: React.ReactNode;
-  logOutCleanUp?: () => void;
-  disableRightHeader?: boolean;
-  centeredContent?: boolean;
 }
-export const Page: React.FC<Page> = ({
-  children,
-  logOutCleanUp = () => {},
-  disableRightHeader = false,
-  centeredContent = false,
-}) => {
-  const isLoggedIn = api.isLoggedIn();
+export const Page: React.FC<Page> = ({ children }) => {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const username: string = useAppSelector((state) => state.username);
   const userId = localStorage.getItem("userid");
   const userRole = localStorage.getItem("userrole");
+  const { cleanAllParams } = useSearchParams();
 
   const layoutWidth: number = useAppSelector(
     (state) => state.layout.layoutWidth
   );
-
   const contentHeight: number = useAppSelector(
     (state) => state.layout.contentHeight
   );
@@ -45,6 +37,15 @@ export const Page: React.FC<Page> = ({
     /apps\/inkvisitor[-]?/,
     ""
   );
+
+  const location = useLocation();
+  const history = useHistory();
+
+  const disableRightHeader: boolean =
+    location.pathname !== "/users" &&
+    location.pathname !== "/acl" &&
+    location.pathname !== "/about" &&
+    location.pathname !== "/";
 
   const {
     status: statusUser,
@@ -70,7 +71,9 @@ export const Page: React.FC<Page> = ({
       queryClient.removeQueries();
       toast.success("You've been successfully logged out!");
       //
-      logOutCleanUp();
+      cleanAllParams();
+
+      history.push("/");
     },
   });
 
@@ -79,7 +82,6 @@ export const Page: React.FC<Page> = ({
   return (
     <StyledPage layoutWidth={layoutWidth}>
       <Header
-        height={heightHeader}
         paddingY={0}
         paddingX={10}
         color={
@@ -102,13 +104,15 @@ export const Page: React.FC<Page> = ({
         }
       />
 
-      <StyledContent
-        height={contentHeight}
-        horizontalCenter={centeredContent}
-        verticalCenter={centeredContent}
-      >
-        {children}
-      </StyledContent>
+      {contentHeight > 0 ? (
+        <StyledPageContent id="page" height={contentHeight}>
+          {children}
+        </StyledPageContent>
+      ) : (
+        <StyledPageContent id="page" height={0}>
+          <Loader show />
+        </StyledPageContent>
+      )}
 
       <MemoizedFooter height={heightFooter} />
 
@@ -118,7 +122,6 @@ export const Page: React.FC<Page> = ({
           onClose={() => setUserCustomizationOpen(false)}
         />
       )}
-      {!isLoggedIn && <MemoizedLoginModal />}
       <Toast />
     </StyledPage>
   );

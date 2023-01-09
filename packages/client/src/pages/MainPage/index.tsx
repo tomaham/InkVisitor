@@ -1,16 +1,23 @@
-import { Box, Button, Panel, PanelSeparator } from "components";
-import { Page } from "components/advanced";
+import { Box, Button, Panel } from "components";
+import { PanelSeparator } from "components/advanced";
 import { useSearchParams } from "hooks";
 import ScrollHandler from "hooks/ScrollHandler";
 import React from "react";
 import { BiHide, BiShow } from "react-icons/bi";
-import { IoMdClose } from "react-icons/io";
+import { BsSquareFill, BsSquareHalf } from "react-icons/bs";
 import { RiMenuFoldFill, RiMenuUnfoldFill } from "react-icons/ri";
+import { VscCloseAll } from "react-icons/vsc";
 import { setFirstPanelExpanded } from "redux/features/layout/firstPanelExpandedSlice";
 import { setFourthPanelBoxesOpened } from "redux/features/layout/fourthPanelBoxesOpenedSlice";
 import { setFourthPanelExpanded } from "redux/features/layout/fourthPanelExpandedSlice";
+import { setStatementListOpened } from "redux/features/layout/statementListOpenedSlice";
 import { useAppDispatch, useAppSelector } from "redux/hooks";
-import { collapsedPanelWidth, hiddenBoxHeight } from "Theme/constants";
+import {
+  collapsedPanelWidth,
+  fourthPanelBoxesHeightThirds,
+  hiddenBoxHeight,
+} from "Theme/constants";
+
 import { MemoizedEntityBookmarkBox } from "./containers/EntityBookmarkBox/EntityBookmarkBox";
 import { MemoizedEntityDetailBox } from "./containers/EntityDetailBox/EntityDetailBox";
 import { MemoizedEntitySearchBox } from "./containers/EntitySearchBox/EntitySearchBox";
@@ -24,13 +31,8 @@ type FourthPanelBoxes = "search" | "bookmarks" | "templates";
 interface MainPage {}
 
 const MainPage: React.FC<MainPage> = ({}) => {
-  const {
-    detailIdArray,
-    setStatementId,
-    setTerritoryId,
-    clearAllDetailIds,
-    selectedDetailId,
-  } = useSearchParams();
+  const { detailIdArray, clearAllDetailIds, selectedDetailId } =
+    useSearchParams();
 
   const dispatch = useAppDispatch();
 
@@ -44,9 +46,6 @@ const MainPage: React.FC<MainPage> = ({}) => {
   const fourthPanelExpanded: boolean = useAppSelector(
     (state) => state.layout.fourthPanelExpanded
   );
-  const layoutWidth: number = useAppSelector(
-    (state) => state.layout.layoutWidth
-  );
   const contentHeight: number = useAppSelector(
     (state) => state.layout.contentHeight
   );
@@ -56,12 +55,9 @@ const MainPage: React.FC<MainPage> = ({}) => {
   const separatorXPosition: number = useAppSelector(
     (state) => state.layout.separatorXPosition
   );
-
-  const logOutCleanUp = () => {
-    clearAllDetailIds();
-    setStatementId("");
-    setTerritoryId("");
-  };
+  const statementListOpened: boolean = useAppSelector(
+    (state) => state.layout.statementListOpened
+  );
 
   const firstPanelButton = () => (
     <Button
@@ -124,7 +120,7 @@ const MainPage: React.FC<MainPage> = ({}) => {
           <Button
             key={boxToHide}
             inverted
-            icon={isThisBoxHidden ? <BiHide /> : <BiShow />}
+            icon={isThisBoxHidden ? <BiShow /> : <BiHide />}
             onClick={() => handleHideBoxButtonClick(boxToHide, isThisBoxHidden)}
           />
         )}
@@ -133,18 +129,21 @@ const MainPage: React.FC<MainPage> = ({}) => {
   };
 
   const getFourthPanelBoxHeight = (box: FourthPanelBoxes): number => {
+    const onePercent = contentHeight / 100;
+
     const isThisBoxHidden = !fourthPanelBoxesOpened[box];
     const openBoxesCount = Object.values(fourthPanelBoxesOpened).filter(
       (b) => b === true
     );
 
     if (!fourthPanelExpanded) {
+      // Hidden panel state
       return contentHeight / 3;
     } else if (isThisBoxHidden) {
       return hiddenBoxHeight;
     } else {
       if (openBoxesCount.length === 3) {
-        return contentHeight / 3;
+        return fourthPanelBoxesHeightThirds[box] * onePercent;
       } else if (openBoxesCount.length === 2) {
         return (contentHeight - hiddenBoxHeight) / 2;
       } else {
@@ -153,104 +152,150 @@ const MainPage: React.FC<MainPage> = ({}) => {
     }
   };
 
+  const clockPerformance = (
+    profilerId: any,
+    mode: any,
+    actualTime: any,
+    baseTime: any,
+    startTime: any,
+    commitTime: any
+  ) => {
+    console.log({
+      profilerId,
+      mode,
+      actualTime,
+      baseTime,
+      startTime,
+      commitTime,
+    });
+  };
+
   return (
     <>
       <ScrollHandler />
-      <Page logOutCleanUp={logOutCleanUp}>
-        {separatorXPosition > 0 && <PanelSeparator />}
-        {/* FIRST PANEL */}
-        <Panel
-          width={firstPanelExpanded ? panelWidths[0] : collapsedPanelWidth}
+      {separatorXPosition > 0 && <PanelSeparator />}
+      {/* FIRST PANEL */}
+
+      <Panel width={firstPanelExpanded ? panelWidths[0] : collapsedPanelWidth}>
+        <Box
+          height={contentHeight}
+          label="Territories"
+          isExpanded={firstPanelExpanded}
+          button={[firstPanelButton()]}
+          noPadding
         >
-          <Box
-            height={contentHeight}
-            label="Territories"
-            isExpanded={firstPanelExpanded}
-            button={[firstPanelButton()]}
-            noPadding
-          >
-            <MemoizedTerritoryTreeBox />
-          </Box>
-        </Panel>
-        {/* SECOND PANEL */}
-        <Panel
-          width={
-            firstPanelExpanded
-              ? panelWidths[1]
-              : panelWidths[1] + panelWidths[0] - collapsedPanelWidth
+          <MemoizedTerritoryTreeBox />
+        </Box>
+      </Panel>
+      {/* SECOND PANEL */}
+      <Panel
+        width={
+          firstPanelExpanded
+            ? panelWidths[1]
+            : panelWidths[1] + panelWidths[0] - collapsedPanelWidth
+        }
+      >
+        <Box
+          borderColor="white"
+          height={
+            detailIdArray.length
+              ? statementListOpened
+                ? contentHeight / 2 - 20
+                : hiddenBoxHeight
+              : contentHeight
           }
+          label="Statements"
         >
+          <MemoizedStatementListBox />
+        </Box>
+        {(selectedDetailId || detailIdArray.length > 0) && (
           <Box
+            borderColor="white"
             height={
-              detailIdArray.length ? contentHeight / 2 - 20 : contentHeight
+              statementListOpened
+                ? contentHeight / 2 + 20
+                : contentHeight - hiddenBoxHeight
             }
-            label="Statements"
+            label="Detail"
+            button={[
+              <Button
+                inverted
+                tooltipLabel={
+                  statementListOpened
+                    ? "maximize detail box"
+                    : "shrink detail box"
+                }
+                icon={
+                  statementListOpened ? (
+                    <BsSquareFill />
+                  ) : (
+                    <BsSquareHalf style={{ transform: "rotate(270deg)" }} />
+                  )
+                }
+                onClick={() => {
+                  statementListOpened
+                    ? localStorage.setItem("statementListOpened", "false")
+                    : localStorage.setItem("statementListOpened", "true");
+                  dispatch(setStatementListOpened(!statementListOpened));
+                }}
+              />,
+              <Button
+                inverted
+                tooltipLabel="close all tabs"
+                icon={<VscCloseAll style={{ transform: "scale(1.3)" }} />}
+                onClick={() => {
+                  clearAllDetailIds();
+                  dispatch(setStatementListOpened(true));
+                }}
+              />,
+            ]}
           >
-            <MemoizedStatementListBox />
+            <MemoizedEntityDetailBox />
           </Box>
-          {(selectedDetailId || detailIdArray.length > 0) && (
-            <Box
-              height={contentHeight / 2 + 20}
-              label="Detail"
-              button={[
-                <Button
-                  inverted
-                  icon={<IoMdClose />}
-                  onClick={() => {
-                    clearAllDetailIds();
-                  }}
-                />,
-              ]}
-            >
-              <MemoizedEntityDetailBox />
-            </Box>
-          )}
-        </Panel>
-        {/* THIRD PANEL */}
-        <Panel
-          width={
-            fourthPanelExpanded
-              ? panelWidths[2]
-              : panelWidths[2] + panelWidths[3] - collapsedPanelWidth
-          }
+        )}
+      </Panel>
+      {/* THIRD PANEL */}
+      <Panel
+        width={
+          fourthPanelExpanded
+            ? panelWidths[2]
+            : panelWidths[2] + panelWidths[3] - collapsedPanelWidth
+        }
+      >
+        <Box borderColor="white" height={contentHeight} label="Editor">
+          <MemoizedStatementEditorBox />
+        </Box>
+      </Panel>
+      {/* FOURTH PANEL */}
+      <Panel width={fourthPanelExpanded ? panelWidths[3] : collapsedPanelWidth}>
+        <Box
+          height={getFourthPanelBoxHeight("search")}
+          label="Search"
+          color="white"
+          isExpanded={fourthPanelExpanded}
+          button={[hideBoxButton("search"), hideFourthPanelButton()]}
         >
-          <Box height={contentHeight} label="Editor">
-            <MemoizedStatementEditorBox />
-          </Box>
-        </Panel>
-        {/* FOURTH PANEL */}
-        <Panel
-          width={fourthPanelExpanded ? panelWidths[3] : collapsedPanelWidth}
+          <MemoizedEntitySearchBox />
+        </Box>
+        <Box
+          height={getFourthPanelBoxHeight("bookmarks")}
+          label="Bookmarks"
+          color="white"
+          isExpanded={fourthPanelExpanded}
+          button={[hideBoxButton("bookmarks"), hideFourthPanelButton()]}
         >
-          <Box
-            height={getFourthPanelBoxHeight("search")}
-            label="Search"
-            color="white"
-            isExpanded={fourthPanelExpanded}
-            button={[hideBoxButton("search"), hideFourthPanelButton()]}
-          >
-            <MemoizedEntitySearchBox />
-          </Box>
-          <Box
-            height={getFourthPanelBoxHeight("bookmarks")}
-            label="Bookmarks"
-            color="white"
-            isExpanded={fourthPanelExpanded}
-            button={[hideBoxButton("bookmarks"), hideFourthPanelButton()]}
-          >
-            <MemoizedEntityBookmarkBox />
-          </Box>
-          <Box
-            height={getFourthPanelBoxHeight("templates")}
-            label="Templates"
-            color="white"
-            isExpanded={fourthPanelExpanded}
-            button={[hideBoxButton("templates"), hideFourthPanelButton()]}
-          >
-            <MemoizedTemplateListBox />
-          </Box>
-        </Panel>
-      </Page>
+          <MemoizedEntityBookmarkBox />
+        </Box>
+        <Box
+          height={getFourthPanelBoxHeight("templates")}
+          label="Templates"
+          color="white"
+          isExpanded={fourthPanelExpanded}
+          button={[hideBoxButton("templates"), hideFourthPanelButton()]}
+        >
+          <MemoizedTemplateListBox />
+        </Box>
+      </Panel>
     </>
   );
 };

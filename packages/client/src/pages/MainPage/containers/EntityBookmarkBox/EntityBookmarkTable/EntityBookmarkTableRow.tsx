@@ -5,7 +5,6 @@ import {
   DropTargetMonitor,
   useDrag,
   useDrop,
-  XYCoord,
 } from "react-dnd";
 import { FaGripVertical } from "react-icons/fa";
 import { Cell, ColumnInstance } from "react-table";
@@ -20,6 +19,7 @@ interface EntityBookmarkTableRow {
   folder: IResponseBookmarkFolder;
   updateOrderFn: () => void;
   visibleColumns: ColumnInstance<{}>[];
+  hasOrder: boolean;
 }
 
 export const EntityBookmarkTableRow: React.FC<EntityBookmarkTableRow> = ({
@@ -29,9 +29,10 @@ export const EntityBookmarkTableRow: React.FC<EntityBookmarkTableRow> = ({
   folder,
   updateOrderFn,
   visibleColumns,
+  hasOrder,
 }) => {
   const dropRef = useRef<HTMLTableRowElement>(null);
-  const dragRef = useRef<HTMLTableDataCellElement>(null);
+  const dragRef = useRef<HTMLTableCellElement>(null);
 
   const [, drop] = useDrop({
     accept: ItemTypes.ENTITY_ROW,
@@ -58,9 +59,13 @@ export const EntityBookmarkTableRow: React.FC<EntityBookmarkTableRow> = ({
   return (
     <React.Fragment key={index}>
       <StyledTr ref={dropRef} opacity={opacity} isOdd={Boolean(index % 2)}>
-        <td ref={dragRef} style={{ cursor: "move" }}>
-          <FaGripVertical />
-        </td>
+        {hasOrder ? (
+          <td ref={dragRef} style={{ cursor: "move" }}>
+            <FaGripVertical />
+          </td>
+        ) : (
+          <td style={{ width: "2rem" }} />
+        )}
         {row.cells.map((cell: Cell) => {
           return (
             <StyledTd {...cell.getCellProps()}>{cell.render("Cell")}</StyledTd>

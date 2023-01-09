@@ -1,5 +1,5 @@
 import { userRoleDict } from "@shared/dictionaries";
-import { EntityClass, UserRole, UserRoleMode } from "@shared/enums";
+import { EntityEnums, UserEnums } from "@shared/enums";
 import { IResponseUser, IUser, IUserRight } from "@shared/types";
 import api from "api";
 import { Button, ButtonGroup, Input, Loader, Submit } from "components";
@@ -31,6 +31,7 @@ import {
   StyledTerritoryColumnAllLabel,
   StyledTerritoryList,
   StyledTerritoryListItem,
+  StyledTerritoryListItemMissing,
   StyledTh,
   StyledTHead,
   StyledUserNameColumn,
@@ -94,7 +95,10 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
       const newRights: IUserRight[] = [
         ...oldUser.rights.filter((right) => right.territory !== territoryId),
       ];
-      newRights.push({ territory: territoryId, mode: mode as UserRoleMode });
+      newRights.push({
+        territory: territoryId,
+        mode: mode as UserEnums.RoleMode,
+      });
       userMutation.mutate({ id: userId, rights: newRights });
     }
   };
@@ -122,10 +126,10 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
         Cell: ({ row }: Cell) => {
           const { name, email, role } = row.original as any;
           let icon = <RiUserSearchFill />;
-          if (role === "admin") {
+          if (role === UserEnums.Role.Admin) {
             icon = <RiUserStarFill />;
           }
-          if (role === "editor") {
+          if (role === UserEnums.Role.Editor) {
             icon = <RiUserSettingsFill />;
           }
           return (
@@ -238,7 +242,7 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
 
           return (
             <StyledTerritoryColumn>
-              {userRole !== UserRole.Admin ? (
+              {userRole !== UserEnums.Role.Admin ? (
                 <React.Fragment>
                   <EntitySuggester
                     disableTemplatesAccept
@@ -246,7 +250,7 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
                     onSelected={(newSelectedId: string) => {
                       addRightToUser(userId, newSelectedId, "read");
                     }}
-                    categoryTypes={[EntityClass.Territory]}
+                    categoryTypes={[EntityEnums.Class.Territory]}
                     placeholder={"assign a territory"}
                   />
                   <StyledTerritoryList>
@@ -263,10 +267,10 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
                               button={
                                 <Button
                                   key="d"
-                                  tooltip="remove territory from rights"
+                                  tooltipLabel="remove territory from rights"
                                   icon={<FaUnlink />}
                                   color="plain"
-                                  inverted={true}
+                                  inverted
                                   onClick={() => {
                                     removeRightFromUser(
                                       userId,
@@ -278,9 +282,19 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
                             />
                           </StyledTerritoryListItem>
                         ) : (
-                          <StyledTerritoryListItem key={right.territory}>
-                            {right.territory}
-                          </StyledTerritoryListItem>
+                          <StyledTerritoryListItemMissing key={right.territory}>
+                            invalid T {right.territory}
+                            <Button
+                              key="d"
+                              tooltipLabel="remove invalid territory"
+                              icon={<FaTrashAlt />}
+                              color="danger"
+                              noBorder
+                              onClick={() => {
+                                removeRightFromUser(userId, right.territory);
+                              }}
+                            />
+                          </StyledTerritoryListItemMissing>
                         );
                       })
                     ) : (
@@ -314,8 +328,8 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
 
           return (
             <StyledTerritoryColumn>
-              {userRole !== UserRole.Admin ? (
-                userRole === UserRole.Editor ? (
+              {userRole !== UserEnums.Role.Admin ? (
+                userRole === UserEnums.Role.Editor ? (
                   <React.Fragment>
                     <EntitySuggester
                       disableTemplatesAccept
@@ -323,7 +337,7 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
                       onSelected={(newSelectedId: string) => {
                         addRightToUser(userId, newSelectedId, "write");
                       }}
-                      categoryTypes={[EntityClass.Territory]}
+                      categoryTypes={[EntityEnums.Class.Territory]}
                       placeholder={"assign a territory"}
                     />
                     <StyledTerritoryList>
@@ -341,10 +355,10 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
                                 button={
                                   <Button
                                     key="d"
-                                    tooltip="remove territory from rights"
+                                    tooltipLabel="remove territory from rights"
                                     icon={<FaUnlink />}
                                     color="plain"
-                                    inverted={true}
+                                    inverted
                                     onClick={() => {
                                       removeRightFromUser(
                                         userId,
@@ -356,9 +370,21 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
                               />
                             </StyledTerritoryListItem>
                           ) : (
-                            <StyledTerritoryListItem key={right.territory}>
-                              {right.territory}
-                            </StyledTerritoryListItem>
+                            <StyledTerritoryListItemMissing
+                              key={right.territory}
+                            >
+                              invalid T {right.territory}
+                              <Button
+                                key="d"
+                                tooltipLabel="remove invalid territory"
+                                icon={<FaTrashAlt />}
+                                color="danger"
+                                noBorder
+                                onClick={() => {
+                                  removeRightFromUser(userId, right.territory);
+                                }}
+                              />
+                            </StyledTerritoryListItemMissing>
                           );
                         })
                       ) : (
@@ -397,7 +423,7 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
                 key="r"
                 icon={<FaTrashAlt size={14} />}
                 color="danger"
-                tooltip="delete"
+                tooltipLabel="delete"
                 disabled={userId === localStorage.getItem("userid")}
                 onClick={() => {
                   setRemovingUserId(userId);
@@ -405,7 +431,7 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
               />
               <Button
                 icon={<FaKey size={14} />}
-                tooltip="reset password"
+                tooltipLabel="reset password"
                 color="warning"
                 onClick={() => {
                   api
@@ -417,8 +443,9 @@ export const UserList: React.FC<UserList> = React.memo(({ heightContent }) => {
                 icon={
                   active ? <FaToggleOn size={14} /> : <FaToggleOff size={14} />
                 }
+                disabled={userId === localStorage.getItem("userid")}
                 color={active ? "success" : "danger"}
-                tooltip={active ? "set inactive" : "set active"}
+                tooltipLabel={active ? "set inactive" : "set active"}
                 onClick={() => {
                   userMutation.mutate({
                     id: userId,

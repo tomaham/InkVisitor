@@ -1,5 +1,5 @@
 import { asyncRouteHandler } from "../index";
-import { Router, Request } from "express";
+import { Router } from "express";
 import {
   BadParams,
   ModelNotValidError,
@@ -8,20 +8,67 @@ import {
 } from "@shared/types/errors";
 import { IResponseGeneric, IResponsePermission } from "@shared/types";
 import AclPermission from "@models/acl/acl_permission";
+import { IRequest } from "src/custom_typings/request";
 
 export default Router()
+  /**
+   * @openapi
+   * /acls/:
+   *   get:
+   *     description: Returns list of all acl entries
+   *     tags:
+   *       - acls
+   *     responses:
+   *       200:
+   *         description: Returns list of acl entries
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: array
+   *               items: 
+   *                 $ref: "#/components/schemas/IResponseGeneric"
+   */
   .get(
     "/",
-    asyncRouteHandler<IResponsePermission[]>(async (request: Request) => {
+    asyncRouteHandler<IResponsePermission[]>(async (request: IRequest) => {
       const permissionsData = await AclPermission.fetchAll(
         request.db.connection
       );
       return permissionsData;
     })
   )
+  /**
+   * @openapi
+   * /acls/{permissionId}:
+   *   put:
+   *     description: Update an existing acl entry
+   *     tags:
+   *       - acls
+   *     parameters:
+   *       - in: path
+   *         name: permissionId
+   *         schema:
+   *           type: string
+   *         required: true
+   *         description: ID of the acl entry
+   *     requestBody:
+   *       description: Acl object
+   *       content: 
+   *         application/json:
+   *           schema:
+   *             allOf:
+   *               - $ref: "#/components/schemas/Acl"               
+   *     responses:
+   *       200:
+   *         description: Returns generic response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/IResponseGeneric"
+   */
   .put(
     "/:permissionId",
-    asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
+    asyncRouteHandler<IResponseGeneric>(async (request: IRequest) => {
       const permissionId = request.params.permissionId;
       const permissionData = request.body as Record<string, unknown>;
 
@@ -67,9 +114,31 @@ export default Router()
       }
     })
   )
+  /**
+   * @openapi
+   * /acls/{permissionId}:
+   *   delete:
+   *     description: Delete an acl entry
+   *     tags:
+   *       - acls
+   *     parameters:
+   *       - in: path
+   *         name: permissionId
+   *         schema:
+   *           type: string
+   *         required: true
+   *         description: ID of the acl entry             
+   *     responses:
+   *       200:
+   *         description: Returns generic response
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: "#/components/schemas/IResponseGeneric"
+   */
   .delete(
     "/:permissionId",
-    asyncRouteHandler<IResponseGeneric>(async (request: Request) => {
+    asyncRouteHandler<IResponseGeneric>(async (request: IRequest) => {
       const permissionId = request.params.permissionId;
 
       if (!permissionId) {

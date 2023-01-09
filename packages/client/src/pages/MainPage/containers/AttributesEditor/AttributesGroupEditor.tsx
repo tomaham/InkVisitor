@@ -10,7 +10,7 @@ import {
   partitivityDict,
   virtualityDict,
 } from "@shared/dictionaries";
-import { EntityClass } from "@shared/enums";
+import { EntityEnums } from "@shared/enums";
 import { IEntity } from "@shared/types";
 import {
   Button,
@@ -56,10 +56,10 @@ interface AttributesGroupEditor {
   setModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   statementId: string;
   propTypeActant?: IEntity;
-  classesPropType: EntityClass[];
+  classesPropType: EntityEnums.Class[];
   propValueActant?: IEntity;
-  classesPropValue: EntityClass[];
-  excludedSuggesterEntities: EntityClass[];
+  classesPropValue: EntityEnums.Class[];
+  excludedSuggesterEntities: EntityEnums.Class[];
   data: PropAttributeGroupDataObject;
   handleUpdate: (data: PropAttributeGroupDataObject) => void;
   updateProp: (propId: string, changes: any) => void;
@@ -105,14 +105,16 @@ export const AttributesGroupEditor: React.FC<AttributesGroupEditor> = ({
       const newModalData = {
         ...modalData,
         type: {
-          ...{ id: propTypeActant?.id },
+          ...{ entityId: propTypeActant?.id },
           ...modalData.type,
         },
         value: {
-          ...{ id: propValueActant?.id },
+          ...{ entityId: propValueActant?.id },
           ...modalData.value,
         },
       };
+
+      console.log(newModalData.type);
       handleUpdate(newModalData);
       setModalOpen(false);
     }
@@ -227,45 +229,43 @@ export const AttributesGroupEditor: React.FC<AttributesGroupEditor> = ({
     );
   };
 
+  const getTooltipContent = () => (
+    <StyledTooltipGrid>
+      <div>
+        <StyledTooltipHeading>Statement</StyledTooltipHeading>
+        {getTooltipColumn(modalData.statement, disabledAttributes.statement)}
+      </div>
+      <div>
+        <StyledTooltipHeading>Type</StyledTooltipHeading>
+        {getTooltipColumn(modalData.type, disabledAttributes.type)}
+      </div>
+      <div>
+        <StyledTooltipHeading>Value</StyledTooltipHeading>
+        {getTooltipColumn(modalData.value, disabledAttributes.value)}
+      </div>
+    </StyledTooltipGrid>
+  );
+
   const dissabledStatement =
     disabledAttributes.statement as PropAttributeName[];
   const dissabledType = disabledAttributes.type as PropAttributeName[];
   const dissabledValue = disabledAttributes.value as PropAttributeName[];
+
   return (
     <div>
-      <Tooltip
-        position="top right"
-        attributes={
-          <StyledTooltipGrid>
-            <div>
-              <StyledTooltipHeading>Statement</StyledTooltipHeading>
-              {getTooltipColumn(
-                modalData.statement,
-                disabledAttributes.statement
-              )}
-            </div>
-            <div>
-              <StyledTooltipHeading>Type</StyledTooltipHeading>
-              {getTooltipColumn(modalData.type, disabledAttributes.type)}
-            </div>
-            <div>
-              <StyledTooltipHeading>Value</StyledTooltipHeading>
-              {getTooltipColumn(modalData.value, disabledAttributes.value)}
-            </div>
-          </StyledTooltipGrid>
-        }
-      >
-        <div>
-          <Button
-            key="settings"
-            disabled={disabledOpenModal}
-            icon={<MdSettings />}
-            inverted
-            color="plain"
-            onClick={() => setModalOpen(true)}
-          />
-        </div>
-      </Tooltip>
+      <Button
+        key="settings"
+        //disabled={disabledOpenModal || !userCanEdit}
+        icon={<MdSettings />}
+        inverted
+        color={!disabledOpenModal && userCanEdit ? "plain" : "grey"}
+        onClick={() => {
+          // if (!disabledOpenModal && userCanEdit) {
+          setModalOpen(true);
+          //   }
+        }}
+        tooltipContent={getTooltipContent()}
+      />
 
       <Modal
         key="edit-modal"
@@ -288,7 +288,9 @@ export const AttributesGroupEditor: React.FC<AttributesGroupEditor> = ({
         />
         <ModalContent>
           <StyledGridColumns>
-            <StyledColumnWrap color={EntityColors[EntityClass.Statement].color}>
+            <StyledColumnWrap
+              color={EntityColors[EntityEnums.Class.Statement].color}
+            >
               <StyledColumnHeading>Statement</StyledColumnHeading>
 
               <AttributesForm
@@ -296,6 +298,7 @@ export const AttributesGroupEditor: React.FC<AttributesGroupEditor> = ({
                 disabledAttributes={dissabledStatement}
                 modalData={modalData.statement}
                 setNewModalData={handleSetModalData}
+                disabledAllAttributes={disabledAllAttributes || !userCanEdit}
               />
             </StyledColumnWrap>
             <StyledColumnWrap
@@ -312,6 +315,7 @@ export const AttributesGroupEditor: React.FC<AttributesGroupEditor> = ({
                 disabledAttributes={dissabledType}
                 modalData={modalData.type}
                 setNewModalData={handleSetModalData}
+                disabledAllAttributes={disabledAllAttributes || !userCanEdit}
               />
               {propTypeActant ? (
                 <StyledEntityWrap>
@@ -319,21 +323,23 @@ export const AttributesGroupEditor: React.FC<AttributesGroupEditor> = ({
                     entity={propTypeActant}
                     fullWidth
                     button={
-                      <Button
-                        key="d"
-                        icon={<FaUnlink />}
-                        color="plain"
-                        inverted
-                        tooltip="unlink actant"
-                        onClick={() => {
-                          updateProp(statementId, {
-                            type: {
-                              ...data.type,
-                              ...{ id: "" },
-                            },
-                          });
-                        }}
-                      />
+                      userCanEdit && (
+                        <Button
+                          key="d"
+                          icon={<FaUnlink />}
+                          color="plain"
+                          inverted
+                          tooltipLabel="unlink actant"
+                          onClick={() => {
+                            updateProp(statementId, {
+                              type: {
+                                ...data.type,
+                                ...{ entityId: "" },
+                              },
+                            });
+                          }}
+                        />
+                      )
                     }
                   />
                 </StyledEntityWrap>
@@ -347,7 +353,7 @@ export const AttributesGroupEditor: React.FC<AttributesGroupEditor> = ({
                         updateProp(statementId, {
                           type: {
                             ...data.type,
-                            ...{ id: newSelectedId },
+                            ...{ entityId: newSelectedId },
                           },
                         });
                       }}
@@ -372,6 +378,7 @@ export const AttributesGroupEditor: React.FC<AttributesGroupEditor> = ({
               <AttributesForm
                 groupName="value"
                 disabledAttributes={dissabledValue}
+                disabledAllAttributes={disabledAllAttributes || !userCanEdit}
                 modalData={modalData.value}
                 setNewModalData={handleSetModalData}
               />
@@ -380,23 +387,25 @@ export const AttributesGroupEditor: React.FC<AttributesGroupEditor> = ({
                   <EntityTag
                     entity={propValueActant}
                     fullWidth
-                    tooltipPosition="left center"
+                    tooltipPosition="left"
                     button={
-                      <Button
-                        key="d"
-                        icon={<FaUnlink />}
-                        tooltip="unlink actant"
-                        color="plain"
-                        inverted
-                        onClick={() => {
-                          updateProp(statementId, {
-                            value: {
-                              ...data.value,
-                              ...{ id: "" },
-                            },
-                          });
-                        }}
-                      />
+                      userCanEdit && (
+                        <Button
+                          key="d"
+                          icon={<FaUnlink />}
+                          tooltipLabel="unlink actant"
+                          color="plain"
+                          inverted
+                          onClick={() => {
+                            updateProp(statementId, {
+                              value: {
+                                ...data.value,
+                                ...{ entityId: "" },
+                              },
+                            });
+                          }}
+                        />
+                      )
                     }
                   />
                 </StyledEntityWrap>
@@ -410,7 +419,7 @@ export const AttributesGroupEditor: React.FC<AttributesGroupEditor> = ({
                         updateProp(statementId, {
                           value: {
                             ...data.type,
-                            ...{ id: newSelectedId },
+                            ...{ entityId: newSelectedId },
                           },
                         });
                       }}

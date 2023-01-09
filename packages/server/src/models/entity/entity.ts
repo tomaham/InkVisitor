@@ -1,19 +1,14 @@
 import {
   IDbModel,
-  UnknownObject,
   fillFlatObject,
   fillArray,
 } from "@models/common";
 import { r as rethink, Connection, WriteResult, RDatum } from "rethinkdb-ts";
-import { IStatement, IEntity, IProp, IReference } from "@shared/types";
+import { IEntity, IProp, IReference } from "@shared/types";
 import {
-  DbIndex,
-  EntityClass,
-  EntityStatus,
-  Language,
-  Order,
-  UserRole,
-  UserRoleMode,
+  DbEnums,
+  EntityEnums,
+  UserEnums,
 } from "@shared/enums";
 import { InternalServerError } from "@shared/types/errors";
 import User from "@models/user/user";
@@ -24,33 +19,39 @@ export default class Entity implements IEntity, IDbModel {
   static table = "entities";
 
   id: string = "";
-  legacyId: string = "";
-  class: EntityClass = EntityClass.Person;
-  status: EntityStatus = EntityStatus.Approved;
+  legacyId?: string;
+  class: EntityEnums.Class = EntityEnums.Class.Person;
+  status: EntityEnums.Status = EntityEnums.Status.Approved;
   data: any = {};
   label: string = "";
   detail: string = "";
-  language: Language = Language.Latin;
+  language: EntityEnums.Language = EntityEnums.Language.Latin;
   notes: string[] = [];
   props: IProp[] = [];
   references: IReference[] = [];
 
-  isTemplate: boolean = false;
-  usedTemplate: string = "";
-  templateData: object = {};
+  isTemplate?: boolean;
+  usedTemplate?: string;
+  templateData?: object;
 
-  usedIn: IStatement[] = [];
-  right: UserRoleMode = UserRoleMode.Read;
-
-  constructor(data: UnknownObject) {
-    if (!data) {
-      return;
-    }
-
+  constructor(data: Partial<IEntity>) {
     fillFlatObject(this, { ...data, data: undefined });
     fillArray(this.references, Object, data.references);
     fillArray(this.notes, String, data.notes);
     fillArray(this.props, Object, data.props);
+
+    if (data.legacyId !== undefined) {
+      this.legacyId = data.legacyId;
+    }
+    if (data.isTemplate !== undefined) {
+      this.isTemplate = data.isTemplate;
+    }
+    if (data.usedTemplate !== undefined) {
+      this.usedTemplate = data.usedTemplate;
+    }
+    if (data.templateData !== undefined) {
+      this.templateData = data.templateData;
+    }
   }
 
   async save(db: Connection | undefined): Promise<WriteResult> {
@@ -110,7 +111,7 @@ export default class Entity implements IEntity, IDbModel {
   }
 
   canBeEditedByUser(user: User): boolean {
-    return user.role !== UserRole.Viewer;
+    return user.role !== UserEnums.Role.Viewer;
   }
 
   canBeDeletedByUser(user: User): boolean {
@@ -124,16 +125,16 @@ export default class Entity implements IEntity, IDbModel {
    * @param user
    * @returns
    */
-  getUserRoleMode(user: User): UserRoleMode {
-    if (user.role === UserRole.Admin) {
-      return UserRoleMode.Admin;
+  getUserRoleMode(user: User): UserEnums.RoleMode {
+    if (user.role === UserEnums.Role.Admin) {
+      return UserEnums.RoleMode.Admin;
     }
 
     if (this.canBeEditedByUser(user)) {
-      return UserRoleMode.Write;
+      return UserEnums.RoleMode.Write;
     }
 
-    return UserRoleMode.Read;
+    return UserEnums.RoleMode.Read;
   }
 
   static async findUsedInProps(
@@ -173,68 +174,17 @@ export default class Entity implements IEntity, IDbModel {
     return entries;
   }
 
-  static determineOrder(want: number, sibl: Record<number, unknown>): number {
-    const sortedOrders: number[] = Object.keys(sibl)
-      .map((k) => parseFloat(k))
-      .sort((a, b) => a - b);
-
-    if (!sortedOrders.length) {
-      // no sibling - use default position 0
-      return 0;
-    }
-
-    if (want === undefined) {
-      // if want is not provided, use Last position by default
-      want = Order.Last;
-    }
-
-    if (want === Order.Last) {
-      return sortedOrders[sortedOrders.length - 1] + 1;
-    } else if (want === Order.First) {
-      return sortedOrders[0] - 1;
-    }
-
-    let out = -1;
-
-    if (sibl[want]) {
-      // if there is a conflict - wanted order value already exists
-      for (let i = 0; i < sortedOrders.length; i++) {
-        if (sortedOrders[i] === want) {
-          if (sortedOrders.length === i + 1) {
-            // conflict occured on the biggest number - use closest bigger free integer
-            const ceiled = Math.ceil(sortedOrders[i]);
-            out = ceiled === sortedOrders[i] ? ceiled + 1 : ceiled;
-            break;
-          }
-
-          // new number would be somewhere behind the wanted position(i) and before
-          // the next position(i+1)
-          out = sortedOrders[i] + (sortedOrders[i + 1] - sortedOrders[i]) / 2;
-          if (!sibl[Math.round(out)]) {
-            out = Math.round(out);
-          }
-
-          break;
-        }
-      }
-    } else {
-      // all good
-      out = want;
-      // less than zero -> zero optional fix
-      if (out < 0 && (sortedOrders.length === 0 || sortedOrders[0] > 0)) {
-        out = 0;
-      }
-    }
-
-    return out;
-  }
-
   /**
    * Returns entity ids that are present in data fields
    * @returns list of ids
    */
   getEntitiesIds(): string[] {
     const entityIds: Record<string, null> = {};
+
+    // get usedTemplate entity
+    if (this.usedTemplate) {
+      entityIds[this.usedTemplate] = null
+    }
 
     Entity.extractIdsFromProps(this.props).forEach((element) => {
       if (element) {
@@ -250,6 +200,7 @@ export default class Entity implements IEntity, IDbModel {
 
     return Object.keys(entityIds);
   }
+
 
   static extractIdsFromReferences(references: IReference[]): string[] {
     let out: string[] = [];
@@ -289,8 +240,7 @@ export default class Entity implements IEntity, IDbModel {
   }
 
   async getEntities(db: Connection): Promise<IEntity[]> {
-    const entities = Entity.findEntitiesByIds(db, this.getEntitiesIds());
-    return entities;
+    return Entity.findEntitiesByIds(db, this.getEntitiesIds());
   }
 
   /**
@@ -301,7 +251,7 @@ export default class Entity implements IEntity, IDbModel {
   async findFromTemplate(db: Connection): Promise<IEntity[]> {
     const data = await rethink
       .table(Entity.table)
-      .getAll(this.id, { index: DbIndex.EntityUsedTemplate })
+      .getAll(this.id, { index: DbEnums.Indexes.EntityUsedTemplate })
       .run(db);
 
     return data;
