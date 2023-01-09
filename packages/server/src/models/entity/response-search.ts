@@ -1,5 +1,4 @@
-import { Request } from "express";
-import { EntityClass } from "@shared/enums";
+import { EntityEnums } from "@shared/enums";
 import { IEntity, RequestSearch } from "@shared/types";
 import { regExpEscape } from "@common/functions";
 import Entity from "./entity";
@@ -7,6 +6,7 @@ import Statement from "@models/statement/statement";
 import { Connection, r, RDatum, RTable } from "rethinkdb-ts";
 import { ResponseEntity } from "./response";
 import { getEntityClass } from "@models/factory";
+import { IRequest } from "src/custom_typings/request";
 
 /**
  * SearchQuery is customized builder for search queries, allowing to build query by chaining prepared filters
@@ -29,16 +29,11 @@ export class SearchQuery {
    * @param cooccurrenceId
    * @returns
    */
-  async getAssociatedEntityIds(cooccurrenceId: string): Promise<string[]> {
-    const associatedEntityIds = await Statement.findIdsByDataEntityId(
+  async getCooccurredEntitiesIds(cooccurrenceId: string): Promise<string[]> {
+    const associatedEntityIds = await Statement.getActantsIdsFromLinkedEntities(
       this.connection,
       cooccurrenceId
     );
-
-    // entity id provided, but not found within statements - end now
-    if (!associatedEntityIds.length) {
-      return [];
-    }
 
     // filter out duplicates
     return [...new Set(associatedEntityIds)];
@@ -49,7 +44,7 @@ export class SearchQuery {
    * @param entityClass
    * @returns
    */
-  whereClass(entityClass: EntityClass): SearchQuery {
+  whereClass(entityClass: EntityEnums.Class): SearchQuery {
     this.query = this.query.filter({
       class: entityClass,
     });
@@ -62,7 +57,7 @@ export class SearchQuery {
    * @param entityClass
    * @returns
    */
-  whereNotClass(entityClass: EntityClass[]): SearchQuery {
+  whereNotClass(entityClass: EntityEnums.Class[]): SearchQuery {
     this.query = this.query.filter(function (row: RDatum) {
       return r.and.apply(
         r,
@@ -208,7 +203,7 @@ export class SearchQuery {
     }
 
     if (req.cooccurrenceId) {
-      const assocEntityIds = await this.getAssociatedEntityIds(
+      const assocEntityIds = await this.getCooccurredEntitiesIds(
         req.cooccurrenceId
       );
       if (!req.entityIds) {
@@ -262,7 +257,7 @@ export class ResponseSearch {
    * Prepares asynchronously results data
    * @param db
    */
-  async prepare(httpRequest: Request): Promise<ResponseEntity[]> {
+  async prepare(httpRequest: IRequest): Promise<ResponseEntity[]> {
     const query = new SearchQuery(httpRequest.db.connection);
     await query.fromRequest(this.request);
     let entities = await query.do();

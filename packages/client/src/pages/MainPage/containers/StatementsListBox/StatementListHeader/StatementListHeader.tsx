@@ -1,23 +1,21 @@
-import { EntityClass, UserRole, UserRoleMode } from "@shared/enums";
+import { EntityEnums, UserEnums } from "@shared/enums";
 import {
   IResponseGeneric,
   IResponseTerritory,
   IResponseTree,
   IStatement,
 } from "@shared/types";
-import api from "api";
 import { AxiosResponse } from "axios";
 import { Button, ButtonGroup } from "components";
-import { EntitySuggester } from "components/advanced";
+import { BreadcrumbItem, EntitySuggester } from "components/advanced";
 import { CStatement } from "constructors";
 import { useSearchParams } from "hooks";
 import React, { useEffect, useState } from "react";
 import { FaPlus, FaRecycle } from "react-icons/fa";
-import { UseMutationResult, useQuery, useQueryClient } from "react-query";
+import { UseMutationResult, useQueryClient } from "react-query";
 import { useAppSelector } from "redux/hooks";
 import theme from "Theme/theme";
 import { collectTerritoryChildren, searchTree } from "utils";
-import { StatementListBreadcrumbItem } from "./StatementListBreadcrumbItem/StatementListBreadcrumbItem";
 import {
   StyledButtons,
   StyledFaStar,
@@ -64,7 +62,7 @@ export const StatementListHeader: React.FC<StatementListHeader> = ({
     if (treeData) {
       const currentTerritory = searchTree(treeData, territoryId);
       if (currentTerritory?.territory.data.parent) {
-        toExclude.push(currentTerritory.territory.data.parent.id);
+        toExclude.push(currentTerritory.territory.data.parent.territoryId);
       }
       if (currentTerritory) {
         const childArr = collectTerritoryChildren(currentTerritory);
@@ -83,7 +81,7 @@ export const StatementListHeader: React.FC<StatementListHeader> = ({
 
   const handleCreateStatement = () => {
     const newStatement: IStatement = CStatement(
-      localStorage.getItem("userrole") as UserRole,
+      localStorage.getItem("userrole") as UserEnums.Role,
       territoryId
     );
     const { statements } = data;
@@ -117,12 +115,12 @@ export const StatementListHeader: React.FC<StatementListHeader> = ({
           selectedTerritoryPath.map((territoryId: string, key: number) => {
             return (
               <React.Fragment key={key}>
-                <StatementListBreadcrumbItem territoryId={territoryId} />
+                <BreadcrumbItem territoryId={territoryId} />
               </React.Fragment>
             );
           })}
         <React.Fragment key="this-territory">
-          <StatementListBreadcrumbItem territoryId={territoryId} />
+          <BreadcrumbItem territoryId={territoryId} territoryData={data} />
         </React.Fragment>
       </StyledHeaderBreadcrumbRow>
       <StyledHeaderRow>
@@ -137,11 +135,11 @@ export const StatementListHeader: React.FC<StatementListHeader> = ({
         {territoryId && (
           <StyledButtons>
             <ButtonGroup marginBottom>
-              {data.right !== UserRoleMode.Read && (
+              {data.right !== UserEnums.RoleMode.Read && (
                 <Button
                   key="add"
                   icon={<FaPlus size={14} />}
-                  tooltip="add new statement at the end of the list"
+                  tooltipLabel="add new statement at the end of the list"
                   color="primary"
                   label="new statement"
                   onClick={() => {
@@ -152,7 +150,7 @@ export const StatementListHeader: React.FC<StatementListHeader> = ({
               <Button
                 key="refresh"
                 icon={<FaRecycle size={14} />}
-                tooltip="refresh data"
+                tooltipLabel="refresh data"
                 inverted
                 color="primary"
                 label="refresh"
@@ -174,7 +172,7 @@ export const StatementListHeader: React.FC<StatementListHeader> = ({
             filterEditorRights
             inputWidth={96}
             disableCreate
-            categoryTypes={[EntityClass.Territory]}
+            categoryTypes={[EntityEnums.Class.Territory]}
             onSelected={(newSelectedId: string) => {
               moveTerritoryMutation.mutate(newSelectedId);
             }}

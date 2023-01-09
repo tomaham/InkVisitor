@@ -1,6 +1,6 @@
 import { Box } from "./basic/Box/Box";
 import { Button } from "./basic/Button/Button";
-import { ButtonGroup } from "./basic/ButtonGroup/ButtonGroup";
+import { ButtonGroup, ButtonGroups } from "./basic/ButtonGroup/ButtonGroup";
 import { Dropdown } from "./basic/Dropdown/Dropdown";
 import { Footer, MemoizedFooter } from "./basic/Footer/Footer";
 import { Header } from "./basic/Header/Header";
@@ -23,18 +23,21 @@ import { Suggester } from "./basic/Suggester/Suggester";
 import { Tag } from "./basic/Tag/Tag";
 import { TagGroup } from "./basic/TagGroup/TagGroup";
 import { Toast } from "./basic/Toast/Toast";
-import { Tooltip } from "./basic/Tooltip/Tooltip";
 import { AttributeIcon } from "./basic/AttributeIcon/AttributeIcon";
 import { Checkbox } from "./basic/Checkbox/Checkbox";
-import { PanelSeparator } from "./basic/PanelSeparator/PanelSeparator";
 import { Table } from "./basic/Table/Table";
 import { TypeBar } from "./basic/TypeBar/TypeBar";
+import { Cloud } from "./basic/Cloud/Cloud";
+import { LetterIcon } from "./basic/LetterIcon/LetterIcon";
+import { Tooltip } from "./basic/Tooltip/Tooltip";
 
 export {
   AttributeIcon,
   Box,
   Button,
   ButtonGroup,
+  ButtonGroups,
+  Cloud,
   Checkbox,
   Header,
   Footer,
@@ -48,6 +51,7 @@ export {
   Suggester,
   Dropdown,
   Toast,
+  LetterIcon,
   Modal,
   ModalCard,
   ModalHeader,
@@ -59,6 +63,5 @@ export {
   MemoizedFooter,
   Submit,
   TypeBar,
-  PanelSeparator,
   Tooltip,
 };

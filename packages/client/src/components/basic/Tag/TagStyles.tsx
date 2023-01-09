@@ -1,7 +1,6 @@
 import styled from "styled-components";
 
 interface StyledTagWrapper {
-  hasMarginRight?: boolean;
   borderStyle: "solid" | "dashed" | "dotted";
   status: string;
   ltype: string;
@@ -14,8 +13,6 @@ export const StyledTagWrapper = styled.div<StyledTagWrapper>`
   border-style: ${({ borderStyle }) => borderStyle};
   border-color: ${({ theme, status }) => theme.color[status]};
   border-radius: ${({ theme }) => theme.borderRadius["sm"]};
-  margin-right: ${({ theme, hasMarginRight }) =>
-    hasMarginRight && theme.space[1]};
   cursor: ${({ dragDisabled }) => (dragDisabled ? "default" : "move")};
   border-style: ${({ theme, ltype }) =>
     "solid solid solid " + theme.borderStyle[ltype]};
@@ -64,8 +61,14 @@ export const StyledLabel = styled.div<StyledLabel>`
       : isFavorited
       ? theme.color["warning"]
       : theme.color["white"]};
-  color: ${({ theme, invertedLabel }) =>
-    invertedLabel ? theme.color["white"] : theme.color["black"]};
+  color: ${({ theme, invertedLabel, isItalic }) =>
+    invertedLabel
+      ? isItalic
+        ? theme.color["grey"]
+        : theme.color["white"]
+      : isItalic
+      ? theme.color["greyer"]
+      : theme.color["black"]};
   border-left-width: ${({ theme, labelOnly }) =>
     labelOnly ? 0 : theme.borderWidth[2]};
   border-left-style: ${({ borderStyle }) => borderStyle};
@@ -74,10 +77,10 @@ export const StyledLabel = styled.div<StyledLabel>`
     fullWidth ? "100%" : theme.space[52]};
 `;
 
-interface ButtonWrapper {
+interface StyledButtonWrapper {
   status: string;
 }
-export const ButtonWrapper = styled.div<ButtonWrapper>`
+export const StyledButtonWrapper = styled.div<StyledButtonWrapper>`
   display: flex;
   button {
     border-width: 0;
@@ -87,10 +90,6 @@ export const ButtonWrapper = styled.div<ButtonWrapper>`
   }
 `;
 
-export const StyledTooltipSeparator = styled.div`
-  display: inline-flex;
-  overflow: hidden;
-`;
 export const StyledItalic = styled.i`
   font-size: ${({ theme }) => theme.fontSize["xxs"]};
 `;

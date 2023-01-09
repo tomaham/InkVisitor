@@ -1,4 +1,4 @@
-import { EntityClass, UserRoleMode } from "@shared/enums";
+import { EntityEnums, UserEnums } from "@shared/enums";
 import {
   IEntity,
   IOption,
@@ -8,33 +8,31 @@ import {
   IStatementAction,
 } from "@shared/types";
 import api from "api";
+import { Button, Dropdown, Input, Loader, MultiInput } from "components";
 import {
-  Button,
-  ButtonGroup,
-  Dropdown,
-  Input,
-  Loader,
-  Modal,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalInputForm,
-  MultiInput,
-} from "components";
-import { EntitySuggester, EntityTag } from "components/advanced";
-import { CProp, CStatementActant, CStatementAction } from "constructors";
+  ApplyTemplateModal,
+  AuditTable,
+  BreadcrumbItem,
+  EntitySuggester,
+  EntityTag,
+  JSONExplorer,
+} from "components/advanced";
+import {
+  CClassification,
+  CIdentification,
+  CProp,
+  CStatementActant,
+  CStatementAction,
+} from "constructors";
 import { useSearchParams } from "hooks";
 import React, { useEffect, useMemo, useState } from "react";
 import { FaUnlink } from "react-icons/fa";
 import { UseMutationResult, useQuery, useQueryClient } from "react-query";
 import { toast } from "react-toastify";
 import { excludedSuggesterEntities } from "Theme/constants";
-import { DropdownItem } from "types";
-import { AuditTable } from "../../AuditTable/AuditTable";
-import { StyledContent } from "../../EntityBookmarkBox/EntityBookmarkBoxStyles";
+import { classesEditorActants, classesEditorTags, DropdownItem } from "types";
+import { getEntityLabel, getShortLabelByLetterCount } from "utils";
 import { EntityReferenceTable } from "../../EntityReferenceTable/EntityReferenceTable";
-import { JSONExplorer } from "../../JSONExplorer/JSONExplorer";
-import { StatementListBreadcrumbItem } from "../../StatementsListBox/StatementListHeader/StatementListBreadcrumbItem/StatementListBreadcrumbItem";
 import { StatementEditorActantTable } from "../StatementEditorActantTable/StatementEditorActantTable";
 import { StatementEditorActionTable } from "../StatementEditorActionTable/StatementEditorActionTable";
 import {
@@ -55,32 +53,6 @@ import {
   StyledTagsList,
   StyledTagsListItem,
 } from "./../StatementEditorBoxStyles";
-
-const classesActants = [
-  EntityClass.Statement,
-  EntityClass.Action,
-  EntityClass.Territory,
-  EntityClass.Resource,
-  EntityClass.Person,
-  EntityClass.Group,
-  EntityClass.Object,
-  EntityClass.Concept,
-  EntityClass.Location,
-  EntityClass.Value,
-  EntityClass.Event,
-];
-const classesTags = [
-  EntityClass.Action,
-  EntityClass.Territory,
-  EntityClass.Resource,
-  EntityClass.Person,
-  EntityClass.Group,
-  EntityClass.Object,
-  EntityClass.Concept,
-  EntityClass.Location,
-  EntityClass.Value,
-  EntityClass.Event,
-];
 
 interface StatementEditor {
   statement: IResponseStatement;
@@ -129,7 +101,9 @@ export const StatementEditor: React.FC<StatementEditor> = ({
     ["territoryActants", statement.data.territory?.territoryId],
     async () => {
       if (statement.data.territory?.territoryId) {
-        const res = await api.entityIdsInTerritory(statement.data.territory.territoryId);
+        const res = await api.entityIdsInTerritory(
+          statement.data.territory.territoryId
+        );
         return res.data;
       } else {
         return [];
@@ -142,7 +116,8 @@ export const StatementEditor: React.FC<StatementEditor> = ({
   );
 
   // TEMPLATES
-  const [applyTemplateModal, setApplyTemplateModal] = useState<boolean>(false);
+  const [showApplyTemplateModal, setShowApplyTemplateModal] =
+    useState<boolean>(false);
   const [templateToApply, setTemplateToApply] = useState<IEntity | false>(
     false
   );
@@ -155,30 +130,9 @@ export const StatementEditor: React.FC<StatementEditor> = ({
 
       if (templateThatIsGoingToBeApplied) {
         setTemplateToApply(templateThatIsGoingToBeApplied);
-        setApplyTemplateModal(true);
+        setShowApplyTemplateModal(true);
       }
     }
-  };
-
-  const handleApplyTemplate = () => {
-    if (templateToApply && statement) {
-      // TODO #952 handle conflicts in Templates application
-      const entityAfterTemplateApplied = {
-        ...{
-          data: templateToApply.data,
-          notes: templateToApply.notes,
-          props: templateToApply.props,
-          references: templateToApply.references,
-          usedTemplate: templateToApply.id,
-        },
-      };
-
-      toast.info(
-        `Template ${templateToApply.label} applied to Statement ${statement.label}`
-      );
-      updateStatementMutation.mutate(entityAfterTemplateApplied);
-    }
-    setTemplateToApply(false);
   };
 
   const {
@@ -191,7 +145,7 @@ export const StatementEditor: React.FC<StatementEditor> = ({
     async () => {
       const res = await api.entitiesSearch({
         onlyTemplates: true,
-        class: EntityClass.Statement,
+        class: EntityEnums.Class.Statement,
       });
 
       const templates = res.data;
@@ -212,12 +166,18 @@ export const StatementEditor: React.FC<StatementEditor> = ({
     ];
 
     if (templates) {
-      templates.forEach((template) => {
-        options.push({
-          value: template.id,
-          label: template.label,
+      templates
+        .filter((template) => template.id !== statement.id)
+        .forEach((template) => {
+          const maxLetterCount = 200;
+          options.push({
+            value: template.id,
+            label: getShortLabelByLetterCount(
+              getEntityLabel(template),
+              maxLetterCount
+            ),
+          });
         });
-      });
     }
     return options;
   }, [templates]);
@@ -245,9 +205,9 @@ export const StatementEditor: React.FC<StatementEditor> = ({
     error: territoryError,
     isFetching: isFetchingTerritory,
   } = useQuery(
-    ["territory", statementTerritoryId],
+    ["territory", "statement-editor", statementTerritoryId],
     async () => {
-      const res = await api.entitiesGet(statementTerritoryId as string);
+      const res = await api.territoryGet(statementTerritoryId as string);
       return res.data;
     },
     {
@@ -256,12 +216,15 @@ export const StatementEditor: React.FC<StatementEditor> = ({
   );
 
   //TODO recurse to get all parents
-  const territoryPath = territoryData && Array(territoryData.data?.parent?.id);
+  const territoryPath =
+    territoryData &&
+    territoryData.data?.parent &&
+    Array(territoryData.data?.parent?.territoryId);
 
   const userCanEdit: boolean = useMemo(() => {
     return (
-      statement.right === UserRoleMode.Admin ||
-      statement.right === UserRoleMode.Write
+      statement.right === UserEnums.RoleMode.Admin ||
+      statement.right === UserEnums.RoleMode.Write
     );
   }, [statement]);
 
@@ -284,20 +247,21 @@ export const StatementEditor: React.FC<StatementEditor> = ({
   };
 
   // Props handling
-  const addProp = (originId: string) => {
+  const addProp = (rowId: string) => {
     const newProp = CProp();
     const newStatementData = { ...statement.data };
 
     [...newStatementData.actants, ...newStatementData.actions].forEach(
       (actant: IStatementActant | IStatementAction) => {
-        const actantId = "entityId" in actant ? actant.entityId : actant.actionId;
+        // const actantId =
+        // "id" in actant ? actant.id : actant.id;
         // adding 1st level prop
-        if (actantId === originId) {
+        if (actant.id === rowId) {
           actant.props = [...actant.props, newProp];
         }
         // adding 2nd level prop
         actant.props.forEach((prop1, pi1) => {
-          if (prop1.id == originId) {
+          if (prop1.id == rowId) {
             actant.props[pi1].children = [
               ...actant.props[pi1].children,
               newProp,
@@ -306,7 +270,7 @@ export const StatementEditor: React.FC<StatementEditor> = ({
 
           // adding 3rd level prop
           actant.props[pi1].children.forEach((prop2, pi2) => {
-            if (prop2.id == originId) {
+            if (prop2.id == rowId) {
               actant.props[pi1].children[pi2].children = [
                 ...actant.props[pi1].children[pi2].children,
                 newProp,
@@ -316,6 +280,32 @@ export const StatementEditor: React.FC<StatementEditor> = ({
         });
       }
     );
+
+    updateStatementDataMutation.mutate(newStatementData);
+  };
+
+  const addClassification = (rowId: string) => {
+    const newClassification = CClassification();
+    const newStatementData = { ...statement.data };
+
+    [...newStatementData.actants].forEach((actant: IStatementActant) => {
+      if (actant.id === rowId) {
+        actant.classifications = [...actant.classifications, newClassification];
+      }
+    });
+
+    updateStatementDataMutation.mutate(newStatementData);
+  };
+
+  const addIdentification = (rowId: string) => {
+    const newIdentification = CIdentification();
+    const newStatementData = { ...statement.data };
+
+    [...newStatementData.actants].forEach((actant: IStatementActant) => {
+      if (actant.id === rowId) {
+        actant.identifications = [...actant.identifications, newIdentification];
+      }
+    });
 
     updateStatementDataMutation.mutate(newStatementData);
   };
@@ -469,20 +459,22 @@ export const StatementEditor: React.FC<StatementEditor> = ({
             <StyledHeaderTagWrap>
               <EntityTag entity={statement} fullWidth />
             </StyledHeaderTagWrap>
-            <div style={{ display: "flex" }}>
-              <StyledEditorStatementInfoLabel>
-                change statement label:
-              </StyledEditorStatementInfoLabel>
-              <StyledEditorHeaderInputWrap>
-                <Input
-                  type="text"
-                  value={statement.label}
-                  onChangeFn={(newValue: string) => {
-                    updateStatementMutation.mutate({ label: newValue });
-                  }}
-                />
-              </StyledEditorHeaderInputWrap>
-            </div>
+            {userCanEdit && (
+              <div style={{ display: "flex" }}>
+                <StyledEditorStatementInfoLabel>
+                  change statement label:
+                </StyledEditorStatementInfoLabel>
+                <StyledEditorHeaderInputWrap>
+                  <Input
+                    type="text"
+                    value={statement.label}
+                    onChangeFn={(newValue: string) => {
+                      updateStatementMutation.mutate({ label: newValue });
+                    }}
+                  />
+                </StyledEditorHeaderInputWrap>
+              </div>
+            )}
           </StyledEditorStatementInfo>
           {!statement.isTemplate && (
             <StyledBreadcrumbWrap>
@@ -490,13 +482,16 @@ export const StatementEditor: React.FC<StatementEditor> = ({
                 territoryPath.map((territory: string, key: number) => {
                   return (
                     <React.Fragment key={key}>
-                      <StatementListBreadcrumbItem territoryId={territory} />
+                      <BreadcrumbItem territoryId={territory} />
                     </React.Fragment>
                   );
                 })}
               {territoryData && (
                 <React.Fragment key={territoryData.id}>
-                  <StatementListBreadcrumbItem territoryId={territoryData.id} />
+                  <BreadcrumbItem
+                    territoryId={territoryData.id}
+                    territoryData={territoryData}
+                  />
                 </React.Fragment>
               )}
               <Loader size={20} show={isFetchingTerritory} />
@@ -511,7 +506,7 @@ export const StatementEditor: React.FC<StatementEditor> = ({
               filterEditorRights
               inputWidth={96}
               disableCreate
-              categoryTypes={[EntityClass.Territory]}
+              categoryTypes={[EntityEnums.Class.Territory]}
               onSelected={(newSelectedId: string) => {
                 moveStatementMutation.mutate(newSelectedId);
               }}
@@ -539,28 +534,28 @@ export const StatementEditor: React.FC<StatementEditor> = ({
             </StyledEditorContentRow>
           </StyledEditorTemplateSection>
         )}
-        <StyledEditorSection firstSection key="editor-section-summary">
+        <StyledEditorSection
+          firstSection
+          key="editor-section-summary"
+          marginRight
+        >
           <StyledEditorSectionContent firstSection>
-            <div>
-              <div>
-                <Input
-                  disabled={!userCanEdit}
-                  type="textarea"
-                  width="full"
-                  noBorder
-                  placeholder="Insert statement text here"
-                  onChangeFn={(newValue: string) => {
-                    if (newValue !== statement.data.text) {
-                      const newData = {
-                        text: newValue,
-                      };
-                      updateStatementDataMutation.mutate(newData);
-                    }
-                  }}
-                  value={statement.data.text}
-                />
-              </div>
-            </div>
+            <Input
+              disabled={!userCanEdit}
+              type="textarea"
+              width="full"
+              noBorder
+              placeholder="Insert statement text here"
+              onChangeFn={(newValue: string) => {
+                if (newValue !== statement.data.text) {
+                  const newData = {
+                    text: newValue,
+                  };
+                  updateStatementDataMutation.mutate(newData);
+                }
+              }}
+              value={statement.data.text}
+            />
           </StyledEditorSectionContent>
         </StyledEditorSection>
 
@@ -572,13 +567,13 @@ export const StatementEditor: React.FC<StatementEditor> = ({
               <StatementEditorActionTable
                 userCanEdit={userCanEdit}
                 statement={statement}
-                statementId={statementId}
                 updateActionsMutation={updateStatementDataMutation}
                 addProp={addProp}
                 updateProp={updateProp}
                 removeProp={removeProp}
                 movePropToIndex={movePropToIndex}
                 territoryParentId={statementTerritoryId}
+                territoryActants={territoryActants}
               />
             </StyledEditorActantTableWrapper>
 
@@ -589,7 +584,7 @@ export const StatementEditor: React.FC<StatementEditor> = ({
                 onSelected={(newSelectedId: string) => {
                   addAction(newSelectedId);
                 }}
-                categoryTypes={[EntityClass.Action]}
+                categoryTypes={[EntityEnums.Class.Action]}
                 excludedEntities={excludedSuggesterEntities}
                 placeholder={"add new action"}
                 isInsideTemplate={statement.isTemplate}
@@ -607,14 +602,16 @@ export const StatementEditor: React.FC<StatementEditor> = ({
               <StatementEditorActantTable
                 statement={statement}
                 userCanEdit={userCanEdit}
-                statementId={statementId}
-                classEntitiesActant={classesActants}
+                classEntitiesActant={classesEditorActants}
                 updateStatementDataMutation={updateStatementDataMutation}
                 addProp={addProp}
                 updateProp={updateProp}
                 removeProp={removeProp}
                 movePropToIndex={movePropToIndex}
                 territoryParentId={statementTerritoryId}
+                addClassification={addClassification}
+                addIdentification={addIdentification}
+                territoryActants={territoryActants}
               />
             </StyledEditorActantTableWrapper>
             {userCanEdit && (
@@ -624,7 +621,7 @@ export const StatementEditor: React.FC<StatementEditor> = ({
                 onSelected={(newSelectedId: string) => {
                   addActant(newSelectedId);
                 }}
-                categoryTypes={classesActants}
+                categoryTypes={classesEditorActants}
                 placeholder={"add new actant"}
                 excludedEntities={excludedSuggesterEntities}
                 isInsideTemplate={statement.isTemplate}
@@ -665,14 +662,14 @@ export const StatementEditor: React.FC<StatementEditor> = ({
                       <EntityTag
                         entity={tagActant}
                         fullWidth
-                        tooltipPosition="left top"
+                        tooltipPosition="left"
                         button={
                           <Button
                             key="d"
-                            tooltip="unlink actant from tags"
+                            tooltipLabel="unlink actant from tags"
                             icon={<FaUnlink />}
                             color="plain"
-                            inverted={true}
+                            inverted
                             onClick={() => {
                               removeTag(tag);
                             }}
@@ -695,7 +692,8 @@ export const StatementEditor: React.FC<StatementEditor> = ({
                     toast.info("Tag already added!");
                   }
                 }}
-                categoryTypes={classesTags}
+                disableTemplatesAccept
+                categoryTypes={classesEditorTags}
                 placeholder={"add new tag"}
                 excludedEntities={excludedSuggesterEntities}
                 excludedActantIds={statement.data.tags}
@@ -738,50 +736,14 @@ export const StatementEditor: React.FC<StatementEditor> = ({
         </StyledEditorSection>
       </div>
 
-      <Modal
-        showModal={applyTemplateModal}
-        width="thin"
-        onEnterPress={() => {
-          setApplyTemplateModal(false);
-          handleApplyTemplate();
-        }}
-        onClose={() => {
-          setApplyTemplateModal(false);
-        }}
-      >
-        <ModalHeader title="Create Template" />
-        <ModalContent>
-          <StyledContent>
-            <ModalInputForm>{`Apply template?`}</ModalInputForm>
-            <div>
-              {templateToApply && <EntityTag entity={templateToApply} />}
-            </div>
-            {/* here goes the info about template #951 */}
-          </StyledContent>
-        </ModalContent>
-        <ModalFooter>
-          <ButtonGroup>
-            <Button
-              key="cancel"
-              label="Cancel"
-              color="greyer"
-              inverted
-              onClick={() => {
-                setApplyTemplateModal(false);
-              }}
-            />
-            <Button
-              key="submit"
-              label="Apply"
-              color="info"
-              onClick={() => {
-                setApplyTemplateModal(false);
-                handleApplyTemplate();
-              }}
-            />
-          </ButtonGroup>
-        </ModalFooter>
-      </Modal>
+      <ApplyTemplateModal
+        showModal={showApplyTemplateModal}
+        setShowApplyTemplateModal={setShowApplyTemplateModal}
+        updateEntityMutation={updateStatementMutation}
+        templateToApply={templateToApply}
+        setTemplateToApply={setTemplateToApply}
+        entity={statement}
+      />
     </>
   );
 };

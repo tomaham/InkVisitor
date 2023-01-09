@@ -7,12 +7,7 @@ import {
 import api from "api";
 import React, { useCallback } from "react";
 import { useQuery } from "react-query";
-import {
-  PropAttributeFilter,
-  PropAttributeName,
-  DraggedPropRowCategory,
-  ItemTypes,
-} from "types";
+import { DraggedPropRowCategory, ItemTypes, PropAttributeFilter } from "types";
 import { FirstLevelPropGroup } from "./FirstLevelPropGroup/FirstLevelPropGroup";
 import { PropGroupRow } from "./PropGroupRow/PropGroupRow";
 import { StyledGrid, StyledListHeaderColumn } from "./PropGroupStyles";
@@ -84,7 +79,8 @@ export const PropGroup: React.FC<PropGroup> = ({
     (
       prop1: IProp,
       pi1: number,
-      moveProp: (dragIndex: number, hoverIndex: number) => void
+      moveProp: (dragIndex: number, hoverIndex: number) => void,
+      hasOrder: boolean
     ) => {
       return (
         <React.Fragment key={prop1.id}>
@@ -108,6 +104,7 @@ export const PropGroup: React.FC<PropGroup> = ({
             disabledAttributes={disabledAttributes}
             isInsideTemplate={isInsideTemplate}
             territoryParentId={territoryParentId}
+            hasOrder={hasOrder}
           />
           {/* 2nd level */}
           <SecondLevelPropGroup
@@ -127,7 +124,8 @@ export const PropGroup: React.FC<PropGroup> = ({
       prop2: IProp,
       pi2: number,
       prop1: IProp,
-      moveProp: (dragIndex: number, hoverIndex: number) => void
+      moveProp: (dragIndex: number, hoverIndex: number) => void,
+      hasOrder: boolean
     ) => {
       return (
         <React.Fragment key={prop2.id}>
@@ -151,6 +149,7 @@ export const PropGroup: React.FC<PropGroup> = ({
             disabledAttributes={disabledAttributes}
             isInsideTemplate={isInsideTemplate}
             territoryParentId={territoryParentId}
+            hasOrder={hasOrder}
           />
           {/* 3rd level */}
           <ThirdLevelPropGroup
@@ -170,7 +169,8 @@ export const PropGroup: React.FC<PropGroup> = ({
       prop3: IProp,
       pi3: number,
       prop2: IProp,
-      moveProp: (dragIndex: number, hoverIndex: number) => void
+      moveProp: (dragIndex: number, hoverIndex: number) => void,
+      hasOrder: boolean
     ) => {
       return (
         <React.Fragment key={prop3.id}>
@@ -194,6 +194,7 @@ export const PropGroup: React.FC<PropGroup> = ({
             disabledAttributes={disabledAttributes}
             isInsideTemplate={isInsideTemplate}
             territoryParentId={territoryParentId}
+            hasOrder={hasOrder}
           />
         </React.Fragment>
       );
@@ -201,25 +202,17 @@ export const PropGroup: React.FC<PropGroup> = ({
     [entities, boxEntity]
   );
 
-  return props.length > 0 ? (
-    <tr>
-      <td colSpan={4}>
+  return (
+    <>
+      {props.length > 0 && (
         <React.Fragment key={originId}>
-          <StyledGrid>
-            {/* Header */}
-            <StyledListHeaderColumn leftMargin>Type</StyledListHeaderColumn>
-            <StyledListHeaderColumn>Value</StyledListHeaderColumn>
-            <StyledListHeaderColumn></StyledListHeaderColumn>
-          </StyledGrid>
           {/* Rows */}
           <FirstLevelPropGroup
             props={props}
             renderFirsLevelPropRow={renderFirsLevelPropRow}
           />
         </React.Fragment>
-      </td>
-    </tr>
-  ) : (
-    <tr />
+      )}
+    </>
   );
 };

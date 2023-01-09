@@ -1,6 +1,7 @@
 import { IUser } from "../../shared/types/user";
 import { hashPassword } from "../../server/src/common/auth";
 import { IAudit } from "../../shared/types";
+import { Relation } from "../../shared/types/relation";
 import { r, RConnectionOptions, Connection } from "rethinkdb-ts";
 import tunnel from "tunnel-ssh";
 import { Server } from "net";
@@ -11,7 +12,8 @@ import {
   DbSchema,
   TableSchema,
 } from "./import-utils";
-import { auditsIndexes, entitiesIndexes } from "./indexes";
+import { auditsIndexes, entitiesIndexes, relationsIndexes } from "./indexes";
+import { EntityEnums } from "@shared/enums";
 
 const [datasetId, env] = parseArgs();
 const envData = require("dotenv").config({ path: `env/.env.${env}` }).parsed;
@@ -57,8 +59,15 @@ const datasets: Record<string, DbSchema> = {
     relations: {
       tableName: "relations",
       data: require("../datasets/all/relations.json"),
-      transform: function () {},
-      indexes: auditsIndexes,
+      transform: function () {
+        this.data = this.data.map((relation: Relation.IRelation) => {
+          if (!relation.order) {
+            relation.order = 1;
+          };
+          return relation
+        })
+      },
+      indexes: relationsIndexes,
     },
   },
   empty: {
@@ -98,7 +107,7 @@ const datasets: Record<string, DbSchema> = {
       tableName: "relations",
       data: require("../datasets/empty/relations.json"),
       transform: function () {},
-      indexes: auditsIndexes,
+      indexes: relationsIndexes,
     },
   },
   allparsed: {
@@ -136,9 +145,69 @@ const datasets: Record<string, DbSchema> = {
     },
     relations: {
       tableName: "relations",
-      data: require("../datasets/empty/relations.json"),
+      data: require("../datasets/all-parsed/relations.json"),
+      transform: function () {
+        this.data = this.data.map((relation: Relation.IRelation) => {
+          if (!relation.order) {
+            relation.order = 1;
+          };
+          return relation
+        })
+      },
+      indexes: relationsIndexes,
+    },
+  },
+  relationstest: {
+    users: {
+      tableName: "users",
+      data: require("../datasets/default/users.json"),
+      transform: function () {
+        
+        // get a list of all entities
+        const entities = require("../datasets/relationstest/entities.json")
+        const allTIds = entities.filter((e: any) => e.class === EntityEnums.Class.Territory).map((e: any) => e.id)
+        
+        this.data = this.data.map((user: IUser) => {
+          user.password = hashPassword(user.password ? user.password : "");
+          user.rights = user.rights.filter((r: any) => allTIds.includes(r.territory))
+          return user;
+        });
+      },
+    },
+    aclPermissions: {
+      tableName: "acl_permissions",
+      data: require("../datasets/default/acl_permissions.json"),
       transform: function () {},
+    },
+    entities: {
+      tableName: "entities",
+      data: require("../datasets/relationstest/entities.json"),
+      transform: function () {},
+      indexes: entitiesIndexes,
+    },
+    audits: {
+      tableName: "audits",
+      data: require("../datasets/empty/audits.json"),
+      transform: function () {
+        this.data = this.data.map((audit: IAudit) => {
+          audit.date = new Date(audit.date);
+          return audit;
+        });
+      },
       indexes: auditsIndexes,
+    },
+    relations: {
+      tableName: "relations",
+      data: require("../datasets/relationstest/relations.json"),
+      transform: function () {
+        this.data = this.data.map((relation: Relation.IRelation) => {
+          if (!relation.order) {
+            relation.order = 1;
+          };
+          return relation
+        })
+      },
+      indexes: relationsIndexes,
     },
   },
 };
@@ -181,24 +250,28 @@ const importData = async () => {
     output: process.stdout,
   });
 
-  rl.question(`Using db ${config.db}. Continue? y/n\n`, async (result) => {
-    if (result.toLowerCase() !== "y") {
-      process.exit(0);
-    }
+  return new Promise((resolve, reject) => {
+    rl.question(`Using db ${config.db}. Continue? y/n\n`, async (result) => {
+      rl.close();
 
-    rl.close();
+      if (result.toLowerCase() !== "y") {
+        return resolve(undefined);
+      }
 
-    const conn = await prepareDbConnection(config);
+      const conn = await prepareDbConnection(config);
 
-    console.log(`***importing dataset ${datasetId}***\n`);
+      console.log(`***importing dataset ${datasetId}***\n`);
 
-    for (const tableConfig of Object.values(config.tables)) {
-      await importTable(tableConfig, conn);
-    }
+      for (const tableConfig of Object.values(config.tables)) {
+        await importTable(tableConfig, conn);
+      }
 
-    console.log("Closing connection");
-    await conn.close({ noreplyWait: true });
-  });
+      console.log("Closing connection");
+      await conn.close({ noreplyWait: true });
+
+      resolve(undefined)
+    });
+  })
 };
 
 (async () => {
@@ -209,11 +282,11 @@ const importData = async () => {
     });
 
     rl.question("Using the tunnel. Continue? y/n\n", function (result) {
+      rl.close();
+
       if (result.toLowerCase() !== "y") {
         process.exit(0);
       }
-
-      rl.close();
 
       const tnl = tunnel(
         {
@@ -227,7 +300,7 @@ const importData = async () => {
           try {
             await importData();
           } catch (e) {
-            console.warn(e);
+            console.warn(`Encountered error in importData: ${e}`);
           } finally {
             await srv.close();
           }

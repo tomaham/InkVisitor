@@ -15,6 +15,7 @@ interface StyledDetailSection {
 }
 export const StyledDetailSection = styled.div<StyledDetailSection>`
   padding: ${({ theme }) => theme.space[6]};
+  /* margin-left: ${({ theme }) => theme.space[8]}; */
   padding-right: ${({ metaSection }) => (metaSection ? 0 : "")};
   padding-top: ${({ firstSection }) => (firstSection ? 0 : "")};
   border-bottom-width: ${({ theme, lastSection = false }) =>
@@ -25,9 +26,14 @@ export const StyledDetailSection = styled.div<StyledDetailSection>`
   width: 100%;
 `;
 
-export const StyledDetailSectionHeader = styled.div`
-  font-size: ${({ theme }) => theme.fontSize.lg};
-  margin-bottom: ${({ theme }) => theme.space["4"]};
+interface StyledDetailSectionHeader {
+  secondary?: boolean;
+}
+export const StyledDetailSectionHeader = styled.div<StyledDetailSectionHeader>`
+  font-size: ${({ theme, secondary }) =>
+    secondary ? theme.fontSize["base"] : theme.fontSize.lg};
+  margin-top: ${({ theme, secondary }) => (secondary ? theme.space[12] : "")};
+  margin-bottom: ${({ theme }) => theme.space[4]};
   color: ${({ theme }) => theme.color["primary"]};
 `;
 
@@ -106,4 +112,49 @@ export const StyledUsedAsTitle = styled.div`
   padding-left: ${({ theme }) => theme.space[2]};
   margin-bottom: ${({ theme }) => theme.space[1]};
   color: ${({ theme }) => theme.color["info"]};
+`;
+
+export const StyledDetailContentRow = styled.div``;
+
+export const StyledDetailContentRowLabel = styled.div`
+  float: left;
+  color: ${({ theme }) => theme.color["info"]};
+  font-size: ${({ theme }) => theme.fontSize["xs"]};
+`;
+export const StyledDetailContentRowValue = styled.div`
+  float: right;
+`;
+export const StyledRelativePosition = styled.div`
+  position: relative;
+`;
+
+export const StyledDetailForm = styled.div`
+  display: table;
+  width: 100%;
+  overflow-y: auto;
+  padding-right: ${({ theme }) => theme.space[6]};
+  ${StyledDetailContentRow} {
+    display: table-row;
+    width: 100%;
+    ${StyledDetailContentRowLabel} {
+      width: 1%;
+      white-space: nowrap;
+      display: table-cell;
+      padding: ${({ theme }) => theme.space[3]};
+      vertical-align: top;
+      text-align: right;
+      float: initial;
+    }
+    ${StyledDetailContentRowValue} {
+      display: table-cell;
+      width: 100%;
+      padding: ${({ theme }) => theme.space[2]};
+    }
+  }
+`;
+
+export const StyledTagWrap = styled.div`
+  display: grid;
+  overflow: hidden;
+  max-width: 100%;
 `;

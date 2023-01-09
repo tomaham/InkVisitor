@@ -1,81 +1,65 @@
+import { entitiesDictKeys } from "@shared/dictionaries";
+import { EntityEnums, UserEnums } from "@shared/enums";
 import {
-  actantLogicalTypeDict,
-  entitiesDict,
-  entitiesDictKeys,
-  entityStatusDict,
-  languageDict,
-} from "@shared/dictionaries";
-import { allEntities } from "@shared/dictionaries/entity";
-import { EntityClass, Language, UserRoleMode } from "@shared/enums";
-import {
-  IAction,
   IEntity,
   IOption,
   IProp,
   IReference,
   IResponseDetail,
-  IResponseEntity,
+  Relation,
 } from "@shared/types";
 import api from "api";
+import { Button, Loader, Submit } from "components";
 import {
-  Button,
-  Dropdown,
-  Input,
-  Loader,
-  MultiInput,
-  Submit,
-  TypeBar,
-} from "components";
-import { AttributeButtonGroup, EntityTag } from "components/advanced";
+  ApplyTemplateModal,
+  AuditTable,
+  EntityTag,
+  JSONExplorer,
+} from "components/advanced";
 import { CMetaProp } from "constructors";
 import { useSearchParams } from "hooks";
 import React, { useEffect, useMemo, useState } from "react";
-import { FaPlus, FaRegCopy } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import { useMutation, useQuery, useQueryClient } from "react-query";
-import { OptionTypeBase, ValueType } from "react-select";
 import { toast } from "react-toastify";
-import { rootTerritoryId } from "Theme/constants";
 import {
   DraggedPropRowCategory,
   DropdownItem,
   PropAttributeFilter,
 } from "types";
-import { AuditTable } from "../../AuditTable/AuditTable";
+import { getEntityLabel, getShortLabelByLetterCount } from "utils";
 import { EntityReferenceTable } from "../../EntityReferenceTable/EntityReferenceTable";
-import { JSONExplorer } from "../../JSONExplorer/JSONExplorer";
 import { PropGroup } from "../../PropGroup/PropGroup";
-import { ApplyTemplateModal } from "../ApplyTemplateModal/ApplyTemplateModal";
+import { EntityDetailCreateTemplateModal } from "./EntityDetailCreateTemplateModal/EntityDetailCreateTemplateModal";
+import { EntityDetailFormSection } from "./EntityDetailFormSection/EntityDetailFormSection";
+import { EntityDetailHeaderRow } from "./EntityDetailHeaderRow/EntityDetailHeaderRow";
+import { EntityDetailRelations } from "./EntityDetailRelations/EntityDetailRelations";
 import {
-  StyledDetailContentRow,
-  StyledDetailContentRowLabel,
-  StyledDetailContentRowValue,
-  StyledDetailForm,
-} from "../EntityDetailBoxStyles";
-import { EntityDetailCreateTemplateModal } from "../EntityDetailCreateTemplateModal/EntityDetailCreateTemplateModal";
-import { EntityDetailHeaderRow } from "../EntityDetailHeaderRow/EntityDetailHeaderRow";
-import { EntityDetailMetaPropsTable } from "../EntityDetailUsedInTable/EntityDetailMetaPropsTable/EntityDetailMetaPropsTable";
-import { EntityDetailStatementPropsTable } from "../EntityDetailUsedInTable/EntityDetailStatementPropsTable/EntityDetailStatementPropsTable";
-import { EntityDetailStatementsTable } from "../EntityDetailUsedInTable/EntityDetailStatementsTable/EntityDetailStatementsTable";
-import {
-  StyledDetailContentRowValueID,
   StyledDetailSection,
   StyledDetailSectionContent,
   StyledDetailSectionContentUsedIn,
   StyledDetailSectionEntityList,
   StyledDetailSectionHeader,
   StyledDetailWrapper,
-  StyledFormWrapper,
   StyledUsedAsHeading,
   StyledUsedAsTitle,
 } from "./EntityDetailStyles";
+import { EntityDetailClassificationTable } from "./EntityDetailUsedInTable/EntityDetailClassificationTable/EntityDetailClassificationTable";
+import { EntityDetailIdentificationTable } from "./EntityDetailUsedInTable/EntityDetailIdentificationTable/EntityDetailIdentificationTable";
+import { EntityDetailInverseRelations } from "./EntityDetailRelations/EntityDetailInverseRelations/EntityDetailInverseRelations";
+import { EntityDetailMetaPropsTable } from "./EntityDetailUsedInTable/EntityDetailMetaPropsTable/EntityDetailMetaPropsTable";
+import { EntityDetailStatementPropsTable } from "./EntityDetailUsedInTable/EntityDetailStatementPropsTable/EntityDetailStatementPropsTable";
+import { EntityDetailStatementsTable } from "./EntityDetailUsedInTable/EntityDetailStatementsTable/EntityDetailStatementsTable";
+import { EntityDetailValency } from "./EntityDetailValency/EntityDetailValency";
 
 const allowedEntityChangeClasses = [
-  EntityClass.Value,
-  EntityClass.Person,
-  EntityClass.Event,
-  EntityClass.Group,
-  EntityClass.Location,
-  EntityClass.Object,
+  EntityEnums.Class.Value,
+  EntityEnums.Class.Person,
+  EntityEnums.Class.Being,
+  EntityEnums.Class.Event,
+  EntityEnums.Class.Group,
+  EntityEnums.Class.Location,
+  EntityEnums.Class.Object,
 ];
 
 interface EntityDetail {
@@ -108,17 +92,19 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
 
   const [createTemplateModal, setCreateTemplateModal] =
     useState<boolean>(false);
-
-  const [showRemoveSubmit, setShowRemoveSubmit] = useState(false);
-  const [selectedEntityType, setSelectedEntityType] = useState<EntityClass>();
+  const [showRemoveSubmit, setShowRemoveSubmit] = useState<boolean>(false);
+  const [selectedEntityType, setSelectedEntityType] =
+    useState<EntityEnums.Class>();
   const [showTypeSubmit, setShowTypeSubmit] = useState(false);
-  const [usedInPage, setUsedInPage] = useState<number>(0);
-  const statementsPerPage = 20;
-
-  const [applyTemplateModal, setApplyTemplateModal] = useState<boolean>(false);
+  const [showApplyTemplateModal, setShowApplyTemplateModal] =
+    useState<boolean>(false);
   const [templateToApply, setTemplateToApply] = useState<IEntity | false>(
     false
   );
+
+  const selectedEntityTypeLabel: string = useMemo(() => {
+    return selectedEntityType ? entitiesDictKeys[selectedEntityType].label : "";
+  }, [selectedEntityType]);
 
   const handleAskForTemplateApply = (templateOptionToApply: IOption) => {
     if (templates) {
@@ -128,7 +114,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
 
       if (templateThatIsGoingToBeApplied) {
         setTemplateToApply(templateThatIsGoingToBeApplied);
-        setApplyTemplateModal(true);
+        setShowApplyTemplateModal(true);
       }
     }
   };
@@ -168,13 +154,17 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
       },
     ];
 
-    if (entity && templates) {
+    if (entity !== undefined && templates) {
       templates
         .filter((template) => template.id !== entity.id)
         .forEach((template) => {
+          const maxLetterCount = 200;
           options.push({
             value: template.id,
-            label: template.label,
+            label: getShortLabelByLetterCount(
+              getEntityLabel(template),
+              maxLetterCount
+            ),
           });
         });
     }
@@ -198,25 +188,26 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
 
   // refetch audit when statement changes
   useEffect(() => {
-    // FIX: move to specific changes
-    queryClient.invalidateQueries("audit");
+    if (entity !== undefined) {
+      queryClient.invalidateQueries("audit");
+    }
   }, [entity]);
 
   useEffect(() => {
-    if (entity) {
+    if (entity !== undefined) {
       setSelectedEntityType(entity.class);
     }
   }, []);
 
   const userCanAdmin: boolean = useMemo(() => {
-    return !!entity && entity.right === UserRoleMode.Admin;
+    return !!entity && entity.right === UserEnums.RoleMode.Admin;
   }, [entity]);
 
   const userCanEdit: boolean = useMemo(() => {
     return (
       !!entity &&
-      (entity.right === UserRoleMode.Admin ||
-        entity.right === UserRoleMode.Write)
+      (entity.right === UserEnums.RoleMode.Admin ||
+        entity.right === UserEnums.RoleMode.Write)
     );
   }, [entity]);
 
@@ -238,7 +229,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
           variables.status ||
           variables.data?.logicalType
         ) {
-          if (entity?.class === EntityClass.Territory) {
+          if (entity?.class === EntityEnums.Class.Territory) {
             queryClient.invalidateQueries("tree");
           }
           queryClient.invalidateQueries("territory");
@@ -262,7 +253,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
         setShowTypeSubmit(false);
         queryClient.invalidateQueries(["entity"]);
         queryClient.invalidateQueries("statement");
-        if (variables === EntityClass.Territory) {
+        if (variables === EntityEnums.Class.Territory) {
           queryClient.invalidateQueries("tree");
         }
         queryClient.invalidateQueries("territory");
@@ -285,7 +276,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
         // hide selected territory if T removed
         if (
           entity &&
-          entity.class == EntityClass.Territory &&
+          entity.class == EntityEnums.Class.Territory &&
           entity.id === territoryId
         ) {
           setTerritoryId("");
@@ -296,7 +287,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
         // hide editor box if the removed entity was also opened in the editor
         if (
           entity &&
-          entity.class == EntityClass.Statement &&
+          entity.class == EntityEnums.Class.Statement &&
           entity.id === statementId
         ) {
           setStatementId("");
@@ -316,7 +307,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
   // adding only second or third level
   // function adding the first level prop is in the button
   const addMetaProp = (originId: string) => {
-    if (entity) {
+    if (entity !== undefined) {
       const newProp = CMetaProp();
       const newProps = [...entity.props];
 
@@ -341,7 +332,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
   };
 
   const updateProp = (propId: string, changes: any) => {
-    if (entity) {
+    if (entity !== undefined) {
       const newProps = [...entity.props];
 
       newProps.forEach((prop1, pi1) => {
@@ -375,7 +366,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
   };
 
   const removeProp = (propId: string) => {
-    if (entity) {
+    if (entity !== undefined) {
       const newProps = [...entity.props].filter(
         (prop, pi) => prop.id !== propId
       );
@@ -438,7 +429,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
     oldIndex: number,
     newIndex: number
   ) => {
-    if (entity) {
+    if (entity !== undefined) {
       const newProps = [...entity.props];
       changeOrder(propId, newProps, oldIndex, newIndex);
 
@@ -455,34 +446,22 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
     }
   }, [error]);
 
-  const usedInPages = useMemo(() => {
-    if (entity && entity.usedInStatement) {
-      return Math.ceil(entity.usedInStatement.length / statementsPerPage);
-    } else {
-      return 0;
-    }
-  }, [detailId, entity]);
-
-  useEffect(() => {
-    setUsedInPage(0);
-  }, [detailId]);
-
   const mayBeRemoved = useMemo(() => {
     return (
-      entity && entity.usedInStatement && entity.usedInStatement.length === 0
+      entity && entity.usedInStatements && entity.usedInStatements.length === 0
     );
   }, [entity]);
 
   const actantMode = useMemo(() => {
     const actantClass = entity?.class;
     if (actantClass) {
-      if (actantClass === EntityClass.Action) {
+      if (actantClass === EntityEnums.Class.Action) {
         return "action";
-      } else if (actantClass === EntityClass.Territory) {
+      } else if (actantClass === EntityEnums.Class.Territory) {
         return "territory";
-      } else if (actantClass === EntityClass.Resource) {
+      } else if (actantClass === EntityEnums.Class.Resource) {
         return "resource";
-      } else if (actantClass === EntityClass.Concept) {
+      } else if (actantClass === EntityEnums.Class.Concept) {
         return "concept";
       }
     }
@@ -491,15 +470,15 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
 
   const isTerritoryWithParent = (entity: IResponseDetail): boolean => {
     return (
-      entity.class === EntityClass.Territory &&
+      entity.class === EntityEnums.Class.Territory &&
       entity.data.parent &&
-      Object.keys(entity.entities).includes(entity.data.parent.id)
+      Object.keys(entity.entities).includes(entity.data.parent.territoryId)
     );
   };
 
   const isStatementWithTerritory = (entity: IResponseDetail): boolean => {
     return (
-      entity.class === EntityClass.Statement &&
+      entity.class === EntityEnums.Class.Statement &&
       entity.data.territory &&
       Object.keys(entity.entities).includes(entity.data.territory.id)
     );
@@ -507,13 +486,44 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
 
   const getTerritoryId = (entity: IResponseDetail) => {
     if (isTerritoryWithParent(entity)) {
-      return entity.entities[entity.data.parent.id].id;
+      return entity.entities[entity.data.parent.territoryId].id;
     } else if (isStatementWithTerritory(entity)) {
       return entity.entities[entity.data.territory.id].id;
     } else {
       return undefined;
     }
   };
+
+  const relationCreateMutation = useMutation(
+    async (newRelation: Relation.IRelation) =>
+      await api.relationCreate(newRelation),
+    {
+      onSuccess: (data, variables) => {
+        queryClient.invalidateQueries("entity");
+      },
+    }
+  );
+
+  const relationUpdateMutation = useMutation(
+    async (relationObject: { relationId: string; changes: any }) =>
+      await api.relationUpdate(
+        relationObject.relationId,
+        relationObject.changes
+      ),
+    {
+      onSuccess: (data, variables) => {
+        queryClient.invalidateQueries("entity");
+      },
+    }
+  );
+  const relationDeleteMutation = useMutation(
+    async (relationId: string) => await api.relationDelete(relationId),
+    {
+      onSuccess: (data, variables) => {
+        queryClient.invalidateQueries("entity");
+      },
+    }
+  );
 
   return (
     <>
@@ -531,655 +541,51 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
             {/* form section */}
             <StyledDetailSection firstSection>
               <StyledDetailSectionContent firstSection>
-                <StyledFormWrapper>
-                  <StyledDetailForm>
-                    <StyledDetailContentRow>
-                      <StyledDetailContentRowLabel>
-                        ID
-                      </StyledDetailContentRowLabel>
-                      <StyledDetailContentRowValue>
-                        <StyledDetailContentRowValueID>
-                          {entity.id}
-                          <Button
-                            inverted
-                            tooltip="copy ID"
-                            color="primary"
-                            label=""
-                            icon={<FaRegCopy />}
-                            onClick={async () => {
-                              await navigator.clipboard.writeText(entity.id);
-                              toast.info("ID copied to clipboard");
-                            }}
-                          />
-                        </StyledDetailContentRowValueID>
-                      </StyledDetailContentRowValue>
-                    </StyledDetailContentRow>
+                <EntityDetailFormSection
+                  entity={entity}
+                  userCanEdit={userCanEdit}
+                  userCanAdmin={userCanAdmin}
+                  actantMode={actantMode}
+                  isStatementWithTerritory={isStatementWithTerritory}
+                  isClassChangeable={isClassChangeable || false}
+                  isTerritoryWithParent={isTerritoryWithParent}
+                  allowedEntityChangeClasses={allowedEntityChangeClasses}
+                  handleAskForTemplateApply={handleAskForTemplateApply}
+                  setSelectedEntityType={setSelectedEntityType}
+                  setShowTypeSubmit={setShowTypeSubmit}
+                  templateOptions={templateOptions}
+                  updateEntityMutation={updateEntityMutation}
+                />
+              </StyledDetailSectionContent>
+            </StyledDetailSection>
 
-                    {/* Entity type */}
-                    {isClassChangeable && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Entity Type
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <div style={{ position: "relative" }}>
-                            <Dropdown
-                              value={{
-                                label: entitiesDictKeys[entity.class].label,
-                                value: entitiesDictKeys[entity.class].value,
-                              }}
-                              options={allowedEntityChangeClasses.map(
-                                (c) => entitiesDictKeys[c]
-                              )}
-                              onChange={(
-                                option: ValueType<OptionTypeBase, any>
-                              ) => {
-                                setSelectedEntityType(
-                                  (option as IOption).value as EntityClass
-                                );
-                                setShowTypeSubmit(true);
-                              }}
-                              width={76}
-                              entityDropdown
-                              disableTyping
-                            />
-                            <TypeBar entityLetter={entity.class} />
-                          </div>
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
+            {/* Valency (A) */}
+            {entity.class === EntityEnums.Class.Action && (
+              <StyledDetailSection>
+                <StyledDetailSectionHeader>Valency</StyledDetailSectionHeader>
+                <StyledDetailSectionContent>
+                  <EntityDetailValency
+                    entity={entity}
+                    userCanEdit={userCanEdit}
+                    updateEntityMutation={updateEntityMutation}
+                    relationCreateMutation={relationCreateMutation}
+                    relationUpdateMutation={relationUpdateMutation}
+                    relationDeleteMutation={relationDeleteMutation}
+                  />
+                </StyledDetailSectionContent>
+              </StyledDetailSection>
+            )}
 
-                    {/* templates */}
-                    <StyledDetailContentRow>
-                      <StyledDetailContentRowLabel>
-                        Apply Template
-                      </StyledDetailContentRowLabel>
-                      <StyledDetailContentRowValue>
-                        <Dropdown
-                          disabled={!userCanEdit}
-                          isMulti={false}
-                          width="full"
-                          options={templateOptions}
-                          value={templateOptions[0]}
-                          onChange={(templateToApply: any) => {
-                            handleAskForTemplateApply(templateToApply);
-                          }}
-                        />
-                      </StyledDetailContentRowValue>
-                    </StyledDetailContentRow>
-
-                    {entity.legacyId && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Legacy ID
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <StyledDetailContentRowValueID>
-                            {entity.legacyId}
-                          </StyledDetailContentRowValueID>
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
-
-                    <StyledDetailContentRow>
-                      <StyledDetailContentRowLabel>
-                        Label
-                      </StyledDetailContentRowLabel>
-                      <StyledDetailContentRowValue>
-                        <Input
-                          disabled={!userCanEdit}
-                          width="full"
-                          value={entity.label}
-                          onChangeFn={async (newLabel: string) => {
-                            if (newLabel !== entity.label) {
-                              updateEntityMutation.mutate({
-                                label: newLabel,
-                              });
-                            }
-                          }}
-                        />
-                      </StyledDetailContentRowValue>
-                    </StyledDetailContentRow>
-                    <StyledDetailContentRow>
-                      <StyledDetailContentRowLabel>
-                        Detail
-                      </StyledDetailContentRowLabel>
-                      <StyledDetailContentRowValue>
-                        <Input
-                          disabled={!userCanEdit}
-                          width="full"
-                          type="textarea"
-                          rows={2}
-                          value={entity.detail}
-                          onChangeFn={async (newValue: string) => {
-                            if (newValue !== entity.detail)
-                              updateEntityMutation.mutate({ detail: newValue });
-                          }}
-                        />
-                      </StyledDetailContentRowValue>
-                    </StyledDetailContentRow>
-
-                    {/* territory parent */}
-                    {isTerritoryWithParent(entity) && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Parent Territory
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <EntityTag
-                            entity={entity.entities[entity.data.parent.id]}
-                            disableDoubleClick={
-                              entity.data.parent.id === rootTerritoryId
-                            }
-                            disableDrag={
-                              entity.data.parent.id === rootTerritoryId
-                            }
-                            disableTooltip={
-                              entity.data.parent.id === rootTerritoryId
-                            }
-                          />
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
-
-                    {/* statement  terriroty */}
-                    {isStatementWithTerritory(entity) && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Territory
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <EntityTag
-                            entity={entity.entities[entity.data.territory.id]}
-                          />
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
-                    <StyledDetailContentRow>
-                      <StyledDetailContentRowLabel>
-                        Status
-                      </StyledDetailContentRowLabel>
-                      <StyledDetailContentRowValue>
-                        <AttributeButtonGroup
-                          disabled={!userCanAdmin}
-                          options={[
-                            {
-                              longValue: entityStatusDict[0]["label"],
-                              shortValue: entityStatusDict[0]["label"],
-                              onClick: () => {
-                                updateEntityMutation.mutate({
-                                  status: entityStatusDict[0]["value"],
-                                });
-                              },
-                              selected:
-                                entityStatusDict[0]["value"] === entity.status,
-                            },
-                            {
-                              longValue: entityStatusDict[1]["label"],
-                              shortValue: entityStatusDict[1]["label"],
-                              onClick: () => {
-                                updateEntityMutation.mutate({
-                                  status: entityStatusDict[1]["value"],
-                                });
-                              },
-                              selected:
-                                entityStatusDict[1]["value"] === entity.status,
-                            },
-                            {
-                              longValue: entityStatusDict[2]["label"],
-                              shortValue: entityStatusDict[2]["label"],
-                              onClick: () => {
-                                updateEntityMutation.mutate({
-                                  status: entityStatusDict[2]["value"],
-                                });
-                              },
-                              selected:
-                                entityStatusDict[2]["value"] === entity.status,
-                            },
-                            {
-                              longValue: entityStatusDict[3]["label"],
-                              shortValue: entityStatusDict[3]["label"],
-                              onClick: () => {
-                                updateEntityMutation.mutate({
-                                  status: entityStatusDict[3]["value"],
-                                });
-                              },
-                              selected:
-                                entityStatusDict[3]["value"] === entity.status,
-                            },
-                          ]}
-                        />
-                      </StyledDetailContentRowValue>
-                    </StyledDetailContentRow>
-                    <StyledDetailContentRow>
-                      <StyledDetailContentRowLabel>
-                        Label language
-                      </StyledDetailContentRowLabel>
-                      <StyledDetailContentRowValue>
-                        <Dropdown
-                          disabled={!userCanEdit}
-                          isMulti={false}
-                          width="full"
-                          options={languageDict}
-                          value={languageDict.find(
-                            (i: any) => i.value === entity.language
-                          )}
-                          onChange={(newValue: any) => {
-                            updateEntityMutation.mutate({
-                              language: newValue.value || Language.Empty,
-                            });
-                          }}
-                        />
-                      </StyledDetailContentRowValue>
-                    </StyledDetailContentRow>
-                    {actantMode === "entity" && entity.data?.logicalType && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Logical Type
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <AttributeButtonGroup
-                            disabled={!userCanEdit}
-                            options={[
-                              {
-                                longValue: actantLogicalTypeDict[0]["label"],
-                                shortValue: actantLogicalTypeDict[0]["label"],
-                                onClick: () => {
-                                  updateEntityMutation.mutate({
-                                    data: {
-                                      logicalType:
-                                        actantLogicalTypeDict[0]["value"],
-                                    },
-                                  });
-                                },
-                                selected:
-                                  actantLogicalTypeDict[0]["value"] ===
-                                  entity.data.logicalType,
-                              },
-                              {
-                                longValue: actantLogicalTypeDict[1]["label"],
-                                shortValue: actantLogicalTypeDict[1]["label"],
-                                onClick: () => {
-                                  updateEntityMutation.mutate({
-                                    data: {
-                                      logicalType:
-                                        actantLogicalTypeDict[1]["value"],
-                                    },
-                                  });
-                                },
-                                selected:
-                                  actantLogicalTypeDict[1]["value"] ===
-                                  entity.data.logicalType,
-                              },
-                              {
-                                longValue: actantLogicalTypeDict[2]["label"],
-                                shortValue: actantLogicalTypeDict[2]["label"],
-                                onClick: () => {
-                                  updateEntityMutation.mutate({
-                                    data: {
-                                      logicalType:
-                                        actantLogicalTypeDict[2]["value"],
-                                    },
-                                  });
-                                },
-                                selected:
-                                  actantLogicalTypeDict[2]["value"] ===
-                                  entity.data.logicalType,
-                              },
-                              {
-                                longValue: actantLogicalTypeDict[3]["label"],
-                                shortValue: actantLogicalTypeDict[3]["label"],
-                                onClick: () => {
-                                  updateEntityMutation.mutate({
-                                    data: {
-                                      logicalType:
-                                        actantLogicalTypeDict[3]["value"],
-                                    },
-                                  });
-                                },
-                                selected:
-                                  actantLogicalTypeDict[3]["value"] ===
-                                  entity.data.logicalType,
-                              },
-                            ]}
-                          />
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
-
-                    {/* Actions */}
-                    {actantMode === "action" && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Subject entity type
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <Dropdown
-                            allowAny
-                            disabled={!userCanEdit}
-                            isMulti
-                            options={entitiesDict}
-                            value={[allEntities]
-                              .concat(entitiesDict)
-                              .filter((i: any) =>
-                                (entity as IAction).data.entities?.s.includes(
-                                  i.value
-                                )
-                              )}
-                            width="full"
-                            noOptionsMessage={() => "no entity"}
-                            placeholder={"no entity"}
-                            onChange={(newValue: any) => {
-                              const oldData = { ...entity.data };
-                              updateEntityMutation.mutate({
-                                data: {
-                                  ...oldData,
-                                  ...{
-                                    entities: {
-                                      s: newValue
-                                        ? (newValue as string[]).map(
-                                            (v: any) => v.value
-                                          )
-                                        : [],
-                                      a1: entity.data.entities.a1,
-                                      a2: entity.data.entities.a2,
-                                    },
-                                  },
-                                },
-                              });
-                            }}
-                          />
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
-                    {actantMode === "action" && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Subject valency
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <Input
-                            disabled={!userCanEdit}
-                            value={(entity as IAction).data.valencies?.s}
-                            width="full"
-                            onChangeFn={async (newValue: string) => {
-                              const oldData = { ...entity.data };
-                              updateEntityMutation.mutate({
-                                data: {
-                                  ...oldData,
-                                  ...{
-                                    valencies: {
-                                      s: newValue,
-                                      a1: entity.data.valencies.a1,
-                                      a2: entity.data.valencies.a2,
-                                    },
-                                  },
-                                },
-                              });
-                            }}
-                          />
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
-
-                    {actantMode === "action" && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Actant1 entity type
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <Dropdown
-                            disabled={!userCanEdit}
-                            isMulti
-                            options={entitiesDict}
-                            value={[allEntities]
-                              .concat(entitiesDict)
-                              .filter((i: any) =>
-                                (entity as IAction).data.entities?.a1.includes(
-                                  i.value
-                                )
-                              )}
-                            placeholder={"no entity"}
-                            width="full"
-                            onChange={(newValue: any) => {
-                              const oldData = { ...entity.data };
-                              updateEntityMutation.mutate({
-                                data: {
-                                  ...oldData,
-                                  ...{
-                                    entities: {
-                                      a1: newValue
-                                        ? (newValue as string[]).map(
-                                            (v: any) => v.value
-                                          )
-                                        : [],
-                                      s: entity.data.entities.s,
-                                      a2: entity.data.entities.a2,
-                                    },
-                                  },
-                                },
-                              });
-                            }}
-                          />
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
-
-                    {actantMode === "action" && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Actant1 valency
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <Input
-                            disabled={!userCanEdit}
-                            value={(entity as IAction).data.valencies?.a1}
-                            width="full"
-                            onChangeFn={async (newValue: string) => {
-                              const oldData = { ...entity.data };
-                              updateEntityMutation.mutate({
-                                data: {
-                                  ...oldData,
-                                  ...{
-                                    valencies: {
-                                      s: entity.data.valencies.s,
-                                      a1: newValue,
-                                      a2: entity.data.valencies.a2,
-                                    },
-                                  },
-                                },
-                              });
-                            }}
-                          />
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
-
-                    {actantMode === "action" && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Actant2 entity type
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <Dropdown
-                            disabled={!userCanEdit}
-                            isMulti
-                            options={entitiesDict}
-                            value={[allEntities]
-                              .concat(entitiesDict)
-                              .filter((i: any) =>
-                                (entity as IAction).data.entities?.a2.includes(
-                                  i.value
-                                )
-                              )}
-                            placeholder={"no entity"}
-                            width="full"
-                            onChange={(newValue: any) => {
-                              const oldData = { ...entity.data };
-
-                              updateEntityMutation.mutate({
-                                data: {
-                                  ...oldData,
-                                  ...{
-                                    entities: {
-                                      a2: newValue
-                                        ? (newValue as string[]).map(
-                                            (v: any) => v.value
-                                          )
-                                        : [],
-                                      s: entity.data.entities.s,
-                                      a1: entity.data.entities.a1,
-                                    },
-                                  },
-                                },
-                              });
-                            }}
-                          />
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
-
-                    {actantMode === "action" && (
-                      <StyledDetailContentRow>
-                        <StyledDetailContentRowLabel>
-                          Actant2 valency
-                        </StyledDetailContentRowLabel>
-                        <StyledDetailContentRowValue>
-                          <Input
-                            disabled={!userCanEdit}
-                            value={(entity as IAction).data.valencies?.a2}
-                            width="full"
-                            onChangeFn={async (newValue: string) => {
-                              const oldData = { ...entity.data };
-                              updateEntityMutation.mutate({
-                                data: {
-                                  ...oldData,
-                                  ...{
-                                    valencies: {
-                                      s: entity.data.valencies.s,
-                                      a1: entity.data.valencies.a1,
-                                      a2: newValue,
-                                    },
-                                  },
-                                },
-                              });
-                            }}
-                          />
-                        </StyledDetailContentRowValue>
-                      </StyledDetailContentRow>
-                    )}
-
-                    {actantMode === "resource" && (
-                      <React.Fragment>
-                        <StyledDetailContentRow>
-                          <StyledDetailContentRowLabel>
-                            URL
-                          </StyledDetailContentRowLabel>
-                          <StyledDetailContentRowValue>
-                            <Input
-                              disabled={!userCanEdit}
-                              value={entity.data.url}
-                              width="full"
-                              onChangeFn={async (newValue: string) => {
-                                const oldData = { ...entity.data };
-                                updateEntityMutation.mutate({
-                                  data: {
-                                    ...oldData,
-                                    ...{
-                                      url: newValue,
-                                    },
-                                  },
-                                });
-                              }}
-                            />
-                          </StyledDetailContentRowValue>
-                        </StyledDetailContentRow>
-
-                        <StyledDetailContentRow>
-                          <StyledDetailContentRowLabel>
-                            Base URL
-                          </StyledDetailContentRowLabel>
-                          <StyledDetailContentRowValue>
-                            <Input
-                              disabled={!userCanEdit}
-                              value={entity.data.partValueBaseURL}
-                              width="full"
-                              onChangeFn={async (newValue: string) => {
-                                const oldData = { ...entity.data };
-                                updateEntityMutation.mutate({
-                                  data: {
-                                    ...oldData,
-                                    ...{
-                                      partValueBaseURL: newValue,
-                                    },
-                                  },
-                                });
-                              }}
-                            />
-                          </StyledDetailContentRowValue>
-                        </StyledDetailContentRow>
-
-                        <StyledDetailContentRow>
-                          <StyledDetailContentRowLabel>
-                            Part Label
-                          </StyledDetailContentRowLabel>
-                          <StyledDetailContentRowValue>
-                            <Input
-                              disabled={!userCanEdit}
-                              value={entity.data.partValueLabel}
-                              width="full"
-                              onChangeFn={async (newValue: string) => {
-                                const oldData = { ...entity.data };
-                                updateEntityMutation.mutate({
-                                  data: {
-                                    ...oldData,
-                                    ...{
-                                      partValueLabel: newValue,
-                                    },
-                                  },
-                                });
-                              }}
-                            />
-                          </StyledDetailContentRowValue>
-                        </StyledDetailContentRow>
-                      </React.Fragment>
-                    )}
-
-                    {/* templates */}
-                    {entity.usedTemplate &&
-                      entity.usedTemplate in entity.entities && (
-                        <StyledDetailContentRow>
-                          <StyledDetailContentRowLabel>
-                            Applied Template
-                          </StyledDetailContentRowLabel>
-                          <StyledDetailContentRowValue>
-                            <EntityTag
-                              entity={entity.entities[entity.usedTemplate]}
-                            />
-                          </StyledDetailContentRowValue>
-                        </StyledDetailContentRow>
-                      )}
-
-                    <StyledDetailContentRow>
-                      <br />
-                    </StyledDetailContentRow>
-                    <StyledDetailContentRow>
-                      <StyledDetailContentRowLabel>
-                        Notes
-                      </StyledDetailContentRowLabel>
-                      <StyledDetailContentRowValue>
-                        <MultiInput
-                          disabled={!userCanEdit}
-                          values={entity.notes}
-                          width="full"
-                          onChange={(newValues: string[]) => {
-                            updateEntityMutation.mutate({ notes: newValues });
-                          }}
-                        />
-                      </StyledDetailContentRowValue>
-                    </StyledDetailContentRow>
-                  </StyledDetailForm>
-                </StyledFormWrapper>
+            {/* Relations */}
+            <StyledDetailSection>
+              <StyledDetailSectionHeader>Relations</StyledDetailSectionHeader>
+              <StyledDetailSectionContent>
+                <EntityDetailRelations
+                  entity={entity}
+                  relationCreateMutation={relationCreateMutation}
+                  relationUpdateMutation={relationUpdateMutation}
+                  relationDeleteMutation={relationDeleteMutation}
+                />
               </StyledDetailSectionContent>
             </StyledDetailSection>
 
@@ -1204,41 +610,37 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
               <StyledDetailSectionHeader>
                 Meta properties
               </StyledDetailSectionHeader>
-              <StyledDetailSectionContent firstSection>
-                <table>
-                  <tbody>
-                    <PropGroup
-                      boxEntity={entity}
-                      originId={entity.id}
-                      entities={entity.entities}
-                      props={entity.props}
-                      territoryId={territoryId}
-                      updateProp={updateProp}
-                      removeProp={removeProp}
-                      addProp={addMetaProp}
-                      userCanEdit={userCanEdit}
-                      openDetailOnCreate={false}
-                      movePropToIndex={(propId, oldIndex, newIndex) => {
-                        movePropToIndex(propId, oldIndex, newIndex);
-                      }}
-                      category={DraggedPropRowCategory.META_PROP}
-                      disabledAttributes={
-                        {
-                          statement: [
-                            "elvl",
-                            "moodvariant",
-                            "mood",
-                            "bundleOperator",
-                          ],
-                          type: ["elvl", "logic", "virtuality", "partitivity"],
-                          value: ["elvl", "logic", "virtuality", "partitivity"],
-                        } as PropAttributeFilter
-                      }
-                      isInsideTemplate={entity.isTemplate || false}
-                      territoryParentId={getTerritoryId(entity)}
-                    />
-                  </tbody>
-                </table>
+              <StyledDetailSectionContent>
+                <PropGroup
+                  boxEntity={entity}
+                  originId={entity.id}
+                  entities={entity.entities}
+                  props={entity.props}
+                  territoryId={territoryId}
+                  updateProp={updateProp}
+                  removeProp={removeProp}
+                  addProp={addMetaProp}
+                  userCanEdit={userCanEdit}
+                  openDetailOnCreate={false}
+                  movePropToIndex={(propId, oldIndex, newIndex) => {
+                    movePropToIndex(propId, oldIndex, newIndex);
+                  }}
+                  category={DraggedPropRowCategory.META_PROP}
+                  disabledAttributes={
+                    {
+                      statement: [
+                        "elvl",
+                        "moodvariant",
+                        "mood",
+                        "bundleOperator",
+                      ],
+                      type: ["elvl", "logic", "virtuality", "partitivity"],
+                      value: ["elvl", "logic", "virtuality", "partitivity"],
+                    } as PropAttributeFilter
+                  }
+                  isInsideTemplate={entity.isTemplate || false}
+                  territoryParentId={getTerritoryId(entity)}
+                />
                 {userCanEdit && (
                   <Button
                     color="primary"
@@ -1294,7 +696,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
                 <EntityDetailStatementsTable
                   title={{ singular: "Statement", plural: "Statements" }}
                   entities={entity.entities}
-                  useCases={entity.usedInStatement}
+                  useCases={entity.usedInStatements}
                   key="Statement"
                 />
               )}
@@ -1309,6 +711,32 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
                   entities={entity.entities}
                   useCases={entity.usedInStatementProps}
                   key="StatementProp"
+                />
+              )}
+
+              {/* usedIn statement identification */}
+              {!entity.isTemplate && (
+                <EntityDetailIdentificationTable
+                  title={{
+                    singular: "Statement Identification",
+                    plural: "Statement Identifications",
+                  }}
+                  entities={entity.entities}
+                  useCases={entity.usedInStatementIdentifications}
+                  key="StatementIdentification"
+                />
+              )}
+
+              {/* usedIn statement classification */}
+              {!entity.isTemplate && (
+                <EntityDetailClassificationTable
+                  title={{
+                    singular: "Statement Classification",
+                    plural: "Statement Classifications",
+                  }}
+                  entities={entity.entities}
+                  useCases={entity.usedInStatementClassifications}
+                  key="StatementClassification"
                 />
               )}
             </StyledDetailSection>
@@ -1345,9 +773,7 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
       />
       <Submit
         title="Change entity type"
-        text={`Changing entity type to: [${
-          selectedEntityType ? entitiesDictKeys[selectedEntityType].label : ""
-        }]. You may loose some values. Do you want to continue?`}
+        text={`Changing entity type to: [${selectedEntityTypeLabel}]. You may loose some values. Do you want to continue?`}
         submitLabel="Continue"
         onSubmit={() => {
           if (selectedEntityType) {
@@ -1367,9 +793,9 @@ export const EntityDetail: React.FC<EntityDetail> = ({ detailId }) => {
       />
 
       <ApplyTemplateModal
-        showModal={applyTemplateModal}
+        showModal={showApplyTemplateModal}
         entity={entity}
-        setApplyTemplateModal={setApplyTemplateModal}
+        setShowApplyTemplateModal={setShowApplyTemplateModal}
         updateEntityMutation={updateEntityMutation}
         templateToApply={templateToApply}
         setTemplateToApply={setTemplateToApply}
