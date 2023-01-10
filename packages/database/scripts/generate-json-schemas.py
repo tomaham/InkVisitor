@@ -44,6 +44,7 @@ files_and_classes = [
     {'file': input_path + 'types/user.ts', 'class': 'IUser'},
     {'file': input_path + 'types/audit.ts', 'class': 'IAudit'},
     {'file': input_path + 'types/person.ts', 'class': 'IPerson'},
+    {'file': input_path + 'types/group.ts', 'class': 'IGroup'},
 
 ]
 
@@ -53,6 +54,7 @@ files_and_classes = [
 #  {'file': input_path + 'types/relation.ts', 'class': 'Relation.IClassification'},
  # {'file': input_path + 'types/relation.ts', 'class': 'Relation.ISubjectActant1Reciprocal'},
 # {'file': input_path + 'types/relation.ts', 'class': 'Relation.ISuperordinateLocation'},
+#{'file': input_path + 'types/group.ts', 'class': 'IGroup'},
 #]
 
 for case in files_and_classes:
