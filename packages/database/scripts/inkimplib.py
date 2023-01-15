@@ -226,11 +226,12 @@ class EntityMapper:
 
         #save entity to the pool, which goes to import json file
         if pd.DataFrame(self.dh.additional_entities)[pd.DataFrame(self.dh.additional_entities)['id']==self.entity['id']].empty:
-            self.dh.additional_entities.append(eval(str((self.entity))))
-            #logger.info(f"Appending {legacyId} territory {self.entity['id']} to the pool of additional entities.")
+            self.entity = eval(str((self.entity)))
+            self.dh.additional_entities.append(self.entity)
+            # logger.info(f"Appending {legacyId} territory {self.entity['id']} to the pool of additional entities.")
         else:
+            # logger.info(f"Territory {legacyId} {self.entity['id']} exists in the pool of additional entities.")
             pass
-            #logger.info(f"Territory {legacyId} {self.entity['id']} exists in the pool of additional entities.")
 
 
     def make_prop_object(self,prop_type_id, prop_value_id):
@@ -336,7 +337,8 @@ class EntityMapper:
 
         # register ventity
         self.dh.tables['values'] = self.dh.tables['values'].append({'id':ventity['id'] ,'value':ventity['label'],"origin":origin},ignore_index=True )
-        self.dh.additional_entities.append(eval(str((ventity))))
+        ventity = eval(str(ventity))
+        self.dh.additional_entities.append(ventity)
 
         # logger.info(f"Ventity id={ventity['id']} generated.")
 
@@ -358,7 +360,8 @@ class EntityMapper:
 
         # register rentity
         self.dh.tables['resources'] = self.dh.tables['resources'].append({'id':rentity['id'] ,'label':rentity['label'],"dissinet_respository_url":url, "origin":origin}, ignore_index=True )
-        self.dh.additional_entities.append(eval(str(rentity)))
+        rentity = eval(str(rentity))
+        self.dh.additional_entities.append(rentity)
 
         # logger.info(f"Rentity id={rentity['id']} generated.")
         return rentity
@@ -376,7 +379,8 @@ class EntityMapper:
 
         # register event
         self.dh.tables['events'] = self.dh.tables['events'].append({'id':eentity['id'] ,'value':eentity['label'],"origin":origin, "legacyId":legacyId}, ignore_index=True )
-        self.dh.additional_entities.append(eval(str(eentity)))
+        eentity = eval(str(eentity))
+        self.dh.additional_entities.append(eentity)
 
         return eentity
 
@@ -392,7 +396,8 @@ class EntityMapper:
 
         # register lentity
         self.dh.tables['locations'] = self.dh.tables['locations'].append({'id':lentity['id'] ,'value':lentity['label'],"origin":origin,"legacyId":legacyId}, ignore_index=True )
-        self.dh.additional_entities.append(eval(str(lentity)))
+        lentity = eval(str(lentity))
+        self.dh.additional_entities.append(lentity)
 
         return lentity
 
@@ -410,7 +415,8 @@ class EntityMapper:
         self.dh.tables['territories'] = self.dh.tables['territories'].append({'id':tentity['id'] ,'value':tentity['label'],"origin":origin,"legacyId":legacyId}, ignore_index=True)
         if legacyId != "":
             self.dh.entity_ids['texts'][legacyId] = tentity['id']
-        self.dh.additional_entities.append(eval(str(tentity)))
+        tentity = eval(str(tentity))
+        self.dh.additional_entities.append(tentity)
 
         return tentity
 
@@ -426,7 +432,8 @@ class EntityMapper:
 
         # register relation
         self.dh.tables['relations'] = self.dh.tables['relations'].append({'id':rir['id'] ,'type':rir['type'], "certainty":rir['certainty'],"entityIds":rir['entityIds'], "origin":origin}, ignore_index=True )
-        self.dh.relation_records.append(eval(str(rir)))
+        rir = eval(str(rir))
+        self.dh.relation_records.append(rir)
 
         return rir
 
@@ -439,7 +446,8 @@ class EntityMapper:
 
         # register relation
         self.dh.tables['relations'] = self.dh.tables['relations'].append({'id':rcr['id'] ,'type':rcr['type'], "entityIds":rcr['entityIds'], "origin":origin}, ignore_index=True )
-        self.dh.relation_records.append(eval(str(rcr)))
+        rcr = eval(str(rcr))
+        self.dh.relation_records.append(rcr)
 
         return rcr
 
@@ -462,7 +470,8 @@ class EntityMapper:
 
         # register lentity
         self.dh.tables['relations'] = self.dh.tables['relations'].append({'id':rr['id'] ,'type':rr['type'], "entityIds":rr['entityIds'], "origin":origin}, ignore_index=True )
-        self.dh.relation_records.append(eval(str(rr)))
+        rr = eval(str(rr))
+        self.dh.relation_records.append(rr)
 
         return rr
 
@@ -485,7 +494,8 @@ class EntityMapper:
             # register relation record
             self.dh.tables['relations'] = self.dh.tables['relations'].append({'id':rr['id'] ,'type':rr['type'], "entityIds":rr['entityIds'], "origin":origin}, ignore_index=True )
             # store relation record
-            self.dh.relation_records.append(eval(str(rr)))
+            rr = eval(str(rr))
+            self.dh.relation_records.append(rr)
 
         return rr
 
@@ -715,7 +725,8 @@ class EntityMapper:
         editor_audit['changes'] = dict(object)
 
         # audits.append(import_audit)
-        self.dh.audits.append(eval(str(editor_audit)))
+        editor_audit = eval(str(editor_audit))
+        self.dh.audits.append(editor_audit)
 
 
 class TerritoryEntityMapper(EntityMapper):
@@ -953,6 +964,7 @@ class Parser():
                 instruction  = {'operation':'discard', 'target': None}
                 self.oper_columns['discard'].append(c)
 
+            # logger.info(f" {instruction_candidate}, {prop_type_candidate}, {source_node_candidate}")
 
             # known instructions
             if 'discard' in instruction_candidate:
@@ -1062,18 +1074,18 @@ class Parser():
 
                     self.oper_columns['hooked-relation'].append(c)
 
-            elif "reference" in instruction_candidate:
+            elif "reference" == instruction_candidate:
                 #logger.info(f"Found instruction 'reference'. {prop_type_candidate}")
                 self.oper_columns["reference"].append(c)
                 instruction  = {'operation':'reference', 'ref_legacy_id':prop_type_candidate}
 
-            elif "reference_object" in instruction_candidate:
+            elif "reference_object" == instruction_candidate:
                 #logger.info(f"Found instruction 'reference'. {prop_type_candidate}")
                 self.oper_columns["reference_object"].append(c)
                 instruction  = {'operation':'reference_object', 'ref_legacy_id':prop_type_candidate}
 
-            elif "reference_part" in instruction_candidate:
-                #logger.info(f"Found instruction 'reference'. {prop_type_candidate}")
+            elif "reference_part" == instruction_candidate:
+                # logger.info(f"Found instruction 'reference_part'. {prop_type_candidate}")
                 self.oper_columns["reference_part"].append(c)
                 instruction  = {'operation':'reference_part', 'ref_legacy_id':prop_type_candidate}
 
@@ -1240,7 +1252,7 @@ class Parser():
                     if ref_object_legacy_id in row.keys():
                         ref_object_legacy_id = row[ref_object_legacy_id]
 
-                    logger.info(f"Doing {operation}, {ref_object_legacy_id}, '{value}'. Row {row}.")
+                    # logger.info(f"Doing {operation}, {ref_object_legacy_id}, '{value}'. Row {row}.")
                     entity_mapper.hook_ref_object(ref_legacyID = ref_object_legacy_id, input_value = value, origin = operation['operation'] +">"+ ":"+ name + " " +str(value))
 
                 if operation['operation'] == 'relation' and value != "" and value != "NA":
@@ -1277,8 +1289,8 @@ class Parser():
                               entity_mapper.make_relation_identity_record(id1, id2, row[name+"_certainty"], origin=operation['operation'] + ">" + ":" + relation_type + f" {entity_mapper.entity['legacyId']}>{item} " + str(id1) + " " + str(id2), order=order * 10)
                             else:
                               entity_mapper.make_relation_record(relation_type, [id1, id2], origin=operation['operation'] +">"+ ":"+ relation_type + f" {entity_mapper.entity['legacyId']}>{item} " +str(id1)+" "+str(id2), order=order*10)
-
-            self.dh.js_objects.append(eval(str(entity_mapper.entity)))
+            entity_mapper.entity = eval(str(entity_mapper.entity))
+            self.dh.js_objects.append(entity_mapper.entity)
 
             # make audit records
             entity_mapper.create_audit_record()
@@ -1564,16 +1576,21 @@ class EventParser(Parser):
         Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger)
 
     def checkTerritoryExists(self,legacyId):
+
         if "-" in legacyId:
             if pd.DataFrame(self.dh.additional_entities)[pd.DataFrame(self.dh.additional_entities)['legacyId']== legacyId].empty:
-                return False
+              # logger.info(f"CheckTerritoryExists through '-' for {legacyId}. Returning false.")
+              return False
             else:
-                return True
+              # logger.info(f"CheckTerritoryExists through '-' for {legacyId}. Returning true.")
+              return True
         else: # main text
             if self.dh.tables["texts"][self.dh.tables["texts"]["legacyId"]==legacyId].empty:
-                return False
+              # logger.info(f"CheckTerritoryExists through 'tableTexts' for {legacyId}. Returning false.")
+              return False
             else:
-                return True
+              # logger.info(f"CheckTerritoryExists through 'tableTexts' for {legacyId}. Returning true.")
+              return True
 
     def special_subterritory_id(self, operation, value, entity_mapper, field_name = "subterritory_id"):
         # Light yellow: document aka Territory metadata (not Event).
@@ -1627,10 +1644,10 @@ class EventParser(Parser):
         trt.entity['data']['parent']['order'] = int(t_parts[-1])
 
         # if exists, connect, if doesnt, create, connect to root and connect the lowest part to the new middle
-        if size == 3:
+        if size == 3: # = the processing territory has 3 parts
             checked_territory_lid = "-".join(t_parts[0:-1])
-            # logger.info(f" Trying to go with {checked_territory_lid}.")
-            if not self.checkTerritoryExists(checked_territory_lid): # territory does not exist
+            # logger.info(f" Trying to go with {checked_territory_lid}. Size 3 because processing {trt.entity['legacyId']}.")
+            if not self.checkTerritoryExists(checked_territory_lid): #  parent territory does not exist
                 trt_new = self.EMP.make(entity_name="ITerritory", data_row=datarow)
                 trt_new.make_alive(legacyId= checked_territory_lid, label=t_parts[1], label_language=datarow['document_label_language'], register_id_where="texts")
                 parent_id = trt_new.entity['id']
@@ -1640,6 +1657,7 @@ class EventParser(Parser):
                     root_territory_id = self.dh.entity_ids["texts"][checked_territory_lid]
                     trt_new.entity['data']['parent']['territoryId'] = root_territory_id
                     trt_new.entity['data']['parent']['order'] = int(t_parts[-2])
+                    # logger.info(f"Writing {trt_new.entity['data']['parent']['territoryId']} to {trt_new.entity['id']}, {trt_new.entity['legacyId']}")
                 else:
                     logger.error(f"The root territory {checked_territory_lid} does not exists.")
 
@@ -1648,8 +1666,10 @@ class EventParser(Parser):
             else:
                 parent_id =  self.dh.entity_ids['texts'][checked_territory_lid]
 
+
             # territory does exist, connect the triggering territory to its parent
             trt.entity['data']['parent']['territoryId'] = parent_id
+            # logger.info(f"Writing {trt.entity['data']['parent']['territoryId']} to {trt.entity['id']}, {trt.entity['legacyId']}")
         elif size == 2:
             # just connect it to the supposedly existing root
             checked_territory_lid = "-".join(t_parts[0:1])
@@ -1657,6 +1677,7 @@ class EventParser(Parser):
                 root_territory_id = self.dh.entity_ids["texts"][checked_territory_lid]
                 trt.entity['data']['parent']['territoryId'] = root_territory_id
                 trt.entity['data']['parent']['order'] = int(t_parts[-1])
+                # logger.info(f"Writing {trt.entity['data']['parent']['territoryId']} to {trt.entity['id']}, {trt.entity['legacyId']}")
             else:
                 logger.error(f"The root territory {checked_territory_lid} does not exists.")
 
