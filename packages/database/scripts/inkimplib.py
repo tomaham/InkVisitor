@@ -197,7 +197,7 @@ class EntityMapper:
 
     # simple inside values mapping from input_values in gsheets to inkVisitor enums
     # field: { FROM  : TO }
-    enum_mapper = {'language': {"English":"eng","Latin":"lat","Occitan":"oci","Middle English":"enm","Czech":"ces","Italian":"ita","French":"fra","German":"deu"},"status":{"approved":"1","pending":"0","discouraged":"2","warning":"3"}, "entity_logical_type":{'definite' : "1",
+    enum_mapper = {'language': {"English":"eng","Latin":"lat","Occitan":"oci","Middle English":"enm","Czech":"ces","Italian":"ita","French":"fra","German":"deu","Spanish":"spa", "Hungarian":"hun"},"status":{"approved":"1","pending":"0","discouraged":"2","warning":"3"}, "entity_logical_type":{'definite' : "1",
   'indefinite' : "2",   'hypothetical' : "3",  'generic' : "4"}}
 
     # status  Pending = "0",   Approved = "1",  Discouraged = "2",  Warning = "3",
@@ -574,7 +574,7 @@ class EntityMapper:
                                 po['children'].append(prop_object)
 
                 else:
-                    logger.error(f"Cannot find the proper prob object record. {prop_object} at {prop_source_field} in origin '{origin}'.")
+                    logger.error(f"In context {self.entity['legacyId']},cannot find the proper prob object record. {prop_object} at {prop_source_field} in origin '{origin}'.")
         else:
             logger.error(f"Fc hook_2ndprop_into_props run without filled prop_source_field in origin '{origin}'.")
 
@@ -632,11 +632,15 @@ class EntityMapper:
             self.entity['status'] = input_value # will raise error
 
     def update_entity_logical_type(self, field_name, input_value, origin = ""):
-        if input_value in type(self).enum_mapper['entity_logical_type'].keys():
-            self.entity['data']['logicalType'] = type(self).enum_mapper['entity_logical_type'][input_value]
+        input_value = input_value.strip()
+        # self.logger.info(f" {field_name}, {input_value}, {self.enum_mapper['entity_logical_type'].keys()}")
+        # self.logger.info(f"'{input_value}' : '{self.enum_mapper['entity_logical_type'].keys()}'")
+        if input_value in self.enum_mapper['entity_logical_type'].keys():
+            self.entity['data']['logicalType'] = self.enum_mapper['entity_logical_type'][input_value]
         else:
-            self.logger.error(f"Unable to set entity logical type in {origin}.")
-            self.entity['data']['logicalType'] = input_value # will raise error
+            self.logger.error(f"Unable to set entity logical type '{input_value}' in {origin}.")
+            raise Exception()
+            # self.entity['data']['logicalType'] = input_value # will raise error
 
     def update_note(self, field_name, input_value, origin = ""):
         #self.logger.info(f"Updating note with {input_value}.")
@@ -1184,7 +1188,9 @@ class Parser():
                         # logger.info(f"Shifting to remote proptype {prop_type} in the context of {name}, {value},{operation['type']}.")
 
                     if prop_type == '' or 'C' not in prop_type:
-                        raise Exception(f"Propvalue does not have prop type '{prop_type}' defined. C entity-string expected, got {key}, {name}, {value}. [{operation}]")
+                        # raise Exception(f"Propvalue does not have prop type '{prop_type}' defined. C entity-string expected, got {key}, {name}, {value}. [{operation}]")
+                        logger.error(f"Propvalue does not have prop type '{prop_type}' defined. C entity-string expected, got {key}, {name}, {value}. [{operation}]")
+                        continue
 
                     for item in self.itemize_valuestring_for_multiples(value):
                         #logger.info(f"Propvalue value {value} item {item}.")
@@ -1729,3 +1735,50 @@ class LocationParser(Parser):
 
             # create audit record
             entity_mapper.create_audit_record(entity_id=lentity['id'], object=lentity)
+
+    def special_name_latin(self, operation, value, entity_mapper, field_name="special_name_latin"):
+      # "MACHINE
+      # For non-empty values:
+      # 1) IF (this procedure has not yet created an L entity of the same label)
+      #    - Generate a new L entity from this col., with the following attribute values: label = value in this col.; status = ""approved"", label_language = Latin, entity_logical_type = same as value in col. D.
+      #    - Attach RelationType.Classification to this modern location from col. ""class_id"".
+      #   - Attach all metaprops (e.g. coordinates) and relations (e.g. superordinates) of the basic L entity (row) also to this new entity.
+      # ELSE
+      #    - Use the already created L entity (recognized by label) as ""target entity"".
+      # END IF
+      # 2) Relate the L entity described by the row with this machine-generated target entity through RelationType.Identification, certainty = certain."
+
+      for item in self.itemize_valuestring_for_multiples(value, origin=field_name+" "+value):
+
+        origin = f"Making Location entity '{item}' from " + entity_mapper.data_row[
+          'legacyId'] + f" by field {field_name}."
+        language = "Latin" # entity_mapper.data_row['modern_name_language']
+
+
+        if item != "" and item != "NA" and item != "N/A" and item != "NS":  # check value
+          # check, whether the location does not exist
+          if self.dh.tables["locations"][self.dh.tables["locations"]['value']==item].empty:
+            label = item
+            lentity = entity_mapper.make_lentity(label, origin=origin)
+            lentity['language'] = entity_mapper.enum_mapper['language'][language]
+            lentity['data']['logicalType'] =  entity_mapper.data_row['entity_logical_type']
+
+            # make classification for the new entity
+            # logger.info(f"{entity_mapper.data_row}")
+            class_value = entity_mapper.data_row['class_id']  # another C
+            for item in self.itemize_valuestring_for_multiples(class_value, origin=origin):
+              entity_mapper.make_relation_record('Classification', [lentity['id'], entity_mapper.get_entity_id(item)])
+          else:
+            lentity = {}
+            lentity['id'] = ""
+
+          # make identity relation
+          # {type: RelationType.Identification, entityIds: [Location 1 id, Location 2 id], certainty: [Certainty.Certain]},
+          # {type: "I", entityIds: [Location 1 id, Location 2 id], certainty: "1"},
+          entity_mapper.make_relation_identity_record(entity_mapper.entity['id'], lentity['id'], "1")
+
+          # create audit record
+          entity_mapper.create_audit_record(entity_id=lentity['id'], object=lentity)
+
+    def special_name_latin_alternative(self, operation, value, entity_mapper, field_name="special_modern_name"):
+      self.special_name_latin(operation, value, entity_mapper, field_name="special_name_latin_alternative")
