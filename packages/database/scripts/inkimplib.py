@@ -248,7 +248,7 @@ class EntityMapper:
         # logger.info(f"Prepare prop object data>  {prop_type}, {prop_value}")
 
         # allowed entities in input
-        allowed_strict_entities = ['C','M','A','E','L','R','S','V','O','T','P'] # should be followed by numbers
+        allowed_strict_entities = ['C','M','A','E','L','R','S','V','O','T','P','G'] # should be followed by numbers
         allowed_free_string_entities = ['~V~']
 
         # checking input_value
@@ -860,12 +860,16 @@ class EntityMapperFactory:
 # CONTROL CLASS
 class ParseController():
 
-    def __init__(self, entity_list = [], keyword_row_id = 3,  logger = logger):
+    def __init__(self, entity_list = [], dh = {}, keyword_row_id = 3,  logger = logger):
         self.entity_list = entity_list
         self.logger = logger
         self.parsers = {}
         self.reparse_entity_list = []
-        self.dh = DataHolder()
+
+        if dh == {}:
+          self.dh = DataHolder()
+        else:
+          self.dh = dh
 
         for e in self.entity_list:
             if 'texts' in e:
@@ -1618,6 +1622,9 @@ class EventParser(Parser):
 
         # propvalues
         prop_value_fields = {"state_of_conservation_id":"C3440", "participant_id":"C2863", "inquisitor_id":"C1541", "notary_id":"C1652", "witness_assessor_id":"C1540"}
+
+        if "witness_id" in datarow:
+          prop_value_fields['witness_id'] = "C1540"
 
         for pvf, concept in prop_value_fields.items():
             if pvf not in entity_mapper.data_row:

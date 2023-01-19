@@ -116,10 +116,10 @@ const datasets: Record<string, DbSchema> = {
       tableName: "users",
       data: require("../datasets/all-parsed/users.json"),
       transform: function () {
-        this.data = this.data.map((user: IUser) => {
-          user.password = hashPassword(user.password ? user.password : "");
-          return user;
-        });
+        //this.data = this.data.map((user: IUser) => {
+        //  user.password = hashPassword(user.password ? user.password : "");
+        //  return user;
+        //});
       },
     },
     aclPermissions: {
