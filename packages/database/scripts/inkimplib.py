@@ -204,7 +204,7 @@ class EntityMapper:
     valid_entity_classes = ['A','C','E','O','B','R','T','P','G','S','L','NULL']
 
 
-    IOF = InkVisitorJSONObjectFactory(schema_path, "Import batch [development] " + str(datetime.now()))
+    IOF = InkVisitorJSONObjectFactory(schema_path, "Import batch [January2023] " + str(datetime.now()))
 
     def __init__(self, entity_type, data_row, logger = logger):
         self.entity =  type(self).IOF.make(entity_type)
