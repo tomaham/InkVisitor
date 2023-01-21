@@ -42,6 +42,9 @@ const anyTemplate: DropdownItem = {
 
 const debounceTime: number = 100;
 
+// the minimum pixels for the results section height
+const MIN_RESULT_H = 100;
+
 export const EntitySearchBox: React.FC = () => {
   const [classOption, setClassOption] =
     useState<DropdownItem>(defaultClassOption);
@@ -184,7 +187,6 @@ export const EntitySearchBox: React.FC = () => {
 
   const templateOptions: DropdownItem[] = useMemo(() => {
     const options: DropdownItem[] = [anyTemplate];
-    console.log("constructing new template options", templates);
 
     if (templates) {
       templates.forEach((template) => {
@@ -282,16 +284,18 @@ export const EntitySearchBox: React.FC = () => {
             )}
           </>
         ) : (
-          <EntitySuggester
-            disableTemplatesAccept
-            categoryTypes={[EntityEnums.Class.Territory]}
-            onSelected={(newSelectedId: string) => {
-              handleChange({ territoryId: newSelectedId });
-            }}
-            placeholder={"territory"}
-            disableCreate
-            inputWidth={114}
-          />
+          <div>
+            <EntitySuggester
+              disableTemplatesAccept
+              categoryTypes={[EntityEnums.Class.Territory]}
+              onSelected={(newSelectedId: string) => {
+                handleChange({ territoryId: newSelectedId });
+              }}
+              placeholder={"territory"}
+              disableCreate
+              inputWidth={114}
+            />
+          </div>
         )}
       </StyledRow>
 
@@ -348,29 +352,31 @@ export const EntitySearchBox: React.FC = () => {
             )}
           </>
         ) : (
-          <EntitySuggester
-            disableTemplatesAccept
-            categoryTypes={[
-              EntityEnums.Class.Statement,
-              EntityEnums.Class.Action,
-              EntityEnums.Class.Territory,
-              EntityEnums.Class.Resource,
-              EntityEnums.Class.Person,
-              EntityEnums.Class.Being,
-              EntityEnums.Class.Group,
-              EntityEnums.Class.Object,
-              EntityEnums.Class.Concept,
-              EntityEnums.Class.Location,
-              EntityEnums.Class.Value,
-              EntityEnums.Class.Event,
-            ]}
-            onSelected={(newSelectedId: string) => {
-              handleChange({ cooccurrenceId: newSelectedId });
-            }}
-            placeholder={"entity"}
-            disableCreate
-            inputWidth={114}
-          />
+          <div>
+            <EntitySuggester
+              disableTemplatesAccept
+              categoryTypes={[
+                EntityEnums.Class.Statement,
+                EntityEnums.Class.Action,
+                EntityEnums.Class.Territory,
+                EntityEnums.Class.Resource,
+                EntityEnums.Class.Person,
+                EntityEnums.Class.Being,
+                EntityEnums.Class.Group,
+                EntityEnums.Class.Object,
+                EntityEnums.Class.Concept,
+                EntityEnums.Class.Location,
+                EntityEnums.Class.Value,
+                EntityEnums.Class.Event,
+              ]}
+              onSelected={(newSelectedId: string) => {
+                handleChange({ cooccurrenceId: newSelectedId });
+              }}
+              placeholder={"entity"}
+              disableCreate
+              inputWidth={114}
+            />
+          </div>
         )}
       </StyledRow>
 
@@ -387,7 +393,11 @@ export const EntitySearchBox: React.FC = () => {
           <>
             <EntitySearchResults
               results={sortedEntities}
-              height={debouncedResultsHeight}
+              height={
+                debouncedResultsHeight > MIN_RESULT_H
+                  ? debouncedResultsHeight
+                  : MIN_RESULT_H
+              }
             />
           </>
         )}

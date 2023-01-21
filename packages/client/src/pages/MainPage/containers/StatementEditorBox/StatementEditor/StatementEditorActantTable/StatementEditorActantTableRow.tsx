@@ -6,7 +6,7 @@ import {
   IResponseStatement,
   IStatementActant,
 } from "@shared/types";
-import { AttributeIcon, Button, ButtonGroup, ButtonGroups } from "components";
+import { AttributeIcon, Button, ButtonGroup } from "components";
 import {
   AttributeButtonGroup,
   EntitySuggester,
@@ -21,7 +21,6 @@ import {
   useDrop,
 } from "react-dnd";
 import { FaGripVertical, FaPlus, FaTrashAlt, FaUnlink } from "react-icons/fa";
-import { RiCompassDiscoverLine } from "react-icons/ri";
 import { UseMutationResult } from "react-query";
 import { setDraggedActantRow } from "redux/features/rowDnd/draggedActantRowSlice";
 import { useAppDispatch, useAppSelector } from "redux/hooks";
@@ -34,8 +33,8 @@ import {
   ItemTypes,
 } from "types";
 import { dndHoverFn } from "utils";
-import AttributesEditor from "../../AttributesEditor/AttributesEditor";
-import { PropGroup } from "../../PropGroup/PropGroup";
+import AttributesEditor from "../../../AttributesEditor/AttributesEditor";
+import { PropGroup } from "../../../PropGroup/PropGroup";
 import { StatementEditorActantClassification } from "./StatementEditorActantClassification/StatementEditorActantClassification";
 import { StatementEditorActantIdentification } from "./StatementEditorActantIdentification/StatementEditorActantIdentification";
 import {
@@ -185,6 +184,7 @@ export const StatementEditorActantTableRow: React.FC<
           isInsideTemplate={isInsideTemplate}
           territoryParentId={territoryParentId}
           territoryActants={territoryActants}
+          placeholder={"add actant"}
         />
       )
     );
@@ -426,7 +426,12 @@ export const StatementEditorActantTableRow: React.FC<
       key={index}
       marginBottom={classifications.length > 0 || identifications.length > 0}
     >
-      <StyledGrid ref={dropRef} style={{ opacity }} hasOrder={hasOrder}>
+      <StyledGrid
+        ref={dropRef}
+        style={{ opacity }}
+        hasOrder={hasOrder}
+        hasActant={!!filteredActant.data.actant}
+      >
         {userCanEdit && hasOrder ? (
           <StyledGridColumn ref={dragRef} style={{ cursor: "move" }}>
             <FaGripVertical />

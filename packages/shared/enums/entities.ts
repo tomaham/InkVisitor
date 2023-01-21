@@ -41,6 +41,7 @@ export namespace EntityEnums {
     Approved = "1",
     Discouraged = "2",
     Warning = "3",
+    Unfinished = "4",
   }
 
   export enum Certainty {
@@ -93,6 +94,7 @@ export namespace EntityEnums {
     Belief = "11",
     Allegation = "12",
     Semblance = "13",
+    Rectitude = "14",
   }
 
   export enum MoodVariant {
