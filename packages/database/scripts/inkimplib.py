@@ -201,7 +201,7 @@ class EntityMapper:
   'indefinite' : "2",   'hypothetical' : "3",  'generic' : "4"}}
 
     # status  Pending = "0",   Approved = "1",  Discouraged = "2",  Warning = "3",
-    valid_entity_classes = ['A','C','E','O','B','R','T','P','G','S','L','NULL']
+    valid_entity_classes = ['A','C','E','O','B','R','T','P','G','S','L','empty']
 
 
     IOF = InkVisitorJSONObjectFactory(schema_path, "Import batch [January2023] " + str(datetime.now()))
@@ -347,11 +347,13 @@ class EntityMapper:
 
         return ventity
 
-    def make_rentity(self, label, url = "", origin=""):
+    def make_rentity(self, label, url = "", origin="", legacyId = ""):
         # logger.info(f"Generating rentity from {value_string}.")
         # generate resource entity object...
         rentity = EntityMapper.IOF.make('IResource')
         rentity['id'] = get_uuid_id()
+        if len(legacyId)>0:
+          rentity['legacyId'] = legacyId
         rentity['label'] = label
         rentity['data']['url'] = url
 
@@ -359,7 +361,7 @@ class EntityMapper:
         #    rentity['notes'].append(origin)
 
         # register rentity
-        self.dh.tables['resources'] = self.dh.tables['resources'].append({'id':rentity['id'] ,'label':rentity['label'],"dissinet_respository_url":url, "origin":origin}, ignore_index=True )
+        self.dh.tables['resources'] = self.dh.tables['resources'].append({'id':rentity['id'] ,'label':rentity['label'],"dissinet_repository_url":url, "origin":origin}, ignore_index=True )
         rentity = eval(str(rentity))
         self.dh.additional_entities.append(rentity)
 
@@ -873,24 +875,24 @@ class ParseController():
 
         for e in self.entity_list:
             if 'texts' in e:
-                self.parsers[e] = TextParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger)
+                self.parsers[e] = TextParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger, dh=self.dh)
             elif 'actions' in e:
-                self.parsers[e] = ActionParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger)
+                self.parsers[e] = ActionParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger, dh=self.dh)
             elif 'concepts' in e:
-                self.parsers[e] = ConceptParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger)
+                self.parsers[e] = ConceptParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger, dh=self.dh)
             elif 'resources' in e:
-                self.parsers[e] = ResourceParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger)
+                self.parsers[e] = ResourceParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger, dh=self.dh)
             elif 'manuscripts' in e:
-                self.parsers[e] = ManuscriptParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger)
+                self.parsers[e] = ManuscriptParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger, dh=self.dh)
 
             elif 'persons' in e:
-                self.parsers[e] = PersonParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger)
+                self.parsers[e] = PersonParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger, dh=self.dh)
             elif 'locations' in e:
-                self.parsers[e] = LocationParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger)
+                self.parsers[e] = LocationParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger, dh=self.dh)
             elif 'events' in e:
-                self.parsers[e] = EventParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger)
+                self.parsers[e] = EventParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger, dh=self.dh)
             elif 'groups' in e:
-                self.parsers[e] = GroupParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger)
+                self.parsers[e] = GroupParser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger, dh=self.dh)
 
             # elif 'R0006_persons' in e:
             #     self.parsers[e] = PersonParser(e, header_df = header_infos[e], table_df = tables[e], keyword_row_id = keyword_row_id, logger = logger)
@@ -906,7 +908,7 @@ class ParseController():
             #     self.parsers[e] = EventParser(e, header_df = header_infos[e], table_df = tables[e], keyword_row_id = keyword_row_id, logger = logger)
             else:
                 self.logger.warning(f"Coming to basic Parser entity - strange '{e}' {type(e)}.")
-                self.parsers[e] = Parser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger)
+                self.parsers[e] = Parser(e, header_df = self.dh.header_infos[e], table_df = self.dh.tables[e], keyword_row_id = keyword_row_id, logger = logger, dh=self.dh)
 
     def update_parsers(self, entity_list = []):
       pass
@@ -929,7 +931,7 @@ class Parser():
     EMP = EntityMapperFactory()
     dh = DataHolder()
 
-    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger):
+    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger, dh = {}):
         self.name = name
         self.logname = name.upper()
         self.input_header_df = header_df
@@ -944,7 +946,10 @@ class Parser():
         self.oper_columns = {'discard':[],'inside':[],'special':[],'unknown':[],"proptype":[],'propvalue':[],'proptype_2nd':[],'propvalue_2nd':[],"dependent":[], "reference":[], "reference_object":[], "reference_part":[],"hooked-inside":[],"hooked-propvalue":[],"hooked-relation":[]}
         self.logger = logger
 
-        self.dh = DataHolder()
+        if dh != {}:
+          self.dh = dh
+        else:
+          self.dh = DataHolder()
 
         # RUN
         self.process_header_instructions()
@@ -1317,8 +1322,8 @@ class Parser():
 
 class TextParser(Parser):
 
-    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger):
-        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger)
+    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger, dh = {}):
+        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger, dh)
 
     # special methods for fields, which needs fully individual processing
     def special_edition_1(self, operation, value, entity_mapper, field_name="edition_1", ):
@@ -1332,11 +1337,11 @@ class TextParser(Parser):
         # logger.info(f"Rentity making {value}")
         if "|" in value:
             data = value.split("|")
-            label = data[0]
-            url = data[1]
+            label = data[0].strip()
+            url = data[1].strip()
         else:
             url = ""
-            label = value
+            label = value.strip()
             # logger.warning(f"Expected char | signaling url after label. Got just {value}."+origin)
 
         # generate resource entity if it does not exist
@@ -1344,6 +1349,7 @@ class TextParser(Parser):
         tdf = self.dh.tables['resources'].fillna("")
         check_rentity = tdf[(tdf['label'] == label) & (tdf['dissinet_repository_url'] == url)]
         #check_rentity = tdf[(tdf['label'] == label)  & (~tdf['dissinet_repository_url'].isna() | ~(tdf['dissinet_repository_url']==""))]
+
         if check_rentity.empty:
             rentity = entity_mapper.make_rentity(label, url, origin=origin)
             rentity['language'] = entity_mapper.enum_mapper['language']['English']
@@ -1400,6 +1406,7 @@ class TextParser(Parser):
 
         for o in t_relations:
             if len(o[0]) > 0 and len(o[1]) > 0:
+                # logger.info(f"Processing time relation of territory creation event. {o}")
                 prop_type_id = entity_mapper.get_entity_id(o[0], origin = origin)
                 prop_value_id = entity_mapper.get_entity_id("~V~"+o[1], origin = origin)
                 prop_object = entity_mapper.make_prop_object(prop_type_id, prop_value_id)
@@ -1416,14 +1423,14 @@ class TextParser(Parser):
 
 class ActionParser(Parser):
 
-    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger):
-        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger)
+    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger, dh = {}):
+        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger, dh)
 
 
 class ConceptParser(Parser):
 
-    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger):
-        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger)
+    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger, dh = {}):
+        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger, dh)
 
     def special_wordnet_synset_id(self, operation, value, entity_mapper,field_name="special_wordnet_synset_id",):
         # wordnet_resource_id = R0067
@@ -1432,8 +1439,8 @@ class ConceptParser(Parser):
 
 class ManuscriptParser(Parser):
 
-    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger):
-        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger)
+    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger, dh = {}):
+        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger, dh)
 
     def special_creation_event_id(self, operation, value, entity_mapper : EntityMapper, field_name="creation_event_id"):
         # Create entities in this col. as new E entities, with (1) the value here as legacy_id, (2) assign (as usual) a new “hash” ID from the db, (3) label of this E: see next col., (4) logical type “definite” (default), (5) label language “English”, (6) status “approved”, and (7) attach to any of those Es the metaprop "(has) - C0565 “class” - C2642 “creation” (to instantiate the event to its event type = event class).
@@ -1561,14 +1568,14 @@ class ManuscriptParser(Parser):
 
 class ResourceParser(Parser):
 
-    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger):
-        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger)
+    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger, dh = {}):
+        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger, dh)
 
 
 class PersonParser(Parser):
 
-    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger):
-        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger)
+    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger, dh = {}):
+        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger, dh)
 
     # TODO implement
     #def special_introducers_id(self, operation, value, entity_mapper, field_name = "introducers_id"):
@@ -1576,14 +1583,14 @@ class PersonParser(Parser):
 
 class GroupParser(Parser):
 
-    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger):
-        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger)
+    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger, dh = {}):
+        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger, dh)
 
 
 class EventParser(Parser):
 
-    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger):
-        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger)
+    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger, dh = {}):
+        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger, dh)
 
     def checkTerritoryExists(self,legacyId):
 
@@ -1697,8 +1704,8 @@ class EventParser(Parser):
 
 class LocationParser(Parser):
 
-    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger):
-        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger)
+    def __init__(self, name, header_df: pd.DataFrame, table_df: pd.DataFrame, keyword_row_id: int, logger: logger, dh = {}):
+        Parser.__init__(self, name, header_df, table_df, keyword_row_id, logger, dh)
 
     def special_modern_name(self, operation, value, entity_mapper, field_name = "special_modern_name"):
         # "For non-empty, generate new L entities from this col.

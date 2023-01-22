@@ -59,7 +59,8 @@
         "10",
         "11",
         "12",
-        "13"
+        "13",
+        "14"
       ],
       "type": "string"
     },
@@ -108,7 +109,8 @@
         "0",
         "1",
         "2",
-        "3"
+        "3",
+        "4"
       ],
       "type": "string"
     },
@@ -161,6 +163,17 @@
         },
         "moodvariant": {
           "$ref": "#/definitions/EntityEnums.MoodVariant"
+        },
+        "statementOrder": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": false,
+              "type": "boolean"
+            }
+          ]
         },
         "type": {
           "$ref": "#/definitions/IPropSpec"
@@ -351,6 +364,17 @@
           },
           "type": "array"
         },
+        "statementOrder": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": false,
+              "type": "boolean"
+            }
+          ]
+        },
         "virtuality": {
           "$ref": "#/definitions/EntityEnums.Virtuality"
         }
@@ -368,7 +392,8 @@
         "bundleEnd",
         "props",
         "classifications",
-        "identifications"
+        "identifications",
+        "statementOrder"
       ],
       "type": "object"
     },
@@ -413,6 +438,17 @@
             "$ref": "#/definitions/IProp"
           },
           "type": "array"
+        },
+        "statementOrder": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": false,
+              "type": "boolean"
+            }
+          ]
         }
       },
       "required": [
@@ -426,7 +462,8 @@
         "bundleOperator",
         "bundleStart",
         "bundleEnd",
-        "props"
+        "props",
+        "statementOrder"
       ],
       "type": "object"
     },
@@ -456,6 +493,17 @@
         },
         "moodvariant": {
           "$ref": "#/definitions/EntityEnums.MoodVariant"
+        },
+        "statementOrder": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": false,
+              "type": "boolean"
+            }
+          ]
         }
       },
       "required": [
@@ -465,7 +513,8 @@
         "logic",
         "certainty",
         "mood",
-        "moodvariant"
+        "moodvariant",
+        "statementOrder"
       ],
       "type": "object"
     },
@@ -547,6 +596,17 @@
         },
         "moodvariant": {
           "$ref": "#/definitions/EntityEnums.MoodVariant"
+        },
+        "statementOrder": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": false,
+              "type": "boolean"
+            }
+          ]
         }
       },
       "required": [
@@ -556,7 +616,8 @@
         "logic",
         "certainty",
         "mood",
-        "moodvariant"
+        "moodvariant",
+        "statementOrder"
       ],
       "type": "object"
     }

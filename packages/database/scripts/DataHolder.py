@@ -67,11 +67,12 @@ class DataHolder(object):
         print(f"There are duplicates! {dupls}")
 
       datagroup = k.split("_")[-1]
+      print(f"Data group: {datagroup}")
       for id, row in t.iterrows():
 
         legacyId = row['legacyId']
         # print(f"{datagroup}, {legacyId}")
-        if len(str(legacyId)) > 3:
+        if len(str(legacyId)) > 1:
 
           if legacyId in cls.entity_ids[datagroup]:
             entity_uid = cls.entity_ids[datagroup][legacyId]

@@ -59,7 +59,8 @@
         "10",
         "11",
         "12",
-        "13"
+        "13",
+        "14"
       ],
       "type": "string"
     },
@@ -99,7 +100,8 @@
         "0",
         "1",
         "2",
-        "3"
+        "3",
+        "4"
       ],
       "type": "string"
     },
@@ -152,6 +154,17 @@
         },
         "moodvariant": {
           "$ref": "#/definitions/EntityEnums.MoodVariant"
+        },
+        "statementOrder": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "const": false,
+              "type": "boolean"
+            }
+          ]
         },
         "type": {
           "$ref": "#/definitions/IPropSpec"
