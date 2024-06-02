@@ -38,6 +38,7 @@ files_and_classes = [
     {'file': input_path + 'types/relation.ts', 'class': 'Relation.ISubjectSemantics'},
     {'file': input_path + 'types/relation.ts', 'class': 'Relation.IActant1Semantics'},
     {'file': input_path + 'types/relation.ts', 'class': 'Relation.IActant2Semantics'},
+    {'file': input_path + 'types/relation.ts', 'class': 'Relation.ISuperordinateEntity'},
   {'file': input_path + 'types/prop.ts', 'class': 'IProp'},
     {'file': input_path + 'types/value.ts', 'class': 'IValue'},
     {'file': input_path + 'types/action.ts', 'class': 'IAction'},
@@ -56,6 +57,10 @@ files_and_classes = [
 # {'file': input_path + 'types/relation.ts', 'class': 'Relation.ISuperordinateLocation'},
 #{'file': input_path + 'types/group.ts', 'class': 'IGroup'},
 #]
+
+files_and_classes = [
+{'file': input_path + 'types/relation.ts', 'class': 'Relation.ISuperordinateEntity'},
+]
 
 for case in files_and_classes:
     # command = command_base + " " + case['file'] + " " + case['class'] + " " + params + " --id " + case['class'] + " --out " + output_path+case['class'] + '.schema.json'

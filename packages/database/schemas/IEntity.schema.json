@@ -77,7 +77,8 @@
         "11",
         "12",
         "13",
-        "14"
+        "14",
+        "15"
       ],
       "type": "string"
     },
@@ -139,6 +140,10 @@
         "class": {
           "$ref": "#/definitions/EntityEnums.Class"
         },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        },
         "data": {},
         "detail": {
           "type": "string"
@@ -181,6 +186,10 @@
         },
         "templateData": {
           "type": "object"
+        },
+        "updatedAt": {
+          "format": "date-time",
+          "type": "string"
         },
         "usedTemplate": {
           "type": "string"

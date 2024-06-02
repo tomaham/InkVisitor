@@ -69,7 +69,8 @@
         "11",
         "12",
         "13",
-        "14"
+        "14",
+        "15"
       ],
       "type": "string"
     },
@@ -132,6 +133,10 @@
           "const": "G",
           "type": "string"
         },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        },
         "data": {
           "$ref": "#/definitions/IGroupData"
         },
@@ -176,6 +181,10 @@
         },
         "templateData": {
           "type": "object"
+        },
+        "updatedAt": {
+          "format": "date-time",
+          "type": "string"
         },
         "usedTemplate": {
           "type": "string"

@@ -26,12 +26,12 @@ export namespace EntityTooltip {
   // and also O:icecream -> C:grocery store products -> C:everyhing,
   // in that case, I propose, the output will be {O:icecream: [C: icecream], C:icecream: [C:sweet, C:cold thing, C:grocery store product], C:sweet: ...}
   export type ISuperclassTree = {
-    entityId: string,
+    entityId: string;
     subtrees: ISuperclassTree[];
   };
 
-  // This should work the same way as ISuperclassTree but only for L and relation of type SuperordinateLocation
-  export type ISuperordinateLocationTree = ISuperclassTree;
+  // This should work the same way as ISuperclassTree but only for L and relation of type SuperordinateEntity
+  export type ISuperordinateEntityTree = ISuperclassTree;
 
   // only for C and A
   // this is much simpler - its only about IRelationSynonym relation "clouds" where entityId is within `entityIds`

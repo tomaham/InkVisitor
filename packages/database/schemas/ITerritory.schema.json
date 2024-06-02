@@ -2,6 +2,14 @@
   "$ref": "#/definitions/ITerritory",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
+    "EProtocolTieType": {
+      "enum": [
+        "Property",
+        "Classification",
+        "Reference"
+      ],
+      "type": "string"
+    },
     "EntityEnums.Certainty": {
       "enum": [
         "0",
@@ -11,6 +19,23 @@
         "4",
         "5",
         "6"
+      ],
+      "type": "string"
+    },
+    "EntityEnums.Class": {
+      "enum": [
+        "A",
+        "T",
+        "S",
+        "R",
+        "P",
+        "B",
+        "G",
+        "O",
+        "C",
+        "L",
+        "V",
+        "E"
       ],
       "type": "string"
     },
@@ -60,7 +85,8 @@
         "11",
         "12",
         "13",
-        "14"
+        "14",
+        "15"
       ],
       "type": "string"
     },
@@ -260,6 +286,10 @@
           "const": "T",
           "type": "string"
         },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        },
         "data": {
           "$ref": "#/definitions/ITerritoryData"
         },
@@ -305,6 +335,10 @@
         "templateData": {
           "type": "object"
         },
+        "updatedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
         "usedTemplate": {
           "type": "string"
         }
@@ -336,10 +370,119 @@
               "type": "boolean"
             }
           ]
+        },
+        "protocol": {
+          "$ref": "#/definitions/ITerritoryProtocol"
+        },
+        "validations": {
+          "items": {
+            "$ref": "#/definitions/ITerritoryValidation"
+          },
+          "type": "array"
         }
       },
       "required": [
         "parent"
+      ],
+      "type": "object"
+    },
+    "ITerritoryProtocol": {
+      "additionalProperties": false,
+      "properties": {
+        "dataCollectionMethods": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "detailedProtocols": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "endDate": {
+          "type": "string"
+        },
+        "guidelines": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "project": {
+          "type": "string"
+        },
+        "relatedDataPublications": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "startDate": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "project",
+        "dataCollectionMethods",
+        "description",
+        "guidelines",
+        "detailedProtocols",
+        "startDate",
+        "endDate",
+        "relatedDataPublications"
+      ],
+      "type": "object"
+    },
+    "ITerritoryValidation": {
+      "additionalProperties": false,
+      "properties": {
+        "allowedClasses": {
+          "items": {
+            "$ref": "#/definitions/EntityEnums.Class"
+          },
+          "type": "array"
+        },
+        "allowedEntities": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "classifications": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "entityClasses": {
+          "items": {
+            "$ref": "#/definitions/EntityEnums.Class"
+          },
+          "type": "array"
+        },
+        "propType": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "tieType": {
+          "$ref": "#/definitions/EProtocolTieType"
+        }
+      },
+      "required": [
+        "entityClasses",
+        "classifications",
+        "tieType",
+        "detail"
       ],
       "type": "object"
     }

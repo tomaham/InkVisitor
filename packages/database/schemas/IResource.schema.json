@@ -60,7 +60,8 @@
         "11",
         "12",
         "13",
-        "14"
+        "14",
+        "15"
       ],
       "type": "string"
     },
@@ -244,6 +245,10 @@
           "const": "R",
           "type": "string"
         },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        },
         "data": {
           "$ref": "#/definitions/IResourceData"
         },
@@ -289,6 +294,10 @@
         "templateData": {
           "type": "object"
         },
+        "updatedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
         "usedTemplate": {
           "type": "string"
         }
@@ -310,6 +319,9 @@
     "IResourceData": {
       "additionalProperties": false,
       "properties": {
+        "documentId": {
+          "type": "string"
+        },
         "partValueBaseURL": {
           "type": "string"
         },

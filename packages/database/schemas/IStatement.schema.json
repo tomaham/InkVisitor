@@ -60,7 +60,8 @@
         "11",
         "12",
         "13",
-        "14"
+        "14",
+        "15"
       ],
       "type": "string"
     },
@@ -253,6 +254,10 @@
           "const": "S",
           "type": "string"
         },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        },
         "data": {
           "$ref": "#/definitions/IStatementData"
         },
@@ -297,6 +302,10 @@
         },
         "templateData": {
           "type": "object"
+        },
+        "updatedAt": {
+          "format": "date-time",
+          "type": "string"
         },
         "usedTemplate": {
           "type": "string"

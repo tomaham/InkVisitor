@@ -517,7 +517,8 @@ class EntityMapper:
         prop_object = self.make_prop_object(prop_type_id, prop_value_id)
 
         # register prop object
-        self.dh.tables['props'] = self.dh.tables['props'].append({'id':prop_object['id'] , 'type_id':prop_type_id,'value_id':prop_value_id,'type':prop_type,'value':input_value, "original_field":field_name, "origin":origin, 'entityId':self.entity['id'], 'legacyId':self.entity['legacyId']}, ignore_index=True)
+        # self.dh.tables['props'] = self.dh.tables['props'].append({'id':prop_object['id'] , 'type_id':prop_type_id,'value_id':prop_value_id,'type':prop_type,'value':input_value, "original_field":field_name, "origin":origin, 'entityId':self.entity['id'], 'legacyId':self.entity['legacyId']}, ignore_index=True)
+        self.dh.tables['props'] = self.dh.tables['props']._append({'id':prop_object['id'] , 'type_id':prop_type_id,'value_id':prop_value_id,'type':prop_type,'value':input_value, "original_field":field_name, "origin":origin, 'entityId':self.entity['id'], 'legacyId':self.entity['legacyId']}, ignore_index=True)
 
         if prop_source_field != "":
             self.hook_2ndprop_into_props(prop_object,prop_source_field = prop_source_field, origin = origin)

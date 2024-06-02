@@ -2,55 +2,6 @@
   "$ref": "#/definitions/IAction",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
-    "ActionEntity": {
-      "additionalProperties": false,
-      "properties": {
-        "a1": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "a2": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "s": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "s",
-        "a1",
-        "a2"
-      ],
-      "type": "object"
-    },
-    "ActionValency": {
-      "additionalProperties": false,
-      "properties": {
-        "a1": {
-          "type": "string"
-        },
-        "a2": {
-          "type": "string"
-        },
-        "s": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "s",
-        "a1",
-        "a2"
-      ],
-      "type": "object"
-    },
     "EntityEnums.Certainty": {
       "enum": [
         "0",
@@ -63,11 +14,47 @@
       ],
       "type": "string"
     },
+    "EntityEnums.Class": {
+      "enum": [
+        "A",
+        "T",
+        "S",
+        "R",
+        "P",
+        "B",
+        "G",
+        "O",
+        "C",
+        "L",
+        "V",
+        "E"
+      ],
+      "type": "string"
+    },
     "EntityEnums.Elvl": {
       "enum": [
         "1",
         "2",
         "3"
+      ],
+      "type": "string"
+    },
+    "EntityEnums.ExtendedClass": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EntityEnums.Class"
+        },
+        {
+          "$ref": "#/definitions/EntityEnums.Extension"
+        }
+      ]
+    },
+    "EntityEnums.Extension": {
+      "enum": [
+        "*",
+        "empty",
+        "X",
+        "?"
       ],
       "type": "string"
     },
@@ -109,7 +96,8 @@
         "11",
         "12",
         "13",
-        "14"
+        "14",
+        "15"
       ],
       "type": "string"
     },
@@ -172,6 +160,10 @@
           "const": "A",
           "type": "string"
         },
+        "createdAt": {
+          "format": "date-time",
+          "type": "string"
+        },
         "data": {
           "$ref": "#/definitions/IActionData"
         },
@@ -217,6 +209,10 @@
         "templateData": {
           "type": "object"
         },
+        "updatedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
         "usedTemplate": {
           "type": "string"
         }
@@ -239,15 +235,64 @@
       "additionalProperties": false,
       "properties": {
         "entities": {
-          "$ref": "#/definitions/ActionEntity"
+          "$ref": "#/definitions/IActionEntity"
+        },
+        "pos": {
+          "const": "verb",
+          "type": "string"
         },
         "valencies": {
-          "$ref": "#/definitions/ActionValency"
+          "$ref": "#/definitions/IActionValency"
         }
       },
       "required": [
         "valencies",
-        "entities"
+        "entities",
+        "pos"
+      ],
+      "type": "object"
+    },
+    "IActionEntity": {
+      "additionalProperties": false,
+      "properties": {
+        "a1": {
+          "items": {
+            "$ref": "#/definitions/EntityEnums.ExtendedClass"
+          },
+          "type": "array"
+        },
+        "a2": {
+          "items": {
+            "$ref": "#/definitions/EntityEnums.ExtendedClass"
+          },
+          "type": "array"
+        },
+        "s": {
+          "items": {
+            "$ref": "#/definitions/EntityEnums.ExtendedClass"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "IActionValency": {
+      "additionalProperties": false,
+      "properties": {
+        "a1": {
+          "type": "string"
+        },
+        "a2": {
+          "type": "string"
+        },
+        "s": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "s",
+        "a1",
+        "a2"
       ],
       "type": "object"
     },
